@@ -551,16 +551,18 @@ type CohortMember = { id: string; name: string; role: '组长' | '负责人' | '
 type CohortTeam = { id: 'algorithm' | 'project'; name: string; count: number; description: string; accent: string; members: CohortMember[] }
 type CohortConfig = { year: string; memberLabel: string; teamCount?: number }
 
-const currentCohortYear = '2026'
+const currentCohortYear = '2029'
 
 // 届次是独立配置：以后新增一届时，在这里追加一项即可，时间轴和合影墙会自动读取。
 const cohortCatalog: CohortConfig[] = [
-  { year: '2026', memberLabel: '13 人', teamCount: 2 },
+  { year: '2026', memberLabel: '人数待补充' },
   { year: '2027', memberLabel: '人数待补充' },
   { year: '2028', memberLabel: '人数待补充' },
-  { year: '2029', memberLabel: '人数待补充' },
+  { year: '2029', memberLabel: '13 人', teamCount: 2 },
 ]
-const cohortYears = cohortCatalog.map((cohort) => cohort.year)
+const cohortYears = cohortCatalog
+  .map((cohort) => cohort.year)
+  .sort((a, b) => Number(b) - Number(a))
 const cohortArchiveMeta: Record<string, string> = cohortCatalog.reduce((result, cohort) => {
   result[cohort.year] = cohort.memberLabel
   return result
@@ -613,10 +615,21 @@ function getStoredCohortPhotos(): Record<string, string> {
   }
 }
 
+function PhotoArchivePage() {
+  const [photos] = useState<Record<string, string>>(getStoredCohortPhotos)
+
+  return <div className="page archive-page">
+    <PageIntro eyebrow="PEOPLE / 06 · ARCHIVE" title="历届合影" description="把每一届的共同记忆留在同一面照片墙里，随时回看小组一路走来的足迹。" action={<button className="secondary-button" onClick={() => navigate('#/members')}><ChevronLeft size={16} /> 返回小组风采</button>} />
+    <section className="photo-archive archive-page-panel">
+      <div className="archive-heading"><div><p className="eyebrow">PHOTO ARCHIVE</p><h2>每一届，都值得被记住</h2><p>照片由管理员整理维护，后续可以持续补充。</p></div><span><ShieldCheck size={14} /> 登录后由管理员维护</span></div>
+      <div className="archive-grid">{cohortYears.map((year) => <article className="archive-card" key={year}>{photos[year] ? <img src={photos[year]} alt={`${year}届历届合影`} /> : <div className="archive-empty"><Camera size={28} /><span>暂无合影</span></div>}<div className="archive-card-meta"><strong>{year} 届</strong><span>· {cohortArchiveMeta[year]}</span></div></article>)}</div>
+    </section>
+  </div>
+}
+
 function MembersPage() {
   const [cohort, setCohort] = useState(currentCohortYear)
   const [activeTeam, setActiveTeam] = useState<CohortTeam['id']>('algorithm')
-  const [archiveOpen, setArchiveOpen] = useState(false)
   const [photos] = useState<Record<string, string>>(getStoredCohortPhotos)
   const selectedPhoto = photos[cohort]
   const selectedCohort = cohortCatalog.find((item) => item.year === cohort) ?? cohortCatalog[0]
@@ -625,7 +638,7 @@ function MembersPage() {
   const selectedMemberCount = selectedTeams.reduce((total, team) => total + team.count, 0)
 
   return <div className="page members-page members-page-redesign">
-    <PageIntro eyebrow="PEOPLE / 06" title="小组风采" description="按届次认识一起写代码、做项目、把经验交给下一届的人。" action={<button className={`secondary-button ${archiveOpen ? 'is-active' : ''}`} onClick={() => setArchiveOpen((open) => !open)}><ImagePlus size={16} /> 历届合影</button>} />
+     <PageIntro eyebrow="PEOPLE / 06" title="小组风采" description="按届次认识一起写代码、做项目、把经验交给下一届的人。" action={<button className="secondary-button" onClick={() => navigate('#/members/archive')}><ImagePlus size={16} /> 历届合影</button>} />
     <div className="members-layout">
       <aside className="cohort-rail" aria-label="届次选择">
         <div className="cohort-rail-list">{cohortYears.map((year) => <button key={year} className={cohort === year ? 'active' : ''} onClick={() => setCohort(year)} aria-current={cohort === year ? 'page' : undefined}><span>{year}届</span></button>)}</div>
@@ -637,8 +650,6 @@ function MembersPage() {
         </section>
 
         {selectedTeams.length > 0 ? <section className="teams-section"><div className="teams-heading"><div><p className="eyebrow">{cohort} · TEAMS</p><h2>两支小组，协作完成一件事</h2></div><span>共 {selectedMemberCount} 位成员</span></div><div className="team-switcher">{selectedTeams.map((team) => <button key={team.id} className={activeTeam === team.id ? `active accent-${team.accent}` : ''} onClick={() => setActiveTeam(team.id)}><span><strong>{team.name}</strong><small>{team.description}</small></span><b>{team.count}<em>人</em></b><ChevronRight size={16} /></button>)}</div>{selectedTeam && <div className={`team-detail accent-${selectedTeam.accent}`}><div className="team-detail-head"><div><span className="team-detail-kicker"><i /> {selectedTeam.id === 'algorithm' ? 'ALGORITHM TRACK' : 'PROJECT TRACK'}</span><h3>{selectedTeam.name}</h3><p>{selectedTeam.description}</p></div><div className="team-role-counts"><span><strong>1</strong>组长</span><span><strong>1</strong>负责人</span><span><strong>{selectedTeam.count - 2}</strong>组员</span></div></div><div className="cohort-member-grid">{selectedTeam.members.map((member) => <article className="cohort-member-card" key={member.id}><Avatar initials={member.initials} accent={member.accent} size="md" /><div><strong>{member.name}</strong><span>{member.role}</span><small>{member.direction}</small></div><i className={`member-role-dot role-${member.role === '组长' ? 'lead' : member.role === '负责人' ? 'owner' : 'member'}`} /></article>)}</div></div>}</section> : <section className="cohort-data-empty"><div><span className="data-empty-icon"><Users size={22} /></span><h3>这一届的成员资料还在整理</h3><p>登录页面开放后，管理员可以补充成员分组和个人资料。</p></div></section>}
-
-        {archiveOpen && <section className="photo-archive"><div className="archive-heading"><div><p className="eyebrow">PHOTO ARCHIVE</p><h2>历届合影</h2><p>每张照片都是一届人的共同记忆。</p></div><span><ShieldCheck size={14} /> 登录后由管理员维护</span></div><div className="archive-grid">{cohortYears.map((year) => <article className="archive-card" key={year}>{photos[year] ? <img src={photos[year]} alt={`${year}届历届合影`} /> : <div className="archive-empty"><Camera size={28} /><span>暂无合影</span></div>}<div className="archive-card-meta"><strong>{year} 届</strong><span>· {cohortArchiveMeta[year]}</span></div></article>)}</div></section>}
 
         <section className="letter-section members-letter"><div className="letter-copy"><p className="eyebrow">PASS IT ON</p><h2>把这一届的经验，留给下一届。</h2><p>“你不需要在大一就知道自己最终会去哪里，先和身边的人一起把一个项目做完。”</p><span>— 传承寄语 · 计算机科技小组</span></div><div className="letter-stamp"><span>TO</span><strong>NEXT<br />COHORT</strong><small>{cohort} → {String(Number(cohort) + 1)}</small></div></section>
       </div>
@@ -695,7 +706,7 @@ function App() {
   useEffect(() => { const handler = (event: KeyboardEvent) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setCommandOpen(true) } }; window.addEventListener('keydown', handler); return () => window.removeEventListener('keydown', handler) }, [])
   const openProject = (project: Project) => navigate(`#/projects/${project.slug}`)
   const sendMessage = (text: string) => { const userMessage: AIMessage = { id: `u-${Date.now()}`, role: 'user', content: text }; const assistant: AIMessage = { id: `a-${Date.now()}`, role: 'assistant', content: text.includes('项目') ? '结合你选择的方向，可以先从校园 AI 智能助手的前端协作任务开始，再逐步参与接口联调。' : text.includes('FastAPI') ? '建议先用一周完成 Python 工程基础和 FastAPI 路由，再把知识放进一个小项目。路线里已经为你标记了项目入口。' : '我已经把这个问题拆进学习路线、项目和资源中。先选择一个方向，我们一起找到可执行的下一步。', citations }; setMessages((current) => [...current, userMessage, assistant]); setAiOpen(true) }
-  const renderPage = () => { if (route === '/home') return <LandingPage onNavigate={navigate} />; if (route === '/tools') return <HomePage onNavigate={navigate} onOnboarding={() => setOnboardingOpen(true)} onOpenProject={openProject} />; if (route === '/learning') return <LearningPage onOpenProject={openProject} />; if (route === '/projects') return <ProjectsPage onOpenProject={openProject} />; if (route.startsWith('/projects/')) { const slug = route.split('/')[2]; return <ProjectDetailPage project={projects.find((item) => item.slug === slug) ?? projects[0]} onNavigate={navigate} /> }; if (route === '/events') return <EventsPage />; if (route === '/resources') return <ResourcesPage onNavigate={navigate} />; if (route === '/resources/prompts') return <PromptsPage />; if (route === '/interviews') return <InterviewsPage />; if (route === '/members') return <MembersPage />; if (route === '/ai') return <AiPage messages={messages} onSend={sendMessage} />; return <LandingPage onNavigate={navigate} /> }
+  const renderPage = () => { if (route === '/home') return <LandingPage onNavigate={navigate} />; if (route === '/tools') return <HomePage onNavigate={navigate} onOnboarding={() => setOnboardingOpen(true)} onOpenProject={openProject} />; if (route === '/learning') return <LearningPage onOpenProject={openProject} />; if (route === '/projects') return <ProjectsPage onOpenProject={openProject} />; if (route.startsWith('/projects/')) { const slug = route.split('/')[2]; return <ProjectDetailPage project={projects.find((item) => item.slug === slug) ?? projects[0]} onNavigate={navigate} /> }; if (route === '/events') return <EventsPage />; if (route === '/resources') return <ResourcesPage onNavigate={navigate} />; if (route === '/resources/prompts') return <PromptsPage />; if (route === '/interviews') return <InterviewsPage />; if (route === '/members/archive') return <PhotoArchivePage />; if (route === '/members') return <MembersPage />; if (route === '/ai') return <AiPage messages={messages} onSend={sendMessage} />; return <LandingPage onNavigate={navigate} /> }
   const isLanding = route === '/home'
   const isTools = route === '/tools'
   const isFullBleed = isLanding

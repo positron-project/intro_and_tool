@@ -783,6 +783,33 @@ html[data-theme='dark'] .archive-card {
   box-shadow: 0 5px 14px rgba(0, 0, 0, .18);
 }
 
+/* The archive is a full page so future photo collections have room to grow. */
+.archive-page .page-intro { align-items: flex-end; }
+.archive-page-panel { margin-bottom: 21px; }
+.archive-page-panel .archive-heading { align-items: flex-end; }
+.archive-page-panel .archive-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.archive-page-panel .archive-card,
+.archive-page-panel .archive-card > img { min-height: 220px; }
+
+@media (max-width: 1050px) {
+  .archive-page-panel .archive-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .archive-page .page-intro { align-items: flex-start; }
+  .archive-page-panel { padding: 17px; }
+  .archive-page-panel .archive-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .archive-page-panel .archive-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .archive-page-panel .archive-card,
+  .archive-page-panel .archive-card > img { min-height: 166px; }
+}
+
+@media (max-width: 480px) {
+  .archive-page-panel .archive-grid { grid-template-columns: 1fr; }
+  .archive-page-panel .archive-card,
+  .archive-page-panel .archive-card > img { min-height: 192px; }
+}
+
 @media (max-width: 760px) {
   .app-shell:not(.landing-shell) {
     background-position: center, center top;
