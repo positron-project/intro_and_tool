@@ -3,10 +3,71 @@ export type AnnouncementCategory = '重要' | '比赛' | '项目' | '讲座' | '
 
 export type Role = 'Visitor' | 'Member' | 'Contributor' | 'Leader' | 'Admin'
 
+/** Shared query shape for all content list endpoints. */
+export interface ListParams {
+  search?: string
+  category?: string
+  status?: string
+  cohort?: string
+  page?: number
+  pageSize?: number
+  sort?: string
+  direction?: 'asc' | 'desc'
+  signal?: AbortSignal
+}
+
+export type CreateInput<T extends { id: string }> = Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy' | 'publishedAt' | 'archivedAt'>
+export type UpdateInput<T extends { id: string }> = Partial<CreateInput<T>>
+
+export interface PageInfo {
+  page: number
+  pageSize: number
+  total: number
+}
+
+export interface Paginated<T> {
+  items: T[]
+  page: PageInfo
+}
+
+export type ContentVisibility = 'public' | 'members'
+
+/** Server-managed fields returned with editable content records. */
+export interface ContentMeta {
+  createdAt?: string
+  updatedAt?: string
+  createdBy?: string
+  updatedBy?: string
+  publishedAt?: string
+  archivedAt?: string
+  visibility?: ContentVisibility
+}
+
+export interface AuthUser extends User {
+  avatarUrl?: string
+}
+
+export interface AuthSession {
+  accessToken: string
+  refreshToken?: string
+  expiresAt?: string
+  user: AuthUser
+}
+
+export interface UploadAsset {
+  id: string
+  url: string
+  name: string
+  mimeType: string
+  size: number
+  alt?: string
+}
+
 export interface User {
   id: string
   name: string
   initials: string
+  bio?: string
   cohort: string
   role: Role
   directions: string[]
@@ -26,19 +87,44 @@ export interface ProjectMember {
   cohort: string
 }
 
-export interface Announcement {
+export interface ProjectMilestone {
+  id: string
+  year: string
+  title: string
+  summary: string
+  status?: '已完成' | '进行中' | '计划中'
+}
+
+export interface ProjectLogEntry {
+  id: string
+  date: string
+  title: string
+  detail: string
+  author?: string
+  authorInitials?: string
+}
+
+export interface Announcement extends ContentMeta {
   id: string
   category: AnnouncementCategory
   title: string
   detail: string
   date: string
+  published?: boolean
+  scope?: string
 }
 
-export interface Project {
+export interface Project extends ContentMeta {
   id: string
   name: string
   slug: string
   description: string
+  intro?: string
+  githubUrl?: string
+  docsUrl?: string
+  demoUrl?: string
+  issueUrl?: string
+  coverImage?: string
   stack: string[]
   members: number
   stars: number
@@ -49,6 +135,11 @@ export interface Project {
   accent: string
   icon: string
   featured?: boolean
+  milestones?: ProjectMilestone[]
+  logs?: ProjectLogEntry[]
+  memberIds?: string[]
+  joinEnabled?: boolean
+  joinNote?: string
 }
 
 export interface LearningNode {
@@ -58,16 +149,19 @@ export interface LearningNode {
   resources: number
   projects: number
   description?: string
+  projectIds?: string[]
 }
 
-export interface LearningRoute {
+export interface LearningRoute extends ContentMeta {
   id: string
   title: string
+  direction?: string
   description: string
   nodes: LearningNode[]
+  featuredProjectIds?: string[]
 }
 
-export interface Resource {
+export interface Resource extends ContentMeta {
   id: string
   title: string
   description: string
@@ -80,7 +174,7 @@ export interface Resource {
   accent: string
 }
 
-export interface Member {
+export interface Member extends ContentMeta {
   id: string
   name: string
   role: string
@@ -91,7 +185,7 @@ export interface Member {
   accent: string
 }
 
-export interface InterviewExperience {
+export interface InterviewExperience extends ContentMeta {
   id: string
   company: string
   role: string
@@ -104,7 +198,7 @@ export interface InterviewExperience {
   summary: string
 }
 
-export interface PromptTemplate {
+export interface PromptTemplate extends ContentMeta {
   id: string
   title: string
   usage: string
@@ -126,6 +220,8 @@ export interface Contribution {
   type: 'resource' | 'project' | 'interview' | 'route' | 'document'
   title: string
   date: string
+  published?: boolean
+  scope?: string
 }
 
 export interface AIMessage {
@@ -135,7 +231,16 @@ export interface AIMessage {
   citations?: Citation[]
 }
 
-export interface CompetitionEvent {
+export interface CompetitionProject {
+  id: string
+  title: string
+  cohort: string
+  description: string
+  imageUrl?: string
+  projectUrl?: string
+}
+
+export interface CompetitionEvent extends ContentMeta {
   id: string
   title: string
   type: string
@@ -144,4 +249,5 @@ export interface CompetitionEvent {
   description: string
   status: '报名中' | '即将开始' | '已结束'
   accent: string
+  projects?: CompetitionProject[]
 }

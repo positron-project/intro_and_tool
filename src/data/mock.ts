@@ -21,7 +21,7 @@ export const announcements: Announcement[] = [
 
 export const projects: Project[] = [
   {
-    id: 'p1', slug: 'ai-campus', name: '校园 AI 智能助手', description: '基于 RAG 和 Agent 的校园知识问答系统', stack: ['Python', 'FastAPI', 'Vue3'], members: 12, stars: 128, status: '招募中', difficulty: 3, year: 2026, category: 'AI', accent: 'blue', icon: 'spark', featured: true,
+    id: 'p1', slug: 'ai-campus', name: '校园 AI 智能助手', description: '基于 RAG 和 Agent 的校园知识问答系统', intro: '把小组历届沉淀的通知、学习路线与项目文档组织成可检索的知识空间，让下一届可以从真实上下文继续前进。', githubUrl: 'https://github.com/example/campus-ai-assistant', docsUrl: '#/resources', demoUrl: '', issueUrl: 'https://github.com/example/campus-ai-assistant/issues', stack: ['Python', 'FastAPI', 'Vue3'], members: 12, stars: 128, status: '招募中', difficulty: 3, year: 2026, category: 'AI', accent: 'blue', icon: 'spark', featured: true, memberIds: ['m1', 'm2', 'm4'], joinEnabled: true, joinNote: '欢迎熟悉 Python、前端或知识库方向的成员参与。', milestones: [{ id: 'p1-m1', year: '2024', title: '校园问答 v1', summary: '关键词检索 · Vue · Flask', status: '已完成' }, { id: 'p1-m2', year: '2025', title: 'RAG v2', summary: '向量检索 · FastAPI · PostgreSQL', status: '已完成' }, { id: 'p1-m3', year: '2026', title: 'Agent v3', summary: 'LangGraph · 工具调用 · 评测集', status: '进行中' }], logs: [{ id: 'p1-l1', date: '05-16', title: '新增校园地点检索工具', detail: '补充校园地点查询与引用卡片。', author: '何宇辰', authorInitials: 'HY' }, { id: 'p1-l2', date: '05-12', title: '完成回答引用卡片', detail: '让每次回答都能追溯到对应资料来源。', author: '周一帆', authorInitials: 'ZY' }],
   },
   {
     id: 'p2', slug: 'online-judge', name: '在线题库系统', description: '支持刷题、比赛、评测的在线平台', stack: ['Next.js', 'NestJS', 'MySQL'], members: 8, stars: 86, status: '维护中', difficulty: 4, year: 2025, category: 'Web', accent: 'violet', icon: 'terminal', featured: true,
