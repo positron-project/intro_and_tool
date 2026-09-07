@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+  <title id="title">Club OS 后端接入架构</title>
+  <desc id="desc">React 前端通过统一的 Node.js Gateway 连接 Java Core、文件存储和 Python AI。</desc>
+  <defs>
+    <linearGradient id="canvas" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fbff"/>
+      <stop offset="1" stop-color="#eef5ff"/>
+    </linearGradient>
+    <linearGradient id="front" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#edf5ff"/>
+      <stop offset="1" stop-color="#f8fbff"/>
+    </linearGradient>
+    <linearGradient id="gateway" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f3faef"/>
+      <stop offset="1" stop-color="#fbfdf9"/>
+    </linearGradient>
+    <linearGradient id="data" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff8ee"/>
+      <stop offset="1" stop-color="#fffdf9"/>
+    </linearGradient>
+    <linearGradient id="agent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2f1ff"/>
+      <stop offset="1" stop-color="#fcfbff"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#6d87ab" flood-opacity=".14"/>
+    </filter>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="5" stdDeviation="8" flood-color="#6d87ab" flood-opacity=".1"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4f6178"/>
+    </marker>
+    <marker id="arrow-muted" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9a8b7a"/>
+    </marker>
+    <style>
+      .font { font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, sans-serif; fill: #1d2c42; }
+      .mono { font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace; letter-spacing: .08em; }
+      .title { font-size: 30px; font-weight: 800; letter-spacing: .01em; }
+      .subtitle { font-size: 13px; fill: #718198; }
+      .card-title { font-size: 24px; font-weight: 800; }
+      .card-subtitle { font-size: 14px; fill: #718198; }
+      .section-label { font-size: 11px; font-weight: 700; letter-spacing: .16em; fill: #8090a5; }
+      .item { font-size: 15px; font-weight: 700; }
+      .item-note { font-size: 12px; fill: #7c899b; }
+      .chip { font-size: 13px; font-weight: 700; }
+      .connector-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; fill: #728198; }
+      .tiny { font-size: 11px; fill: #8a98aa; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="900" fill="url(#canvas)"/>
+  <path d="M70 98 H1370" stroke="#dfe8f4" stroke-width="1"/>
+  <circle cx="1338" cy="70" r="4" fill="#6c9de0"/>
+  <circle cx="1355" cy="70" r="4" fill="#8b82dc"/>
+  <circle cx="1372" cy="70" r="4" fill="#8fbd72"/>
+
+  <text x="70" y="61" class="font title">Club OS · 后端接入架构</text>
+  <text x="70" y="83" class="font subtitle">让前端只依赖统一 API，内容服务和 AI 能力可以独立演进</text>
+
+  <!-- Frontend -->
+  <g filter="url(#shadow)">
+    <rect x="400" y="122" width="640" height="126" rx="20" fill="url(#front)" stroke="#5b8fd2" stroke-width="2.5"/>
+  </g>
+  <circle cx="484" cy="185" r="34" fill="#e1edff" stroke="#5b8fd2" stroke-width="2"/>
+  <text x="484" y="193" text-anchor="middle" class="font" font-size="25" font-weight="800" fill="#3e77c4">&lt;/&gt;</text>
+  <text x="550" y="178" class="font card-title">React / Vite / TypeScript</text>
+  <text x="550" y="204" class="font card-subtitle">页面展示 · 路由 · API SDK · 管理后台</text>
+  <text x="986" y="153" text-anchor="end" class="font section-label">CLIENT</text>
+
+  <!-- Frontend to gateway -->
+  <path d="M720 250 V296" stroke="#4f6178" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="742" y="279" class="font connector-label">HTTPS /api</text>
+
+  <!-- API gateway -->
+  <g filter="url(#shadow)">
+    <rect x="220" y="306" width="1000" height="244" rx="22" fill="url(#gateway)" stroke="#7cab62" stroke-width="2.5"/>
+  </g>
+  <circle cx="304" cy="372" r="35" fill="#e8f5df" stroke="#7cab62" stroke-width="2"/>
+  <text x="304" y="384" text-anchor="middle" class="font" font-size="28" font-weight="800" fill="#5e9444">N</text>
+  <text x="366" y="363" class="font card-title">Node.js Gateway · 统一 API 层</text>
+  <text x="366" y="389" class="font card-subtitle">BFF / API 网关：浏览器只和这一层通信</text>
+  <text x="1168" y="337" text-anchor="end" class="font section-label">GATEWAY</text>
+  <path d="M270 421 H1170" stroke="#b7d49f" stroke-width="1.5" stroke-dasharray="7 8"/>
+
+  <g filter="url(#soft-shadow)">
+    <rect x="270" y="448" width="245" height="54" rx="12" fill="#fff" stroke="#a7c995"/>
+    <rect x="545" y="448" width="245" height="54" rx="12" fill="#fff" stroke="#a7c995"/>
+    <rect x="820" y="448" width="245" height="54" rx="12" fill="#fff" stroke="#a7c995"/>
+    <rect x="1095" y="448" width="75" height="54" rx="12" fill="#fff" stroke="#a7c995"/>
+  </g>
+  <circle cx="296" cy="475" r="8" fill="#6b9dda"/>
+  <text x="316" y="480" class="font chip">鉴权与角色</text>
+  <circle cx="571" cy="475" r="8" fill="#73ad61"/>
+  <text x="591" y="480" class="font chip">请求校验</text>
+  <circle cx="846" cy="475" r="8" fill="#8175d5"/>
+  <text x="866" y="480" class="font chip">内容 CRUD</text>
+  <circle cx="1121" cy="475" r="8" fill="#e3a45e"/>
+  <text x="1141" y="480" class="font chip">SSE</text>
+  <text x="270" y="530" class="font tiny">统一错误格式 · 统一类型 · 请求路由 · 审计字段</text>
+
+  <!-- Gateway to services -->
+  <path d="M430 552 V594 H275 V616" stroke="#4f6178" stroke-width="2.3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M720 552 V616" stroke="#4f6178" stroke-width="2.3" fill="none" marker-end="url(#arrow)"/>
+  <path d="M1010 552 V594 H1165 V616" stroke="#9a8b7a" stroke-width="2.2" stroke-dasharray="8 7" fill="none" marker-end="url(#arrow-muted)"/>
+  <text x="293" y="584" class="font connector-label">SQL + Storage</text>
+  <text x="742" y="587" class="font connector-label">REST + SSE</text>
+  <text x="1000" y="584" class="font connector-label" fill="#9a8b7a">内部 RPC（按需）</text>
+
+  <!-- Data service -->
+  <g filter="url(#shadow)">
+    <rect x="70" y="618" width="410" height="208" rx="20" fill="url(#data)" stroke="#e6ab60" stroke-width="2.5"/>
+  </g>
+  <circle cx="132" cy="674" r="28" fill="#fff0d9" stroke="#e6ab60" stroke-width="2"/>
+  <path d="M119 668 Q132 660 145 668 V684 Q132 692 119 684 Z" fill="none" stroke="#ca8c43" stroke-width="2"/>
+  <path d="M119 668 Q132 676 145 668" fill="none" stroke="#ca8c43" stroke-width="2"/>
+  <text x="178" y="666" class="font card-title" font-size="21">内容与成员数据</text>
+  <text x="178" y="690" class="font card-subtitle">Java Core 统一管理业务数据</text>
+  <text x="100" y="733" class="font item">PostgreSQL / MySQL</text>
+  <text x="100" y="754" class="font item-note">项目 · 资源 · 面经 · 比赛 · 成员 · 审计</text>
+  <text x="100" y="786" class="font item">对象存储</text>
+  <text x="100" y="807" class="font item-note">合影 · 附件 · 封面图（MinIO / S3）</text>
+
+  <!-- Python Agent -->
+  <g filter="url(#shadow)">
+    <rect x="515" y="618" width="410" height="208" rx="20" fill="url(#agent)" stroke="#7f76d5" stroke-width="2.5"/>
+  </g>
+  <circle cx="577" cy="674" r="28" fill="#e9e7ff" stroke="#7f76d5" stroke-width="2"/>
+  <text x="577" y="684" text-anchor="middle" class="font" font-size="25" font-weight="800" fill="#6860bb">AI</text>
+  <text x="623" y="666" class="font card-title" font-size="21">Python FastAPI Agent</text>
+  <text x="623" y="690" class="font card-subtitle">AI 能力独立部署，按需扩容</text>
+  <text x="545" y="733" class="font item">RAG · 工具调用 · Prompt</text>
+  <text x="545" y="754" class="font item-note">向量库 · Embedding · LLM</text>
+  <text x="545" y="786" class="font item">SSE 流式回答</text>
+  <text x="545" y="807" class="font item-note">Node.js 负责鉴权和转发，不暴露模型密钥</text>
+
+  <!-- Optional Java service -->
+  <g filter="url(#soft-shadow)">
+    <rect x="960" y="618" width="410" height="208" rx="20" fill="#fffaf3" stroke="#c9b59d" stroke-width="2.2" stroke-dasharray="8 6"/>
+  </g>
+  <circle cx="1022" cy="674" r="28" fill="#f8efe4" stroke="#c9b59d" stroke-width="2"/>
+  <text x="1022" y="684" text-anchor="middle" class="font" font-size="21" font-weight="800" fill="#9b805f">J</text>
+  <text x="1068" y="666" class="font card-title" font-size="21">Java Core · 业务服务</text>
+  <text x="1068" y="690" class="font card-subtitle">账号、内容和权限的唯一写入方</text>
+  <text x="990" y="733" class="font item">学习路线 · 项目 · 资源 · 成员</text>
+  <text x="990" y="754" class="font item-note">PostgreSQL · 迁移 · 审计日志</text>
+  <text x="990" y="786" class="font item">生产实现</text>
+  <text x="990" y="807" class="font item-note">Node/Python 只通过契约调用 Java Core</text>
+
+  <path d="M70 856 H1370" stroke="#dfe8f4" stroke-width="1"/>
+  <circle cx="82" cy="875" r="5" fill="#5b8fd2"/>
+  <text x="98" y="879" class="font tiny">前端只依赖 /api</text>
+  <circle cx="253" cy="875" r="5" fill="#7cab62"/>
+  <text x="269" y="879" class="font tiny">后端统一鉴权与校验</text>
+  <circle cx="465" cy="875" r="5" fill="#7f76d5"/>
+  <text x="481" y="879" class="font tiny">AI 服务独立演进</text>
+  <text x="1370" y="879" text-anchor="end" class="font mono tiny">CLUB OS · ARCHITECTURE / 01</text>
+</svg>

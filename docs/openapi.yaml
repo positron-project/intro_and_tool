@@ -1,0 +1,1316 @@
+openapi: 3.1.0
+info:
+  title: Club OS API
+  version: 1.0.0
+  description: |
+    南昌航空大学科技学院计算机科技小组 Club OS 后端接口。
+    浏览器只访问 Node.js Gateway，Gateway 再转发到 Java Core、Python AI 或对象存储。
+    所有写操作由 Java Core 再次执行角色校验；删除采用软删除。
+    除 204 外，成功响应统一使用 { data, meta } 包装；本文各业务 schema 描述 data 的内容，meta 至少包含 requestId，分页列表还包含 page、pageSize、total、totalPages。
+servers:
+  - url: http://127.0.0.1:3000
+    description: 本地 Node.js Gateway
+tags:
+  - name: System
+    description: 网关与依赖健康状态
+  - name: Auth
+    description: 登录、会话与角色
+  - name: Content
+    description: 学习路线、项目、资源、面经、比赛、公告、Prompt 和成员
+  - name: Uploads
+    description: 图片和附件
+  - name: AI
+    description: Python AI 助手
+paths:
+  /health:
+    get:
+      tags: [System]
+      summary: 聚合健康检查
+      operationId: getHealth
+      responses:
+        '200':
+          description: 依赖均正常
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GatewayHealth' }
+        '503':
+          description: 至少一个依赖不可用
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GatewayHealth' }
+  /api/health:
+    get:
+      tags: [System]
+      summary: 聚合健康检查（API 别名）
+      operationId: getApiHealth
+      responses:
+        '200':
+          description: 依赖均正常
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GatewayHealth' }
+        '503':
+          description: 至少一个依赖不可用
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GatewayHealth' }
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: 登录并取得 access token
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: 获取当前用户
+      operationId: getCurrentUser
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: 当前用户
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthUser' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags: [Auth]
+      summary: 更新当前用户公开资料
+      operationId: updateCurrentUser
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                initials: { type: string }
+                bio: { type: string }
+                avatarAssetId: { type: string }
+      responses:
+        '200':
+          description: 更新后的用户
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthUser' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: 刷新登录令牌
+      operationId: refreshAuth
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200':
+          description: 新的登录会话
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/auth/me/password:
+    patch:
+      tags: [Auth]
+      summary: 修改当前用户密码
+      operationId: changeCurrentPassword
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword: { type: string, format: password }
+                newPassword: { type: string, format: password, minLength: 8 }
+      responses:
+        '204': { description: 密码修改成功 }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: 注销当前令牌
+      operationId: logout
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 注销成功或重复注销 }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/learning-routes:
+    get:
+      tags: [Content]
+      summary: 学习路线列表
+      operationId: listLearningRoutes
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/Cohort'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/Direction'
+      responses:
+        '200':
+          description: 分页列表
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContentPage' }
+    post:
+      tags: [Content]
+      summary: 创建学习路线记录
+      operationId: createLearningRoute
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentInput' }
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LearningRoute' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/learning-routes/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: 学习路线记录 id
+        schema: { type: string }
+    get:
+      tags: [Content]
+      summary: 学习路线详情
+      operationId: getLearningRoute
+      responses:
+        '200':
+          description: 详情
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LearningRoute' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Content]
+      summary: 编辑学习路线
+      operationId: updateLearningRoute
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentPatch' }
+      responses:
+        '200':
+          description: 更新后的记录
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LearningRoute' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Content]
+      summary: 归档学习路线
+      operationId: deleteLearningRoute
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 归档成功 }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/projects:
+    get:
+      tags: [Content]
+      summary: 项目库列表
+      operationId: listProjects
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/Cohort'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/Direction'
+      responses:
+        '200':
+          description: 分页列表
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContentPage' }
+    post:
+      tags: [Content]
+      summary: 创建项目库记录
+      operationId: createProject
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentInput' }
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/projects/{idOrSlug}:
+    parameters:
+      - name: idOrSlug
+        in: path
+        required: true
+        description: 项目 id 或 slug
+        schema: { type: string }
+    get:
+      tags: [Content]
+      summary: 项目库详情
+      operationId: getProject
+      responses:
+        '200':
+          description: 详情
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Content]
+      summary: 编辑项目库
+      operationId: updateProject
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentPatch' }
+      responses:
+        '200':
+          description: 更新后的记录
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Content]
+      summary: 归档项目库
+      operationId: deleteProject
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 归档成功 }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/resources:
+    get:
+      tags: [Content]
+      summary: 资源库列表
+      operationId: listResources
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/Cohort'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/Direction'
+      responses:
+        '200':
+          description: 分页列表
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContentPage' }
+    post:
+      tags: [Content]
+      summary: 创建资源库记录
+      operationId: createResource
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentInput' }
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Resource' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/resources/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: 资源库记录 id
+        schema: { type: string }
+    get:
+      tags: [Content]
+      summary: 资源库详情
+      operationId: getResource
+      responses:
+        '200':
+          description: 详情
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Resource' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Content]
+      summary: 编辑资源库
+      operationId: updateResource
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentPatch' }
+      responses:
+        '200':
+          description: 更新后的记录
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Resource' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Content]
+      summary: 归档资源库
+      operationId: deleteResource
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 归档成功 }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/interviews:
+    get:
+      tags: [Content]
+      summary: 面经墙列表
+      operationId: listInterviews
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/Cohort'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/Direction'
+      responses:
+        '200':
+          description: 分页列表
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContentPage' }
+    post:
+      tags: [Content]
+      summary: 创建面经墙记录
+      operationId: createInterview
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentInput' }
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Interview' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/interviews/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: 面经墙记录 id
+        schema: { type: string }
+    get:
+      tags: [Content]
+      summary: 面经墙详情
+      operationId: getInterview
+      responses:
+        '200':
+          description: 详情
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Interview' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Content]
+      summary: 编辑面经墙
+      operationId: updateInterview
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentPatch' }
+      responses:
+        '200':
+          description: 更新后的记录
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Interview' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Content]
+      summary: 归档面经墙
+      operationId: deleteInterview
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 归档成功 }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/competitions:
+    get:
+      tags: [Content]
+      summary: 比赛中心列表
+      operationId: listCompetitions
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/Cohort'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/Direction'
+      responses:
+        '200':
+          description: 分页列表
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContentPage' }
+    post:
+      tags: [Content]
+      summary: 创建比赛中心记录
+      operationId: createCompetition
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentInput' }
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Competition' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/competitions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: 比赛中心记录 id
+        schema: { type: string }
+    get:
+      tags: [Content]
+      summary: 比赛中心详情
+      operationId: getCompetition
+      responses:
+        '200':
+          description: 详情
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Competition' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Content]
+      summary: 编辑比赛中心
+      operationId: updateCompetition
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentPatch' }
+      responses:
+        '200':
+          description: 更新后的记录
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Competition' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Content]
+      summary: 归档比赛中心
+      operationId: deleteCompetition
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 归档成功 }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/announcements:
+    get:
+      tags: [Content]
+      summary: 公告列表
+      operationId: listAnnouncements
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/Direction'
+      responses:
+        '200':
+          description: 分页列表
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContentPage' }
+    post:
+      tags: [Content]
+      summary: 创建公告
+      operationId: createAnnouncement
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentInput' }
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Announcement' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /api/announcements/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Content]
+      summary: 获取公告详情
+      operationId: getAnnouncement
+      responses:
+        '200':
+          description: 公告详情
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Announcement' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Content]
+      summary: 编辑公告
+      operationId: updateAnnouncement
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentPatch' }
+      responses:
+        '200':
+          description: 更新后的公告
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Announcement' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Content]
+      summary: 归档公告
+      operationId: deleteAnnouncement
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 归档成功 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/prompts:
+    get:
+      tags: [Content]
+      summary: Prompt 模板列表
+      operationId: listPrompts
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Category'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/Direction'
+      responses:
+        '200':
+          description: 分页列表
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContentPage' }
+    post:
+      tags: [Content]
+      summary: 创建 Prompt 模板
+      operationId: createPrompt
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentInput' }
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Prompt' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /api/prompts/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Content]
+      summary: 获取 Prompt 模板详情
+      operationId: getPrompt
+      responses:
+        '200':
+          description: Prompt 详情
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Prompt' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Content]
+      summary: 编辑 Prompt 模板
+      operationId: updatePrompt
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentPatch' }
+      responses:
+        '200':
+          description: 更新后的 Prompt
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Prompt' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Content]
+      summary: 归档 Prompt 模板
+      operationId: deletePrompt
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 归档成功 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/members:
+    get:
+      tags: [Content]
+      summary: 成员列表
+      operationId: listMembers
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Cohort'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/Direction'
+      responses:
+        '200':
+          description: 分页列表
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContentPage' }
+    post:
+      tags: [Content]
+      summary: 创建成员账号
+      operationId: createMember
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentInput' }
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Member' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /api/members/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      tags: [Content]
+      summary: 获取成员详情
+      operationId: getMember
+      responses:
+        '200':
+          description: 成员详情
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Member' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Content]
+      summary: 编辑成员资料
+      operationId: updateMember
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentPatch' }
+      responses:
+        '200':
+          description: 更新后的成员
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Member' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Content]
+      summary: 归档成员账号
+      operationId: deleteMember
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 归档成功 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/uploads:
+    post:
+      tags: [Uploads]
+      summary: 上传图片或附件
+      operationId: uploadAsset
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+                folder: { type: string }
+                alt: { type: string }
+      responses:
+        '201':
+          description: 上传成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UploadAsset' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          description: 普通图片超过 10 MB 或头像超过 5 MB
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '415':
+          description: 必须使用 multipart/form-data
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /api/uploads/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    delete:
+      tags: [Uploads]
+      summary: 删除上传文件
+      operationId: deleteAsset
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 删除成功 }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/uploads/files/{id}/{name}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string }
+      - name: name
+        in: path
+        required: true
+        description: 原始文件名（仅用于友好 URL）
+        schema: { type: string }
+    get:
+      tags: [Uploads]
+      summary: 下载上传文件
+      operationId: downloadAsset
+      security: []
+      responses:
+        '200':
+          description: 文件流
+          content:
+            image/*:
+              schema: { type: string, format: binary }
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/ai/ask:
+    post:
+      tags: [AI]
+      summary: AI 助手问答
+      operationId: askAssistant
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AskRequest' }
+      responses:
+        '200':
+          description: AI 回答与引用
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AIMessage' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '502':
+          description: AI 服务不可用
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+      description: Java Core 登录返回的 accessToken
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    Search:
+      name: search
+      in: query
+      schema: { type: string }
+      description: 在记录字段中模糊搜索
+    Category:
+      name: category
+      in: query
+      schema: { type: string }
+    Status:
+      name: status
+      in: query
+      schema: { type: string }
+    Cohort:
+      name: cohortId
+      in: query
+      schema: { type: string }
+    Team:
+      name: teamId
+      in: query
+      schema: { type: string }
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    PageSize:
+      name: pageSize
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    Sort:
+      name: sort
+      in: query
+      schema: { type: string }
+    Direction:
+      name: direction
+      in: query
+      schema: { type: string, enum: [asc, desc], default: asc }
+  responses:
+    Unauthorized:
+      description: 未登录或令牌失效
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: 当前账号无权管理该内容
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ValidationError:
+      description: 参数校验失败
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: 内容不存在
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [message, code, details, requestId]
+          properties:
+            message: { type: string }
+            code: { type: string }
+            details: { type: object, additionalProperties: true }
+            requestId: { type: string }
+    PageInfo:
+      type: object
+      required: [page, pageSize, total, totalPages]
+      properties:
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+        totalPages: { type: integer }
+    ContentPage:
+      type: object
+      required: [items, page]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ContentRecord' }
+        page: { $ref: '#/components/schemas/PageInfo' }
+    ContentRecord:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        name: { type: string }
+        description: { type: string }
+        cohort: { type: string }
+        category: { type: string }
+        status: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        createdBy: { type: string }
+        updatedBy: { type: string }
+        publishedAt: { type: string, format: date-time }
+        archivedAt: { type: string, format: date-time }
+        visibility: { type: string, enum: [public, members] }
+      additionalProperties: true
+    ContentInput:
+      type: object
+      description: 新增记录；不要提交 id 或审计字段。
+      additionalProperties: true
+    ContentPatch:
+      type: object
+      description: 部分更新；只提交需要改变的字段。
+      additionalProperties: true
+    LearningRoute:
+      allOf:
+        - $ref: '#/components/schemas/ContentRecord'
+        - type: object
+          required: [title, description, nodes]
+          properties:
+            title: { type: string }
+            description: { type: string }
+            nodes: { type: array, items: { $ref: '#/components/schemas/LearningNode' } }
+    LearningNode:
+      type: object
+      required: [id, title, duration, resources, projects]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        duration: { type: string }
+        resources: { type: integer }
+        projects: { type: integer }
+        description: { type: string }
+    Project:
+      allOf:
+        - $ref: '#/components/schemas/ContentRecord'
+        - type: object
+          required: [name, slug, description, stack, members, stars, status, difficulty, year, category, accent, icon]
+          properties:
+            name: { type: string }
+            slug: { type: string }
+            description: { type: string }
+            stack: { type: array, items: { type: string } }
+            members: { type: integer }
+            stars: { type: integer }
+            status: { type: string }
+            difficulty: { type: integer }
+            year: { type: integer }
+            category: { type: string }
+            accent: { type: string }
+            icon: { type: string }
+            featured: { type: boolean }
+    Resource:
+      allOf:
+        - $ref: '#/components/schemas/ContentRecord'
+        - type: object
+          required: [title, description, category, type, tags, author, updated, views, accent]
+          properties:
+            title: { type: string }
+            description: { type: string }
+            category: { type: string }
+            type: { type: string }
+            tags: { type: array, items: { type: string } }
+            author: { type: string }
+            updated: { type: string }
+            views: { type: integer }
+            accent: { type: string }
+    Interview:
+      allOf:
+        - $ref: '#/components/schemas/ContentRecord'
+        - type: object
+          required: [company, role, author, cohort, date, difficulty, rounds, tags, summary]
+          properties:
+            company: { type: string }
+            role: { type: string }
+            author: { type: string }
+            cohort: { type: string }
+            date: { type: string }
+            difficulty: { type: string, enum: [简单, 中等, 困难] }
+            rounds: { type: integer }
+            tags: { type: array, items: { type: string } }
+            summary: { type: string }
+    Competition:
+      allOf:
+        - $ref: '#/components/schemas/ContentRecord'
+        - type: object
+          required: [title, type, date, deadline, description, status, accent]
+          properties:
+            title: { type: string }
+            type: { type: string }
+            date: { type: string }
+            deadline: { type: string }
+            description: { type: string }
+            status: { type: string }
+            accent: { type: string }
+    Announcement:
+      allOf:
+        - $ref: '#/components/schemas/ContentRecord'
+        - type: object
+          required: [title, category, detail, date]
+          properties:
+            title: { type: string }
+            category: { type: string }
+            detail: { type: string }
+            date: { type: string }
+    Prompt:
+      allOf:
+        - $ref: '#/components/schemas/ContentRecord'
+        - type: object
+          required: [title, usage, model, category, preview]
+          properties:
+            title: { type: string }
+            usage: { type: string }
+            model: { type: string }
+            category: { type: string }
+            preview: { type: string }
+    Member:
+      allOf:
+        - $ref: '#/components/schemas/ContentRecord'
+        - type: object
+          required: [name, role, cohort, direction, projects, initials, accent]
+          properties:
+            name: { type: string }
+            role: { type: string }
+            cohort: { type: string }
+            direction: { type: string }
+            projects: { type: array, items: { type: string } }
+            initials: { type: string }
+            accent: { type: string }
+    UploadAsset:
+      type: object
+      required: [id, url, name, mimeType, size]
+      properties:
+        id: { type: string }
+        url: { type: string }
+        name: { type: string }
+        mimeType: { type: string }
+        size: { type: integer }
+        alt: { type: string }
+    Citation:
+      type: object
+      required: [id, title, type, path]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        type: { type: string }
+        path: { type: string }
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string, minLength: 1 }
+        password: { type: string, format: password, minLength: 1 }
+    AuthUser:
+      type: object
+      required: [id, name, initials, cohort, role, directions]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        initials: { type: string }
+        cohort: { type: string }
+        role: { type: string, enum: [Visitor, Member, Contributor, Leader, Admin] }
+        directions: { type: array, items: { type: string } }
+        avatarUrl: { type: string, format: uri }
+    AuthSession:
+      type: object
+      required: [accessToken, expiresAt, user]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        expiresAt: { type: string, format: date-time }
+        user: { $ref: '#/components/schemas/AuthUser' }
+    DependencyHealth:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [up, degraded, down] }
+        httpStatus: { type: integer }
+        error: { type: string }
+    GatewayHealth:
+      type: object
+      required: [status, service, requestId, dependencies]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        service: { type: string, example: node-gateway }
+        requestId: { type: string }
+        dependencies:
+          type: object
+          properties:
+            core: { $ref: '#/components/schemas/DependencyHealth' }
+            ai: { $ref: '#/components/schemas/DependencyHealth' }
+    AskRequest:
+      type: object
+      required: [prompt]
+      properties:
+        prompt: { type: string, minLength: 1, maxLength: 4000 }
+    AIMessage:
+      type: object
+      required: [id, role, content, citations]
+      properties:
+        id: { type: string }
+        role: { type: string, enum: [assistant] }
+        content: { type: string }
+        citations: { type: array, items: { $ref: '#/components/schemas/Citation' }}

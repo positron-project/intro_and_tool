@@ -1,0 +1,165 @@
+# Club OS API v1 接口文档
+
+> 本文与 [backend-handoff.md](./backend-handoff.md) 共同组成 v1 契约；管理后台新增接口以 `backend-handoff.md` 的资源定义为准。发生冲突时，以本文下面的统一响应、错误和路径约定为准，并同步更新 `openapi.yaml`。
+
+本文是前端与三端后端之间的主契约。浏览器只请求 Node.js Gateway 的 `/api`，Node 再把请求转给 Java Core、Python AI 或文件存储。
+
+## 基本约定
+
+- 网关开发地址：`http://127.0.0.1:3000`；前端配置 `VITE_API_BASE_URL=http://127.0.0.1:3000/api`。
+- 所有路径均为 `/api` 后的相对路径；服务内部路径不带 `/api`。
+- 请求和响应使用 UTF-8 JSON；上传使用 `multipart/form-data`。
+- 成功响应统一返回 `{ "data": ..., "meta": { "requestId": "req_123" } }`；列表的 `data` 为数组，`meta` 额外包含 `page`、`pageSize`、`total`、`totalPages`。前端暂时兼容直接数组和旧的 `{ items, page }` 响应。
+- 成功创建返回 `201`；删除/退出登录返回 `204`；未登录/令牌失效返回 `401`；无权限返回 `403`。
+- 每个响应带 `X-Request-Id`，排查问题时把它提供给管理员。
+
+错误格式：
+
+```json
+{ "error": { "code": "FORBIDDEN", "message": "当前账号没有管理这部分内容的权限", "details": {}, "requestId": "req_123" } }
+```
+
+列表查询参数：`search`、`category`、`status`、`cohortId`、`teamId`、`page`、`pageSize`、`sort`、`direction=asc|desc`。后端应限制 `pageSize <= 100`；为兼容旧前端可暂时接受 `cohort` 别名。
+
+## 服务路由分工
+
+| 前端路径 | 方法 | 归属 |
+| --- | --- | --- |
+| `/api/auth/*` | GET/POST/PATCH | Java Core |
+| `/api/learning-routes*` | GET/POST/PATCH/DELETE | Java Core |
+| `/api/projects*` | GET/POST/PATCH/DELETE | Java Core |
+| `/api/resources*` | GET/POST/PATCH/DELETE | Java Core |
+| `/api/interviews*` | GET/POST/PATCH/DELETE | Java Core |
+| `/api/competitions*` | GET/POST/PATCH/DELETE | Java Core |
+| `/api/announcements`、`/api/prompts`、`/api/members` | GET/POST/PATCH/DELETE | Java Core |
+| `/api/uploads*` | GET/POST/DELETE | Node Gateway |
+| `/api/ai/ask` | POST | Python AI |
+| `/health` | GET | Node 聚合 Java/Python 状态 |
+
+## 登录与角色
+
+### `POST /api/auth/login`
+
+```json
+{ "username": "leader", "password": "********" }
+```
+
+```json
+{
+  "data": {
+  "accessToken": "core.xxxxx",
+  "refreshToken": "optional-refresh-token",
+  "expiresAt": "2026-10-05T04:49:50Z",
+  "user": {
+    "id": "user-1",
+    "name": "科技小组组长",
+    "initials": "组长",
+    "cohort": "全站",
+    "role": "Leader",
+    "directions": ["全站内容", "成员与权限"]
+  },
+  "meta": { "requestId": "req_123" }
+}
+```
+
+### `GET /api/auth/me`
+
+请求头 `Authorization: Bearer <accessToken>`，返回 `user` 对象。
+
+### `PATCH /api/auth/me`
+
+更新当前账号的公开资料（`name`、`initials`、`bio`、`avatarAssetId`），返回更新后的 `user` 对象。
+
+### `POST /api/auth/refresh`
+
+请求体 `{ "refreshToken": "..." }`，返回新的 `accessToken`、可轮换的 `refreshToken` 和 `expiresAt`。
+
+### `PATCH /api/auth/me/password`
+
+请求体 `{ "currentPassword": "...", "newPassword": "..." }`。新密码由 Java Core 使用 Argon2id/bcrypt 哈希保存，成功返回 `204`。
+
+### `POST /api/auth/logout`
+
+请求头同上，吊销当前令牌并返回 `204`；重复退出也应安全返回 `204`。
+
+角色规则：
+
+- `Visitor`：只能查看公开内容；
+- `Member`：登录后查看成员内容，可提交待审核内容（后续）；
+- `Contributor`：只能编辑登录用户 `cohort` 对应的本届内容；
+- `Leader` / `Admin`：组长/超级管理员，可管理全部届次。
+
+前端的权限判断只改善界面，不能替代 Java Core 的后端校验。
+
+## 内容接口
+
+| 模块 | 列表 | 详情 | 新增 | 编辑 | 删除 |
+| --- | --- | --- | --- | --- | --- |
+| 学习路线 | `GET /learning-routes` | `GET /learning-routes/:id` | `POST /learning-routes` | `PATCH /learning-routes/:id` | `DELETE /learning-routes/:id` |
+| 项目库 | `GET /projects` | `GET /projects/:slug`（详情按 slug） | `POST /projects` | `PATCH /projects/:id` | `DELETE /projects/:id` |
+| 资源库 | `GET /resources` | `GET /resources/:id`（可选） | `POST /resources` | `PATCH /resources/:id` | `DELETE /resources/:id` |
+| 面经墙 | `GET /interviews` | `GET /interviews/:id`（可选） | `POST /interviews` | `PATCH /interviews/:id` | `DELETE /interviews/:id` |
+| 比赛中心 | `GET /competitions` | `GET /competitions/:id`（可选） | `POST /competitions` | `PATCH /competitions/:id` | `DELETE /competitions/:id` |
+| 公告 / Prompt / 成员 | `GET /announcements` 等 | `GET /{resource}/:id` | `POST /{resource}` | `PATCH /{resource}/:id` | `DELETE /{resource}/:id` |
+
+新增请求体去掉 `id` 和审计字段；编辑只传变更字段。Java Core 补充 `createdAt`、`updatedAt`、`createdBy`、`updatedBy`、`archivedAt`。删除采用软删除，默认列表不返回已归档记录。
+
+## 文件上传
+
+### `POST /api/uploads`
+
+Node 接收 `multipart/form-data`：`file`（必填，普通图片单文件不超过 10 MB，头像不超过 5 MB）、`folder`（可选）、`alt`（可选）。请求头需要 `Authorization: Bearer <accessToken>`。
+
+响应 `201`（成功响应包裹在 `data` 中）：
+
+```json
+{
+  "data": {
+  "id": "asset-uuid",
+  "url": "/api/uploads/files/asset-uuid/photo.jpg",
+  "name": "photo.jpg",
+  "mimeType": "image/jpeg",
+  "size": 183920,
+  "alt": "2029 届算法组成员合影"
+  },
+  "meta": { "requestId": "req_123" }
+}
+```
+
+`GET /api/uploads/files/:id/:name` 返回文件流；`DELETE /api/uploads/:id` 删除文件。生产环境把 Node 本地目录换成 MinIO/S3，返回字段保持不变。
+
+## AI
+
+### `POST /api/ai/ask`
+
+```json
+{ "prompt": "我现在能参加哪些项目？" }
+```
+
+```json
+{
+  "data": {
+  "id": "assistant-message-id",
+  "role": "assistant",
+  "content": "可以先从校园 AI 智能助手的前端协作任务开始……",
+  "citations": [
+    { "id": "project-ai-campus", "title": "校园 AI 智能助手", "type": "项目", "path": "/projects/ai-campus" }
+  ]
+  },
+  "meta": { "requestId": "req_123" }
+}
+```
+
+Python 不保存 access token，也不决定内容编辑权限。模型密钥只放在 Python 服务环境变量。后续 SSE 使用新路径 `/api/ai/ask/stream`，不破坏普通请求。
+
+## 规划服务地址
+
+这些是三端计划使用的内部监听地址；当前仓库只保存接口设计，不包含可启动的后端服务代码。
+
+| 服务 | 计划地址 | 归属 |
+| --- | --- | --- |
+| Node.js Gateway | :3000 | 浏览器唯一入口 |
+| Java Core | :8081 | 业务数据、账号和权限 |
+| Python AI | :8001 | AI 编排、检索和模型调用 |
+
+生产必须启用 HTTPS、密码哈希、短期 access token + refresh token、CORS 白名单、限流、日志脱敏、数据库迁移和备份。服务实现时应保持本文件与 openapi.yaml 的路径、字段和错误格式一致。
