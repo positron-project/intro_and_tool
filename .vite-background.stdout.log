@@ -1,0 +1,22 @@
+
+> campus-cs-club-os@0.1.0 dev
+> vite --host 0.0.0.0
+
+
+  VITE v7.3.6  ready in 238 ms
+
+  ➜  Local:   http://localhost:5180/
+  ➜  Network: http://26.134.52.199:5180/
+  ➜  Network: http://192.168.8.1:5180/
+  ➜  Network: http://192.168.40.1:5180/
+  ➜  Network: http://10.22.149.150:5180/
+  ➜  Network: http://192.168.224.1:5180/
+  ➜  press h + enter to show help
+22:41:03 [vite] (client) hmr update /src/App.tsx
+22:41:03 [vite] (client) hmr update /src/services/auth.context.tsx, /src/App.tsx, /src/services/content.context.tsx
+22:41:03 [vite] (client) hmr update /src/services/auth.context.tsx
+22:41:03 [vite] (client) hmr update /src/services/auth.context.tsx, /src/App.tsx
+22:41:03 [vite] (client) hmr update /src/styles.css
+22:41:03 [vite] (client) hmr update /src/components/turnstile-widget.tsx
+22:41:04 [vite] (client) hmr invalidate /src/services/auth.context.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+22:41:04 [vite] (client) page reload src/services/auth.context.tsx
