@@ -25,46 +25,51 @@ Content-Type: application/json
 X-Request-Id: <uuid>
 ```
 
-成功响应统一使用：
+前端在登录接口返回 HTTP `200` 且响应包含非空 `accessToken` 后才保存 Token。勾选“记住登录状态”时保存到持久存储，否则保存到会话存储；后续受保护请求由统一 HTTP 客户端自动添加 `Authorization: Bearer <accessToken>`。登录、注册和发送验证码接口显式不转发浏览器里可能残留的旧 Token。
+
+Java Core 成功响应统一使用：
 
 ```json
 {
-  "data": {},
-  "meta": { "requestId": "req_123" }
+  "code": 200,
+  "msg": null,
+  "data": {}
 }
 ```
+
+业务失败也返回 HTTP `200` 的 `Result`，例如 `{ "code": 403, "msg": "当前账号没有管理这部分内容的权限", "data": null }`。前端统一客户端只把 `code=200` 解包为成功结果；其他 code 转成可捕获的业务错误并显示 `msg`，不会把后端响应对象直接渲染为页面异常。网络断开、网关不可用等传输层问题仍使用 HTTP 错误或网络异常处理。
 
 列表响应：
 
 ```json
 {
-  "data": [],
-  "meta": {
-    "page": 1,
-    "pageSize": 20,
-    "total": 42,
-    "totalPages": 3,
-    "requestId": "req_123"
+  "code": 200,
+  "msg": null,
+  "data": {
+    "items": [],
+    "page": {
+      "page": 1,
+      "pageSize": 20,
+      "total": 42,
+      "totalPages": 3
+    }
   }
 }
 ```
 
 列表统一支持 `search`、`category`、`status`、`cohortId`、`teamId`、`page`、`pageSize`、`sort`、`direction=asc|desc`，后端限制 `pageSize <= 100`。
 
-错误响应：
+业务失败响应：
 
 ```json
 {
-  "error": {
-    "code": "VERSION_CONFLICT",
-    "message": "记录已被其他管理员修改",
-    "details": {},
-    "requestId": "req_123"
-  }
+  "code": 409,
+  "msg": "记录已被其他管理员修改",
+  "data": null
 }
 ```
 
-状态码：`400` 参数错误、`401` 未登录、`403` 无权限、`404` 不存在、`409` 冲突、`413` 文件过大、`415` 文件类型不支持、`429` 限流、`500` 服务错误、`502/503` 上游不可用。
+传输层状态码：网络/网关级错误使用 `400` 参数错误、`401` 未登录、`403` 无权限、`404` 不存在、`409` 冲突、`413` 文件过大、`415` 文件类型不支持、`429` 限流、`500` 服务错误、`502/503` 上游不可用；Java 业务校验失败按约定返回 HTTP `200`，在 `Result.code` 中表达业务状态。
 
 ## 2. 身份与权限
 
@@ -82,6 +87,10 @@ X-Request-Id: <uuid>
 
 ```text
 POST  /api/auth/login
+POST  /api/auth/login/send-code
+POST  /api/auth/login/code
+POST  /api/auth/register/send-code
+POST  /api/auth/register
 POST  /api/auth/refresh
 POST  /api/auth/logout
 GET   /api/auth/me
@@ -108,6 +117,10 @@ POST  /api/members/{memberId}/reset-password
 ```
 
 密码只能保存 Argon2id/bcrypt 哈希；日志中不得记录密码、Token 或模型密钥。
+
+登录约定：密码登录 `POST /api/auth/login` 只接收 `{ "email": "member@example.com", "password": "...", "turnstileToken": "...", "rememberMe": true }`；验证码登录先调用 `POST /api/auth/login/send-code` 发送验证码，再调用 `POST /api/auth/login/code`，请求体为 `{ "email": "member@example.com", "verificationCode": "123456", "turnstileToken": "...", "rememberMe": true }`。登录成功统一返回 HTTP `200`。
+
+注册约定：前端先调用 `POST /api/auth/register/send-code`，请求体为 `{ "email": "member@example.com", "turnstileToken": "..." }`；服务端验证 Turnstile 后发送 6 位邮箱验证码，验证码有效期建议 10 分钟且同一邮箱 60 秒内只能发送一次。随后调用 `POST /api/auth/register`，请求体为 `{ "verificationCode": "123456", "username": "member01", "email": "member@example.com", "password": "至少 8 位", "turnstileToken": "..." }`。只有返回 HTTP `200` 才视为创建成功，其他状态码均由前端按失败处理。`email` 是账号的唯一身份标识，数据库必须建立唯一索引；`username` 是用户自行设置的显示/登录名称，不承担唯一身份职责。注册和登录都必须在 Java Core 再次校验 Turnstile token，Node 只透传，不接受前端自报的验证结果。密码登录只接收邮箱和密码；验证码登录先通过 `POST /api/auth/login/send-code` 获取验证码，再调用 `POST /api/auth/login/code`。登录额外接收 `rememberMe: boolean`，用于决定 refresh token 的持久化策略。
 
 ## 3. 届次与小组
 

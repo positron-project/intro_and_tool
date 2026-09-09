@@ -1,0 +1,59 @@
+
+> campus-cs-club-os@0.1.0 dev
+> vite --host 0.0.0.0 --port 5180 --strictPort
+
+
+  VITE v7.3.6  ready in 2317 ms
+
+  ➜  Local:   http://localhost:5180/
+  ➜  Network: http://26.134.52.199:5180/
+  ➜  Network: http://192.168.8.1:5180/
+  ➜  Network: http://192.168.40.1:5180/
+  ➜  Network: http://10.22.149.150:5180/
+  ➜  press h + enter to show help
+22:11:01 [vite] (client) hmr update /src/styles.css
+22:12:03 [vite] (client) hmr update /src/styles.css
+22:13:06 [vite] (client) page reload nchu-cs-club-standalone.html
+22:16:02 [vite] (client) hmr update /src/App.tsx
+22:16:02 [vite] (client) hmr update /src/styles.css
+22:16:44 [vite] (client) page reload nchu-cs-club-standalone.html
+22:40:14 [vite] (client) hmr update /src/App.tsx
+22:42:43 [vite] (client) hmr update /src/styles.css
+22:43:26 [vite] (client) page reload nchu-cs-club-standalone.html
+22:54:08 [vite] (client) hmr update /src/App.tsx
+22:56:02 [vite] (client) hmr update /src/styles.css
+22:58:20 [vite] (client) hmr update /src/styles.css
+22:58:59 [vite] (client) page reload nchu-cs-club-standalone.html
+23:05:16 [vite] (client) hmr update /src/App.tsx
+23:05:50 [vite] (client) hmr update /src/App.tsx
+23:06:55 [vite] (client) page reload nchu-cs-club-standalone.html
+23:33:48 [vite] (client) hmr update /src/App.tsx
+23:34:02 [vite] (client) hmr update /src/App.tsx, /src/services/auth.context.tsx
+23:34:03 [vite] (client) hmr invalidate /src/services/auth.context.tsx Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+23:34:03 [vite] (client) page reload src/services/auth.context.tsx
+23:34:57 [vite] (client) hmr update /src/App.tsx
+23:37:42 [vite] (client) hmr update /src/App.tsx
+23:39:32 [vite] (client) hmr update /src/App.tsx
+23:40:25 [vite] (client) hmr update /src/App.tsx
+23:44:10 [vite] (client) hmr update /src/styles.css
+23:47:08 [vite] (client) page reload nchu-cs-club-standalone.html
+23:48:16 [vite] (client) hmr update /src/App.tsx
+23:48:36 [vite] (client) page reload nchu-cs-club-standalone.html
+23:56:17 [vite] (client) hmr update /src/App.tsx
+23:57:38 [vite] (client) hmr update /src/styles.css
+23:58:03 [vite] (client) page reload nchu-cs-club-standalone.html
+23:58:51 [vite] (client) hmr update /src/App.tsx
+23:59:10 [vite] (client) hmr update /src/styles.css
+23:59:30 [vite] (client) page reload nchu-cs-club-standalone.html
+00:05:18 [vite] (client) hmr update /src/App.tsx
+00:05:44 [vite] (client) hmr update /src/App.tsx
+00:06:45 [vite] (client) hmr update /src/App.tsx
+00:07:38 [vite] (client) hmr update /src/styles.css
+00:08:20 [vite] (client) page reload nchu-cs-club-standalone.html
+00:22:38 [vite] (client) hmr update /src/App.tsx
+00:22:52 [vite] (client) hmr update /src/App.tsx
+00:23:21 [vite] (client) hmr update /src/App.tsx
+00:23:39 [vite] (client) hmr update /src/styles.css
+00:23:57 [vite] (client) page reload nchu-cs-club-standalone.html
+00:24:30 [vite] (client) hmr update /src/App.tsx
+00:24:50 [vite] (client) page reload nchu-cs-club-standalone.html

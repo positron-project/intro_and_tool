@@ -1,0 +1,474 @@
+23:37:42 [vite] Internal server error: D:\Codex\projects\community\src\App.tsx: Unexpected token, expected "," (1072:1076)
+
+  1070 |   const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">ACCOUNT DIRECTORY</p><h2>成员账号</h2></div><div className="admin-head-actions">{isLeader && <button className="secondary-button admin-small-button" onClick={() => showToast('邀请成员接口已预留')}><Plus size={15} /> 添加成员</button>}<button className="primary-button admin-small-button" onClick={() => showToast('批量导入接口已预留')}><UserCog size={15} /> 批量导入</button></div></div><div className="admin-filter-row"><div className="admin-search"><Search size={15} /><input value={memberSearch} onChange={(event) => setMemberSearch(event.target.value)} placeholder="搜索姓名、方向或角色" /></div><span>{visibleMembers.length} 个结果 · {scopeLabel}</span></div>{visibleMembers.length ? <div className="admin-member-list">{visibleMembers.map((member) => <div className="admin-member-row" key={member.id}><Avatar initials={member.initials} accent={member.accent} size="sm" /><div className="admin-member-main"><strong>{member.name}</strong><small>{member.direction} · {member.cohort}</small></div><Tag tone={member.role.includes('组长') ? 'blue' : member.role === '负责人' ? 'mint' : 'neutral'}>{member.role}</Tag><span className="admin-member-status"><i /> 正常</span><button className="admin-link-button" onClick={() => showToast(`${member.name}资料编辑接口已预留`)}>编辑 <ArrowUpRight size={13} /></button></div>)}</div> : <div className="admin-empty"><UserCog size={22} /><strong>{memberSearch ? '没有匹配的成员' : `${user.cohort} 届成员资料还未同步`}</strong><span>管理员登录后可在这里补充头像、简介、方向和账号状态。</span><button className="secondary-button admin-small-button" onClick={() => showToast('成员资料接口已预留')}>开始整理</button></div>}</section><section className="admin-note-card"><LockKeyhole size={16} /><div><strong>密码安全提示</strong><p>后台不显示成员原密码。重置密码时生成一次性链接，并写入操作日志。</p></div></section></div>
+  1071 |
+> 1072 |   const renderContent = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">CONTENT REGISTRY</p><h2>内容模块</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('内容创建接口已预留')}><Plus size={15} /> 新建内容</button></div><div className="admin-content-grid">{[{ label: '学习路线', count: data.learningNodes.length, icon: Route, tone: 'blue', note: '节点与推荐资源' }, { label: '项目库', count: data.projects.length, icon: Rocket, tone: 'violet', note: '项目状态与成员' }, { label: '资源库', count: data.resources.length, icon: Folder, tone: 'mint', note: '资料、文档与链接' }, { label: '面经墙', count: data.interviews.length, icon: MessageCircle, tone: 'orange', note: '经验与标签' }, { label: '比赛中心', count: data.competitionEvents.length, icon: Trophy, tone: 'rose', note: '赛事与报名状态' }, { label: '历届合影', count: 4, icon: Camera, tone: 'blue', note: '照片墙与管理员上传' }].map(({ label, count, icon: ContentIcon, tone, note }) => <button className="admin-content-module" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}><ContentIcon size={17} /></span><span><strong>{label}</strong><small>{count} 条 · {note}</small></span><ArrowUpRight size={14} /></button>)}</div></section><section className="admin-card admin-api-card"><div className="admin-api-mark"><ServerCog size={19} /></div><div><p className="eyebrow">API READY</p><h2>为后端接入保留边界</h2><p>每个模块都通过独立 service 读取，后续可以把演示数据替换为 Node.js / Java / Python 接口，不需要改页面结构。</p></div><Tag tone="mint">接口层已预留</Tag></section></div>
+       |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ^
+  1073 |
+  1074 |   const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">BROADCAST CENTER</p><h2>公告列表</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('公告编辑器接口已预留')}><Plus size={15} /> 新建公告</button></div><div className="admin-announcement-list">{data.announcements.map((announcement) => <div className="admin-announcement-row" key={announcement.id}><Tag tone={announcement.category === '重要' ? 'red' : announcement.category === '比赛' ? 'orange' : 'blue'}>{announcement.category}</Tag><div><strong>{announcement.title}</strong><small>{announcement.detail}</small></div><time>{announcement.date}</time><button className="admin-link-button" onClick={() => showToast('公告编辑接口已预留')}>编辑 <ArrowUpRight size={13} /></button></div>)}</div></section><section className="admin-card admin-publish-card"><div><p className="eyebrow">PUBLISHING RULE</p><h2>发布前检查</h2><p>公告发布后会记录发布人、发布时间和可见范围。本届负责人只能发布到自己负责的届次空间。</p></div><div className="admin-check-list"><span><Check size={13} /> 需要明确公告分类</span><span><Check size={13} /> 支持定时下线</span><span><Check size={13} /> 发布记录可追溯</span></div></section></div>
+  1075 |
+  Plugin: vite:react-babel
+  File: D:/Codex/projects/community/src/App.tsx:1072:1076
+  1070 |    const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card...
+  1071 |  
+  1072 |  ...dule" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}>...
+       |                                                                 ^
+  1073 |  
+  1074 |    const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admi...
+      at constructor (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:369:19)
+      at TypeScriptParserMixin.raise (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6620:19)
+      at TypeScriptParserMixin.unexpected (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6640:16)
+      at TypeScriptParserMixin.expect (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6920:12)
+      at TypeScriptParserMixin.parseCallExpressionArguments (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11269:14)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11212:29)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11141:19)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9293:18)
+      at TypeScriptParserMixin.parseSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11115:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11106:17)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseFunctionBody (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12122:24)
+      at TypeScriptParserMixin.parseArrowExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12104:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11713:12)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11357:23)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4780:20)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseExpressionBase (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10805:23)
+      at D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:39
+      at TypeScriptParserMixin.allowInAnd (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12455:12)
+      at TypeScriptParserMixin.parseExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:17)
+      at TypeScriptParserMixin.jsxParseExpressionContainer (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4648:31)
+      at TypeScriptParserMixin.jsxParseAttributeValue (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4620:21)
+      at TypeScriptParserMixin.jsxParseAttribute (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4669:38)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4683:28)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10064:18)
+      at TypeScriptParserMixin.jsxParseOpeningElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4678:17)
+      at TypeScriptParserMixin.jsxParseElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4702:33)
+      at TypeScriptParserMixin.jsxParseElement (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4765:17)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4775:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+23:37:42 [vite] Internal server error: D:\Codex\projects\community\src\App.tsx: Unexpected token, expected "," (1072:1076)
+
+  1070 |   const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">ACCOUNT DIRECTORY</p><h2>成员账号</h2></div><div className="admin-head-actions">{isLeader && <button className="secondary-button admin-small-button" onClick={() => showToast('邀请成员接口已预留')}><Plus size={15} /> 添加成员</button>}<button className="primary-button admin-small-button" onClick={() => showToast('批量导入接口已预留')}><UserCog size={15} /> 批量导入</button></div></div><div className="admin-filter-row"><div className="admin-search"><Search size={15} /><input value={memberSearch} onChange={(event) => setMemberSearch(event.target.value)} placeholder="搜索姓名、方向或角色" /></div><span>{visibleMembers.length} 个结果 · {scopeLabel}</span></div>{visibleMembers.length ? <div className="admin-member-list">{visibleMembers.map((member) => <div className="admin-member-row" key={member.id}><Avatar initials={member.initials} accent={member.accent} size="sm" /><div className="admin-member-main"><strong>{member.name}</strong><small>{member.direction} · {member.cohort}</small></div><Tag tone={member.role.includes('组长') ? 'blue' : member.role === '负责人' ? 'mint' : 'neutral'}>{member.role}</Tag><span className="admin-member-status"><i /> 正常</span><button className="admin-link-button" onClick={() => showToast(`${member.name}资料编辑接口已预留`)}>编辑 <ArrowUpRight size={13} /></button></div>)}</div> : <div className="admin-empty"><UserCog size={22} /><strong>{memberSearch ? '没有匹配的成员' : `${user.cohort} 届成员资料还未同步`}</strong><span>管理员登录后可在这里补充头像、简介、方向和账号状态。</span><button className="secondary-button admin-small-button" onClick={() => showToast('成员资料接口已预留')}>开始整理</button></div>}</section><section className="admin-note-card"><LockKeyhole size={16} /><div><strong>密码安全提示</strong><p>后台不显示成员原密码。重置密码时生成一次性链接，并写入操作日志。</p></div></section></div>
+  1071 |
+> 1072 |   const renderContent = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">CONTENT REGISTRY</p><h2>内容模块</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('内容创建接口已预留')}><Plus size={15} /> 新建内容</button></div><div className="admin-content-grid">{[{ label: '学习路线', count: data.learningNodes.length, icon: Route, tone: 'blue', note: '节点与推荐资源' }, { label: '项目库', count: data.projects.length, icon: Rocket, tone: 'violet', note: '项目状态与成员' }, { label: '资源库', count: data.resources.length, icon: Folder, tone: 'mint', note: '资料、文档与链接' }, { label: '面经墙', count: data.interviews.length, icon: MessageCircle, tone: 'orange', note: '经验与标签' }, { label: '比赛中心', count: data.competitionEvents.length, icon: Trophy, tone: 'rose', note: '赛事与报名状态' }, { label: '历届合影', count: 4, icon: Camera, tone: 'blue', note: '照片墙与管理员上传' }].map(({ label, count, icon: ContentIcon, tone, note }) => <button className="admin-content-module" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}><ContentIcon size={17} /></span><span><strong>{label}</strong><small>{count} 条 · {note}</small></span><ArrowUpRight size={14} /></button>)}</div></section><section className="admin-card admin-api-card"><div className="admin-api-mark"><ServerCog size={19} /></div><div><p className="eyebrow">API READY</p><h2>为后端接入保留边界</h2><p>每个模块都通过独立 service 读取，后续可以把演示数据替换为 Node.js / Java / Python 接口，不需要改页面结构。</p></div><Tag tone="mint">接口层已预留</Tag></section></div>
+       |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ^
+  1073 |
+  1074 |   const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">BROADCAST CENTER</p><h2>公告列表</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('公告编辑器接口已预留')}><Plus size={15} /> 新建公告</button></div><div className="admin-announcement-list">{data.announcements.map((announcement) => <div className="admin-announcement-row" key={announcement.id}><Tag tone={announcement.category === '重要' ? 'red' : announcement.category === '比赛' ? 'orange' : 'blue'}>{announcement.category}</Tag><div><strong>{announcement.title}</strong><small>{announcement.detail}</small></div><time>{announcement.date}</time><button className="admin-link-button" onClick={() => showToast('公告编辑接口已预留')}>编辑 <ArrowUpRight size={13} /></button></div>)}</div></section><section className="admin-card admin-publish-card"><div><p className="eyebrow">PUBLISHING RULE</p><h2>发布前检查</h2><p>公告发布后会记录发布人、发布时间和可见范围。本届负责人只能发布到自己负责的届次空间。</p></div><div className="admin-check-list"><span><Check size={13} /> 需要明确公告分类</span><span><Check size={13} /> 支持定时下线</span><span><Check size={13} /> 发布记录可追溯</span></div></section></div>
+  1075 |
+  Plugin: vite:react-babel
+  File: D:/Codex/projects/community/src/App.tsx:1072:1076
+  1070 |    const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card...
+  1071 |  
+  1072 |  ...dule" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}>...
+       |                                                                 ^
+  1073 |  
+  1074 |    const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admi...
+      at constructor (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:369:19)
+      at TypeScriptParserMixin.raise (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6620:19)
+      at TypeScriptParserMixin.unexpected (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6640:16)
+      at TypeScriptParserMixin.expect (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6920:12)
+      at TypeScriptParserMixin.parseCallExpressionArguments (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11269:14)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11212:29)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11141:19)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9293:18)
+      at TypeScriptParserMixin.parseSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11115:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11106:17)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseFunctionBody (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12122:24)
+      at TypeScriptParserMixin.parseArrowExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12104:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11713:12)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11357:23)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4780:20)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseExpressionBase (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10805:23)
+      at D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:39
+      at TypeScriptParserMixin.allowInAnd (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12455:12)
+      at TypeScriptParserMixin.parseExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:17)
+      at TypeScriptParserMixin.jsxParseExpressionContainer (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4648:31)
+      at TypeScriptParserMixin.jsxParseAttributeValue (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4620:21)
+      at TypeScriptParserMixin.jsxParseAttribute (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4669:38)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4683:28)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10064:18)
+      at TypeScriptParserMixin.jsxParseOpeningElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4678:17)
+      at TypeScriptParserMixin.jsxParseElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4702:33)
+      at TypeScriptParserMixin.jsxParseElement (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4765:17)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4775:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+23:37:42 [vite] Internal server error: D:\Codex\projects\community\src\App.tsx: Unexpected token, expected "," (1072:1076)
+
+  1070 |   const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">ACCOUNT DIRECTORY</p><h2>成员账号</h2></div><div className="admin-head-actions">{isLeader && <button className="secondary-button admin-small-button" onClick={() => showToast('邀请成员接口已预留')}><Plus size={15} /> 添加成员</button>}<button className="primary-button admin-small-button" onClick={() => showToast('批量导入接口已预留')}><UserCog size={15} /> 批量导入</button></div></div><div className="admin-filter-row"><div className="admin-search"><Search size={15} /><input value={memberSearch} onChange={(event) => setMemberSearch(event.target.value)} placeholder="搜索姓名、方向或角色" /></div><span>{visibleMembers.length} 个结果 · {scopeLabel}</span></div>{visibleMembers.length ? <div className="admin-member-list">{visibleMembers.map((member) => <div className="admin-member-row" key={member.id}><Avatar initials={member.initials} accent={member.accent} size="sm" /><div className="admin-member-main"><strong>{member.name}</strong><small>{member.direction} · {member.cohort}</small></div><Tag tone={member.role.includes('组长') ? 'blue' : member.role === '负责人' ? 'mint' : 'neutral'}>{member.role}</Tag><span className="admin-member-status"><i /> 正常</span><button className="admin-link-button" onClick={() => showToast(`${member.name}资料编辑接口已预留`)}>编辑 <ArrowUpRight size={13} /></button></div>)}</div> : <div className="admin-empty"><UserCog size={22} /><strong>{memberSearch ? '没有匹配的成员' : `${user.cohort} 届成员资料还未同步`}</strong><span>管理员登录后可在这里补充头像、简介、方向和账号状态。</span><button className="secondary-button admin-small-button" onClick={() => showToast('成员资料接口已预留')}>开始整理</button></div>}</section><section className="admin-note-card"><LockKeyhole size={16} /><div><strong>密码安全提示</strong><p>后台不显示成员原密码。重置密码时生成一次性链接，并写入操作日志。</p></div></section></div>
+  1071 |
+> 1072 |   const renderContent = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">CONTENT REGISTRY</p><h2>内容模块</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('内容创建接口已预留')}><Plus size={15} /> 新建内容</button></div><div className="admin-content-grid">{[{ label: '学习路线', count: data.learningNodes.length, icon: Route, tone: 'blue', note: '节点与推荐资源' }, { label: '项目库', count: data.projects.length, icon: Rocket, tone: 'violet', note: '项目状态与成员' }, { label: '资源库', count: data.resources.length, icon: Folder, tone: 'mint', note: '资料、文档与链接' }, { label: '面经墙', count: data.interviews.length, icon: MessageCircle, tone: 'orange', note: '经验与标签' }, { label: '比赛中心', count: data.competitionEvents.length, icon: Trophy, tone: 'rose', note: '赛事与报名状态' }, { label: '历届合影', count: 4, icon: Camera, tone: 'blue', note: '照片墙与管理员上传' }].map(({ label, count, icon: ContentIcon, tone, note }) => <button className="admin-content-module" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}><ContentIcon size={17} /></span><span><strong>{label}</strong><small>{count} 条 · {note}</small></span><ArrowUpRight size={14} /></button>)}</div></section><section className="admin-card admin-api-card"><div className="admin-api-mark"><ServerCog size={19} /></div><div><p className="eyebrow">API READY</p><h2>为后端接入保留边界</h2><p>每个模块都通过独立 service 读取，后续可以把演示数据替换为 Node.js / Java / Python 接口，不需要改页面结构。</p></div><Tag tone="mint">接口层已预留</Tag></section></div>
+       |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ^
+  1073 |
+  1074 |   const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">BROADCAST CENTER</p><h2>公告列表</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('公告编辑器接口已预留')}><Plus size={15} /> 新建公告</button></div><div className="admin-announcement-list">{data.announcements.map((announcement) => <div className="admin-announcement-row" key={announcement.id}><Tag tone={announcement.category === '重要' ? 'red' : announcement.category === '比赛' ? 'orange' : 'blue'}>{announcement.category}</Tag><div><strong>{announcement.title}</strong><small>{announcement.detail}</small></div><time>{announcement.date}</time><button className="admin-link-button" onClick={() => showToast('公告编辑接口已预留')}>编辑 <ArrowUpRight size={13} /></button></div>)}</div></section><section className="admin-card admin-publish-card"><div><p className="eyebrow">PUBLISHING RULE</p><h2>发布前检查</h2><p>公告发布后会记录发布人、发布时间和可见范围。本届负责人只能发布到自己负责的届次空间。</p></div><div className="admin-check-list"><span><Check size={13} /> 需要明确公告分类</span><span><Check size={13} /> 支持定时下线</span><span><Check size={13} /> 发布记录可追溯</span></div></section></div>
+  1075 |
+  Plugin: vite:react-babel
+  File: D:/Codex/projects/community/src/App.tsx:1072:1076
+  1070 |    const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card...
+  1071 |  
+  1072 |  ...dule" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}>...
+       |                                                                 ^
+  1073 |  
+  1074 |    const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admi...
+      at constructor (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:369:19)
+      at TypeScriptParserMixin.raise (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6620:19)
+      at TypeScriptParserMixin.unexpected (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6640:16)
+      at TypeScriptParserMixin.expect (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6920:12)
+      at TypeScriptParserMixin.parseCallExpressionArguments (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11269:14)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11212:29)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11141:19)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9293:18)
+      at TypeScriptParserMixin.parseSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11115:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11106:17)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseFunctionBody (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12122:24)
+      at TypeScriptParserMixin.parseArrowExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12104:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11713:12)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11357:23)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4780:20)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseExpressionBase (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10805:23)
+      at D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:39
+      at TypeScriptParserMixin.allowInAnd (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12455:12)
+      at TypeScriptParserMixin.parseExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:17)
+      at TypeScriptParserMixin.jsxParseExpressionContainer (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4648:31)
+      at TypeScriptParserMixin.jsxParseAttributeValue (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4620:21)
+      at TypeScriptParserMixin.jsxParseAttribute (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4669:38)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4683:28)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10064:18)
+      at TypeScriptParserMixin.jsxParseOpeningElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4678:17)
+      at TypeScriptParserMixin.jsxParseElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4702:33)
+      at TypeScriptParserMixin.jsxParseElement (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4765:17)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4775:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+23:37:42 [vite] Internal server error: D:\Codex\projects\community\src\App.tsx: Unexpected token, expected "," (1072:1076)
+
+  1070 |   const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">ACCOUNT DIRECTORY</p><h2>成员账号</h2></div><div className="admin-head-actions">{isLeader && <button className="secondary-button admin-small-button" onClick={() => showToast('邀请成员接口已预留')}><Plus size={15} /> 添加成员</button>}<button className="primary-button admin-small-button" onClick={() => showToast('批量导入接口已预留')}><UserCog size={15} /> 批量导入</button></div></div><div className="admin-filter-row"><div className="admin-search"><Search size={15} /><input value={memberSearch} onChange={(event) => setMemberSearch(event.target.value)} placeholder="搜索姓名、方向或角色" /></div><span>{visibleMembers.length} 个结果 · {scopeLabel}</span></div>{visibleMembers.length ? <div className="admin-member-list">{visibleMembers.map((member) => <div className="admin-member-row" key={member.id}><Avatar initials={member.initials} accent={member.accent} size="sm" /><div className="admin-member-main"><strong>{member.name}</strong><small>{member.direction} · {member.cohort}</small></div><Tag tone={member.role.includes('组长') ? 'blue' : member.role === '负责人' ? 'mint' : 'neutral'}>{member.role}</Tag><span className="admin-member-status"><i /> 正常</span><button className="admin-link-button" onClick={() => showToast(`${member.name}资料编辑接口已预留`)}>编辑 <ArrowUpRight size={13} /></button></div>)}</div> : <div className="admin-empty"><UserCog size={22} /><strong>{memberSearch ? '没有匹配的成员' : `${user.cohort} 届成员资料还未同步`}</strong><span>管理员登录后可在这里补充头像、简介、方向和账号状态。</span><button className="secondary-button admin-small-button" onClick={() => showToast('成员资料接口已预留')}>开始整理</button></div>}</section><section className="admin-note-card"><LockKeyhole size={16} /><div><strong>密码安全提示</strong><p>后台不显示成员原密码。重置密码时生成一次性链接，并写入操作日志。</p></div></section></div>
+  1071 |
+> 1072 |   const renderContent = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">CONTENT REGISTRY</p><h2>内容模块</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('内容创建接口已预留')}><Plus size={15} /> 新建内容</button></div><div className="admin-content-grid">{[{ label: '学习路线', count: data.learningNodes.length, icon: Route, tone: 'blue', note: '节点与推荐资源' }, { label: '项目库', count: data.projects.length, icon: Rocket, tone: 'violet', note: '项目状态与成员' }, { label: '资源库', count: data.resources.length, icon: Folder, tone: 'mint', note: '资料、文档与链接' }, { label: '面经墙', count: data.interviews.length, icon: MessageCircle, tone: 'orange', note: '经验与标签' }, { label: '比赛中心', count: data.competitionEvents.length, icon: Trophy, tone: 'rose', note: '赛事与报名状态' }, { label: '历届合影', count: 4, icon: Camera, tone: 'blue', note: '照片墙与管理员上传' }].map(({ label, count, icon: ContentIcon, tone, note }) => <button className="admin-content-module" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}><ContentIcon size={17} /></span><span><strong>{label}</strong><small>{count} 条 · {note}</small></span><ArrowUpRight size={14} /></button>)}</div></section><section className="admin-card admin-api-card"><div className="admin-api-mark"><ServerCog size={19} /></div><div><p className="eyebrow">API READY</p><h2>为后端接入保留边界</h2><p>每个模块都通过独立 service 读取，后续可以把演示数据替换为 Node.js / Java / Python 接口，不需要改页面结构。</p></div><Tag tone="mint">接口层已预留</Tag></section></div>
+       |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ^
+  1073 |
+  1074 |   const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">BROADCAST CENTER</p><h2>公告列表</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('公告编辑器接口已预留')}><Plus size={15} /> 新建公告</button></div><div className="admin-announcement-list">{data.announcements.map((announcement) => <div className="admin-announcement-row" key={announcement.id}><Tag tone={announcement.category === '重要' ? 'red' : announcement.category === '比赛' ? 'orange' : 'blue'}>{announcement.category}</Tag><div><strong>{announcement.title}</strong><small>{announcement.detail}</small></div><time>{announcement.date}</time><button className="admin-link-button" onClick={() => showToast('公告编辑接口已预留')}>编辑 <ArrowUpRight size={13} /></button></div>)}</div></section><section className="admin-card admin-publish-card"><div><p className="eyebrow">PUBLISHING RULE</p><h2>发布前检查</h2><p>公告发布后会记录发布人、发布时间和可见范围。本届负责人只能发布到自己负责的届次空间。</p></div><div className="admin-check-list"><span><Check size={13} /> 需要明确公告分类</span><span><Check size={13} /> 支持定时下线</span><span><Check size={13} /> 发布记录可追溯</span></div></section></div>
+  1075 |
+  Plugin: vite:react-babel
+  File: D:/Codex/projects/community/src/App.tsx:1072:1076
+  1070 |    const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card...
+  1071 |  
+  1072 |  ...dule" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}>...
+       |                                                                 ^
+  1073 |  
+  1074 |    const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admi...
+      at constructor (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:369:19)
+      at TypeScriptParserMixin.raise (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6620:19)
+      at TypeScriptParserMixin.unexpected (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6640:16)
+      at TypeScriptParserMixin.expect (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6920:12)
+      at TypeScriptParserMixin.parseCallExpressionArguments (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11269:14)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11212:29)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11141:19)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9293:18)
+      at TypeScriptParserMixin.parseSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11115:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11106:17)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseFunctionBody (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12122:24)
+      at TypeScriptParserMixin.parseArrowExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12104:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11713:12)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11357:23)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4780:20)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseExpressionBase (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10805:23)
+      at D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:39
+      at TypeScriptParserMixin.allowInAnd (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12455:12)
+      at TypeScriptParserMixin.parseExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:17)
+      at TypeScriptParserMixin.jsxParseExpressionContainer (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4648:31)
+      at TypeScriptParserMixin.jsxParseAttributeValue (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4620:21)
+      at TypeScriptParserMixin.jsxParseAttribute (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4669:38)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4683:28)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10064:18)
+      at TypeScriptParserMixin.jsxParseOpeningElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4678:17)
+      at TypeScriptParserMixin.jsxParseElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4702:33)
+      at TypeScriptParserMixin.jsxParseElement (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4765:17)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4775:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+23:37:42 [vite] Internal server error: D:\Codex\projects\community\src\App.tsx: Unexpected token, expected "," (1072:1076)
+
+  1070 |   const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">ACCOUNT DIRECTORY</p><h2>成员账号</h2></div><div className="admin-head-actions">{isLeader && <button className="secondary-button admin-small-button" onClick={() => showToast('邀请成员接口已预留')}><Plus size={15} /> 添加成员</button>}<button className="primary-button admin-small-button" onClick={() => showToast('批量导入接口已预留')}><UserCog size={15} /> 批量导入</button></div></div><div className="admin-filter-row"><div className="admin-search"><Search size={15} /><input value={memberSearch} onChange={(event) => setMemberSearch(event.target.value)} placeholder="搜索姓名、方向或角色" /></div><span>{visibleMembers.length} 个结果 · {scopeLabel}</span></div>{visibleMembers.length ? <div className="admin-member-list">{visibleMembers.map((member) => <div className="admin-member-row" key={member.id}><Avatar initials={member.initials} accent={member.accent} size="sm" /><div className="admin-member-main"><strong>{member.name}</strong><small>{member.direction} · {member.cohort}</small></div><Tag tone={member.role.includes('组长') ? 'blue' : member.role === '负责人' ? 'mint' : 'neutral'}>{member.role}</Tag><span className="admin-member-status"><i /> 正常</span><button className="admin-link-button" onClick={() => showToast(`${member.name}资料编辑接口已预留`)}>编辑 <ArrowUpRight size={13} /></button></div>)}</div> : <div className="admin-empty"><UserCog size={22} /><strong>{memberSearch ? '没有匹配的成员' : `${user.cohort} 届成员资料还未同步`}</strong><span>管理员登录后可在这里补充头像、简介、方向和账号状态。</span><button className="secondary-button admin-small-button" onClick={() => showToast('成员资料接口已预留')}>开始整理</button></div>}</section><section className="admin-note-card"><LockKeyhole size={16} /><div><strong>密码安全提示</strong><p>后台不显示成员原密码。重置密码时生成一次性链接，并写入操作日志。</p></div></section></div>
+  1071 |
+> 1072 |   const renderContent = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">CONTENT REGISTRY</p><h2>内容模块</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('内容创建接口已预留')}><Plus size={15} /> 新建内容</button></div><div className="admin-content-grid">{[{ label: '学习路线', count: data.learningNodes.length, icon: Route, tone: 'blue', note: '节点与推荐资源' }, { label: '项目库', count: data.projects.length, icon: Rocket, tone: 'violet', note: '项目状态与成员' }, { label: '资源库', count: data.resources.length, icon: Folder, tone: 'mint', note: '资料、文档与链接' }, { label: '面经墙', count: data.interviews.length, icon: MessageCircle, tone: 'orange', note: '经验与标签' }, { label: '比赛中心', count: data.competitionEvents.length, icon: Trophy, tone: 'rose', note: '赛事与报名状态' }, { label: '历届合影', count: 4, icon: Camera, tone: 'blue', note: '照片墙与管理员上传' }].map(({ label, count, icon: ContentIcon, tone, note }) => <button className="admin-content-module" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}><ContentIcon size={17} /></span><span><strong>{label}</strong><small>{count} 条 · {note}</small></span><ArrowUpRight size={14} /></button>)}</div></section><section className="admin-card admin-api-card"><div className="admin-api-mark"><ServerCog size={19} /></div><div><p className="eyebrow">API READY</p><h2>为后端接入保留边界</h2><p>每个模块都通过独立 service 读取，后续可以把演示数据替换为 Node.js / Java / Python 接口，不需要改页面结构。</p></div><Tag tone="mint">接口层已预留</Tag></section></div>
+       |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ^
+  1073 |
+  1074 |   const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">BROADCAST CENTER</p><h2>公告列表</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('公告编辑器接口已预留')}><Plus size={15} /> 新建公告</button></div><div className="admin-announcement-list">{data.announcements.map((announcement) => <div className="admin-announcement-row" key={announcement.id}><Tag tone={announcement.category === '重要' ? 'red' : announcement.category === '比赛' ? 'orange' : 'blue'}>{announcement.category}</Tag><div><strong>{announcement.title}</strong><small>{announcement.detail}</small></div><time>{announcement.date}</time><button className="admin-link-button" onClick={() => showToast('公告编辑接口已预留')}>编辑 <ArrowUpRight size={13} /></button></div>)}</div></section><section className="admin-card admin-publish-card"><div><p className="eyebrow">PUBLISHING RULE</p><h2>发布前检查</h2><p>公告发布后会记录发布人、发布时间和可见范围。本届负责人只能发布到自己负责的届次空间。</p></div><div className="admin-check-list"><span><Check size={13} /> 需要明确公告分类</span><span><Check size={13} /> 支持定时下线</span><span><Check size={13} /> 发布记录可追溯</span></div></section></div>
+  1075 |
+  Plugin: vite:react-babel
+  File: D:/Codex/projects/community/src/App.tsx:1072:1076
+  1070 |    const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card...
+  1071 |  
+  1072 |  ...dule" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}>...
+       |                                                                 ^
+  1073 |  
+  1074 |    const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admi...
+      at constructor (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:369:19)
+      at TypeScriptParserMixin.raise (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6620:19)
+      at TypeScriptParserMixin.unexpected (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6640:16)
+      at TypeScriptParserMixin.expect (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6920:12)
+      at TypeScriptParserMixin.parseCallExpressionArguments (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11269:14)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11212:29)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11141:19)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9293:18)
+      at TypeScriptParserMixin.parseSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11115:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11106:17)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseFunctionBody (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12122:24)
+      at TypeScriptParserMixin.parseArrowExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12104:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11713:12)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11357:23)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4780:20)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseExpressionBase (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10805:23)
+      at D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:39
+      at TypeScriptParserMixin.allowInAnd (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12455:12)
+      at TypeScriptParserMixin.parseExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:17)
+      at TypeScriptParserMixin.jsxParseExpressionContainer (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4648:31)
+      at TypeScriptParserMixin.jsxParseAttributeValue (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4620:21)
+      at TypeScriptParserMixin.jsxParseAttribute (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4669:38)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4683:28)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10064:18)
+      at TypeScriptParserMixin.jsxParseOpeningElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4678:17)
+      at TypeScriptParserMixin.jsxParseElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4702:33)
+      at TypeScriptParserMixin.jsxParseElement (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4765:17)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4775:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+23:37:42 [vite] Internal server error: D:\Codex\projects\community\src\App.tsx: Unexpected token, expected "," (1072:1076)
+
+  1070 |   const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">ACCOUNT DIRECTORY</p><h2>成员账号</h2></div><div className="admin-head-actions">{isLeader && <button className="secondary-button admin-small-button" onClick={() => showToast('邀请成员接口已预留')}><Plus size={15} /> 添加成员</button>}<button className="primary-button admin-small-button" onClick={() => showToast('批量导入接口已预留')}><UserCog size={15} /> 批量导入</button></div></div><div className="admin-filter-row"><div className="admin-search"><Search size={15} /><input value={memberSearch} onChange={(event) => setMemberSearch(event.target.value)} placeholder="搜索姓名、方向或角色" /></div><span>{visibleMembers.length} 个结果 · {scopeLabel}</span></div>{visibleMembers.length ? <div className="admin-member-list">{visibleMembers.map((member) => <div className="admin-member-row" key={member.id}><Avatar initials={member.initials} accent={member.accent} size="sm" /><div className="admin-member-main"><strong>{member.name}</strong><small>{member.direction} · {member.cohort}</small></div><Tag tone={member.role.includes('组长') ? 'blue' : member.role === '负责人' ? 'mint' : 'neutral'}>{member.role}</Tag><span className="admin-member-status"><i /> 正常</span><button className="admin-link-button" onClick={() => showToast(`${member.name}资料编辑接口已预留`)}>编辑 <ArrowUpRight size={13} /></button></div>)}</div> : <div className="admin-empty"><UserCog size={22} /><strong>{memberSearch ? '没有匹配的成员' : `${user.cohort} 届成员资料还未同步`}</strong><span>管理员登录后可在这里补充头像、简介、方向和账号状态。</span><button className="secondary-button admin-small-button" onClick={() => showToast('成员资料接口已预留')}>开始整理</button></div>}</section><section className="admin-note-card"><LockKeyhole size={16} /><div><strong>密码安全提示</strong><p>后台不显示成员原密码。重置密码时生成一次性链接，并写入操作日志。</p></div></section></div>
+  1071 |
+> 1072 |   const renderContent = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">CONTENT REGISTRY</p><h2>内容模块</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('内容创建接口已预留')}><Plus size={15} /> 新建内容</button></div><div className="admin-content-grid">{[{ label: '学习路线', count: data.learningNodes.length, icon: Route, tone: 'blue', note: '节点与推荐资源' }, { label: '项目库', count: data.projects.length, icon: Rocket, tone: 'violet', note: '项目状态与成员' }, { label: '资源库', count: data.resources.length, icon: Folder, tone: 'mint', note: '资料、文档与链接' }, { label: '面经墙', count: data.interviews.length, icon: MessageCircle, tone: 'orange', note: '经验与标签' }, { label: '比赛中心', count: data.competitionEvents.length, icon: Trophy, tone: 'rose', note: '赛事与报名状态' }, { label: '历届合影', count: 4, icon: Camera, tone: 'blue', note: '照片墙与管理员上传' }].map(({ label, count, icon: ContentIcon, tone, note }) => <button className="admin-content-module" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}><ContentIcon size={17} /></span><span><strong>{label}</strong><small>{count} 条 · {note}</small></span><ArrowUpRight size={14} /></button>)}</div></section><section className="admin-card admin-api-card"><div className="admin-api-mark"><ServerCog size={19} /></div><div><p className="eyebrow">API READY</p><h2>为后端接入保留边界</h2><p>每个模块都通过独立 service 读取，后续可以把演示数据替换为 Node.js / Java / Python 接口，不需要改页面结构。</p></div><Tag tone="mint">接口层已预留</Tag></section></div>
+       |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ^
+  1073 |
+  1074 |   const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">BROADCAST CENTER</p><h2>公告列表</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('公告编辑器接口已预留')}><Plus size={15} /> 新建公告</button></div><div className="admin-announcement-list">{data.announcements.map((announcement) => <div className="admin-announcement-row" key={announcement.id}><Tag tone={announcement.category === '重要' ? 'red' : announcement.category === '比赛' ? 'orange' : 'blue'}>{announcement.category}</Tag><div><strong>{announcement.title}</strong><small>{announcement.detail}</small></div><time>{announcement.date}</time><button className="admin-link-button" onClick={() => showToast('公告编辑接口已预留')}>编辑 <ArrowUpRight size={13} /></button></div>)}</div></section><section className="admin-card admin-publish-card"><div><p className="eyebrow">PUBLISHING RULE</p><h2>发布前检查</h2><p>公告发布后会记录发布人、发布时间和可见范围。本届负责人只能发布到自己负责的届次空间。</p></div><div className="admin-check-list"><span><Check size={13} /> 需要明确公告分类</span><span><Check size={13} /> 支持定时下线</span><span><Check size={13} /> 发布记录可追溯</span></div></section></div>
+  1075 |
+  Plugin: vite:react-babel
+  File: D:/Codex/projects/community/src/App.tsx:1072:1076
+  1070 |    const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card...
+  1071 |  
+  1072 |  ...dule" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}>...
+       |                                                                 ^
+  1073 |  
+  1074 |    const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admi...
+      at constructor (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:369:19)
+      at TypeScriptParserMixin.raise (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6620:19)
+      at TypeScriptParserMixin.unexpected (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6640:16)
+      at TypeScriptParserMixin.expect (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6920:12)
+      at TypeScriptParserMixin.parseCallExpressionArguments (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11269:14)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11212:29)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11141:19)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9293:18)
+      at TypeScriptParserMixin.parseSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11115:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11106:17)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseFunctionBody (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12122:24)
+      at TypeScriptParserMixin.parseArrowExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12104:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11713:12)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11357:23)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4780:20)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseExpressionBase (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10805:23)
+      at D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:39
+      at TypeScriptParserMixin.allowInAnd (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12455:12)
+      at TypeScriptParserMixin.parseExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:17)
+      at TypeScriptParserMixin.jsxParseExpressionContainer (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4648:31)
+      at TypeScriptParserMixin.jsxParseAttributeValue (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4620:21)
+      at TypeScriptParserMixin.jsxParseAttribute (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4669:38)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4683:28)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10064:18)
+      at TypeScriptParserMixin.jsxParseOpeningElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4678:17)
+      at TypeScriptParserMixin.jsxParseElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4702:33)
+      at TypeScriptParserMixin.jsxParseElement (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4765:17)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4775:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+23:37:42 [vite] Internal server error: D:\Codex\projects\community\src\App.tsx: Unexpected token, expected "," (1072:1076)
+
+  1070 |   const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">ACCOUNT DIRECTORY</p><h2>成员账号</h2></div><div className="admin-head-actions">{isLeader && <button className="secondary-button admin-small-button" onClick={() => showToast('邀请成员接口已预留')}><Plus size={15} /> 添加成员</button>}<button className="primary-button admin-small-button" onClick={() => showToast('批量导入接口已预留')}><UserCog size={15} /> 批量导入</button></div></div><div className="admin-filter-row"><div className="admin-search"><Search size={15} /><input value={memberSearch} onChange={(event) => setMemberSearch(event.target.value)} placeholder="搜索姓名、方向或角色" /></div><span>{visibleMembers.length} 个结果 · {scopeLabel}</span></div>{visibleMembers.length ? <div className="admin-member-list">{visibleMembers.map((member) => <div className="admin-member-row" key={member.id}><Avatar initials={member.initials} accent={member.accent} size="sm" /><div className="admin-member-main"><strong>{member.name}</strong><small>{member.direction} · {member.cohort}</small></div><Tag tone={member.role.includes('组长') ? 'blue' : member.role === '负责人' ? 'mint' : 'neutral'}>{member.role}</Tag><span className="admin-member-status"><i /> 正常</span><button className="admin-link-button" onClick={() => showToast(`${member.name}资料编辑接口已预留`)}>编辑 <ArrowUpRight size={13} /></button></div>)}</div> : <div className="admin-empty"><UserCog size={22} /><strong>{memberSearch ? '没有匹配的成员' : `${user.cohort} 届成员资料还未同步`}</strong><span>管理员登录后可在这里补充头像、简介、方向和账号状态。</span><button className="secondary-button admin-small-button" onClick={() => showToast('成员资料接口已预留')}>开始整理</button></div>}</section><section className="admin-note-card"><LockKeyhole size={16} /><div><strong>密码安全提示</strong><p>后台不显示成员原密码。重置密码时生成一次性链接，并写入操作日志。</p></div></section></div>
+  1071 |
+> 1072 |   const renderContent = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">CONTENT REGISTRY</p><h2>内容模块</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('内容创建接口已预留')}><Plus size={15} /> 新建内容</button></div><div className="admin-content-grid">{[{ label: '学习路线', count: data.learningNodes.length, icon: Route, tone: 'blue', note: '节点与推荐资源' }, { label: '项目库', count: data.projects.length, icon: Rocket, tone: 'violet', note: '项目状态与成员' }, { label: '资源库', count: data.resources.length, icon: Folder, tone: 'mint', note: '资料、文档与链接' }, { label: '面经墙', count: data.interviews.length, icon: MessageCircle, tone: 'orange', note: '经验与标签' }, { label: '比赛中心', count: data.competitionEvents.length, icon: Trophy, tone: 'rose', note: '赛事与报名状态' }, { label: '历届合影', count: 4, icon: Camera, tone: 'blue', note: '照片墙与管理员上传' }].map(({ label, count, icon: ContentIcon, tone, note }) => <button className="admin-content-module" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}><ContentIcon size={17} /></span><span><strong>{label}</strong><small>{count} 条 · {note}</small></span><ArrowUpRight size={14} /></button>)}</div></section><section className="admin-card admin-api-card"><div className="admin-api-mark"><ServerCog size={19} /></div><div><p className="eyebrow">API READY</p><h2>为后端接入保留边界</h2><p>每个模块都通过独立 service 读取，后续可以把演示数据替换为 Node.js / Java / Python 接口，不需要改页面结构。</p></div><Tag tone="mint">接口层已预留</Tag></section></div>
+       |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ^
+  1073 |
+  1074 |   const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">BROADCAST CENTER</p><h2>公告列表</h2></div><button className="primary-button admin-small-button" onClick={() => showToast('公告编辑器接口已预留')}><Plus size={15} /> 新建公告</button></div><div className="admin-announcement-list">{data.announcements.map((announcement) => <div className="admin-announcement-row" key={announcement.id}><Tag tone={announcement.category === '重要' ? 'red' : announcement.category === '比赛' ? 'orange' : 'blue'}>{announcement.category}</Tag><div><strong>{announcement.title}</strong><small>{announcement.detail}</small></div><time>{announcement.date}</time><button className="admin-link-button" onClick={() => showToast('公告编辑接口已预留')}>编辑 <ArrowUpRight size={13} /></button></div>)}</div></section><section className="admin-card admin-publish-card"><div><p className="eyebrow">PUBLISHING RULE</p><h2>发布前检查</h2><p>公告发布后会记录发布人、发布时间和可见范围。本届负责人只能发布到自己负责的届次空间。</p></div><div className="admin-check-list"><span><Check size={13} /> 需要明确公告分类</span><span><Check size={13} /> 支持定时下线</span><span><Check size={13} /> 发布记录可追溯</span></div></section></div>
+  1075 |
+  Plugin: vite:react-babel
+  File: D:/Codex/projects/community/src/App.tsx:1072:1076
+  1070 |    const renderMembers = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card...
+  1071 |  
+  1072 |  ...dule" key={label} onClick={() => showToast(`${label}管理接口已预留`}><span className={`admin-content-icon tone-${tone}`}>...
+       |                                                                 ^
+  1073 |  
+  1074 |    const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admi...
+      at constructor (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:369:19)
+      at TypeScriptParserMixin.raise (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6620:19)
+      at TypeScriptParserMixin.unexpected (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6640:16)
+      at TypeScriptParserMixin.expect (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:6920:12)
+      at TypeScriptParserMixin.parseCallExpressionArguments (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11269:14)
+      at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11212:29)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11141:19)
+      at TypeScriptParserMixin.parseSubscript (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9293:18)
+      at TypeScriptParserMixin.parseSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11115:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11106:17)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseFunctionBody (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12122:24)
+      at TypeScriptParserMixin.parseArrowExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12104:10)
+      at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11713:12)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11357:23)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4780:20)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+      at TypeScriptParserMixin.parseExprOps (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10925:23)
+      at TypeScriptParserMixin.parseMaybeConditional (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10902:23)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10852:21)
+      at TypeScriptParserMixin.parseMaybeAssign (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9807:20)
+      at TypeScriptParserMixin.parseExpressionBase (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10805:23)
+      at D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:39
+      at TypeScriptParserMixin.allowInAnd (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:12455:12)
+      at TypeScriptParserMixin.parseExpression (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10801:17)
+      at TypeScriptParserMixin.jsxParseExpressionContainer (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4648:31)
+      at TypeScriptParserMixin.jsxParseAttributeValue (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4620:21)
+      at TypeScriptParserMixin.jsxParseAttribute (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4669:38)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4683:28)
+      at TypeScriptParserMixin.jsxParseOpeningElementAfterName (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10064:18)
+      at TypeScriptParserMixin.jsxParseOpeningElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4678:17)
+      at TypeScriptParserMixin.jsxParseElementAt (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4702:33)
+      at TypeScriptParserMixin.jsxParseElement (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4765:17)
+      at TypeScriptParserMixin.parseExprAtom (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:4775:19)
+      at TypeScriptParserMixin.parseExprSubscripts (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11102:23)
+      at TypeScriptParserMixin.parseUpdate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11087:21)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:11067:23)
+      at TypeScriptParserMixin.parseMaybeUnary (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:9858:18)
+      at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Codex\projects\community\node_modules\@babel\parser\lib\index.js:10920:61)
+npm notice
+npm notice New major version of npm available! 11.13.0 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice

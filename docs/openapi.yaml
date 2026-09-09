@@ -6,7 +6,8 @@ info:
     南昌航空大学科技学院计算机科技小组 Club OS 后端接口。
     浏览器只访问 Node.js Gateway，Gateway 再转发到 Java Core、Python AI 或对象存储。
     所有写操作由 Java Core 再次执行角色校验；删除采用软删除。
-    除 204 外，成功响应统一使用 { data, meta } 包装；本文各业务 schema 描述 data 的内容，meta 至少包含 requestId，分页列表还包含 page、pageSize、total、totalPages。
+    Java Core 业务响应统一使用 Result<T>：{ code: 200, msg: null, data: ... }。
+    code=200 表示业务成功，其他 code 表示业务失败；本文各业务 schema 描述 data 的内容。
 servers:
   - url: http://127.0.0.1:3000
     description: 本地 Node.js Gateway
@@ -73,6 +74,90 @@ paths:
               schema: { $ref: '#/components/schemas/AuthSession' }
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/auth/login/send-code:
+    post:
+      tags: [Auth]
+      summary: 发送登录邮箱验证码
+      operationId: sendLoginCode
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginCodeSendRequest' }
+      responses:
+        '202':
+          description: 验证码已发送
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegistrationCodeResult' }
+        '404':
+          description: 邮箱尚未注册
+        '429':
+          description: 发送过于频繁
+  /api/auth/login/code:
+    post:
+      tags: [Auth]
+      summary: 使用邮箱验证码登录
+      operationId: loginWithCode
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginCodeRequest' }
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /api/auth/register/send-code:
+    post:
+      tags: [Auth]
+      summary: 发送注册邮箱验证码
+      operationId: sendRegistrationCode
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegistrationCodeRequest' }
+      responses:
+        '202':
+          description: 验证码已发送
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegistrationCodeResult' }
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          description: 发送过于频繁
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: 注册小组账号
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '200':
+          description: 注册成功并创建会话
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthSession' }
+        '409':
+          description: 账号或邮箱已存在
         '422':
           $ref: '#/components/responses/ValidationError'
   /api/auth/me:
@@ -1071,16 +1156,18 @@ components:
   schemas:
     Error:
       type: object
-      required: [error]
+      required: [code, msg, data]
       properties:
-        error:
-          type: object
-          required: [message, code, details, requestId]
-          properties:
-            message: { type: string }
-            code: { type: string }
-            details: { type: object, additionalProperties: true }
-            requestId: { type: string }
+        code: { type: integer, description: 业务状态码，200 表示成功 }
+        msg: { type: string, nullable: true }
+        data: { nullable: true, description: 失败时通常为 null }
+    Result:
+      type: object
+      required: [code, msg, data]
+      properties:
+        code: { type: integer, description: 业务状态码，200 表示成功 }
+        msg: { type: string, nullable: true }
+        data: { nullable: true }
     PageInfo:
       type: object
       required: [page, pageSize, total, totalPages]
@@ -1259,16 +1346,53 @@ components:
         path: { type: string }
     LoginRequest:
       type: object
-      required: [username, password]
+      required: [email, password, turnstileToken, rememberMe]
       properties:
-        username: { type: string, minLength: 1 }
+        email: { type: string, format: email }
         password: { type: string, format: password, minLength: 1 }
+        turnstileToken: { type: string, minLength: 1 }
+        rememberMe: { type: boolean, default: true }
+    LoginCodeRequest:
+      type: object
+      required: [email, verificationCode, turnstileToken, rememberMe]
+      properties:
+        email: { type: string, format: email }
+        verificationCode: { type: string, pattern: '^[0-9]{6}$' }
+        turnstileToken: { type: string, minLength: 1 }
+        rememberMe: { type: boolean, default: true }
+    LoginCodeSendRequest:
+      type: object
+      required: [email, turnstileToken]
+      properties:
+        email: { type: string, format: email }
+        turnstileToken: { type: string, minLength: 1 }
+    RegistrationCodeRequest:
+      type: object
+      required: [email, turnstileToken]
+      properties:
+        email: { type: string, format: email }
+        turnstileToken: { type: string, minLength: 1 }
+    RegistrationCodeResult:
+      type: object
+      required: [expiresInSeconds]
+      properties:
+        expiresInSeconds: { type: integer, minimum: 60 }
+    RegisterRequest:
+      type: object
+      required: [username, email, verificationCode, password, turnstileToken]
+      properties:
+        username: { type: string, minLength: 1, maxLength: 64 }
+        email: { type: string, format: email }
+        verificationCode: { type: string, pattern: '^[0-9]{6}$' }
+        password: { type: string, format: password, minLength: 8 }
+        turnstileToken: { type: string, minLength: 1 }
     AuthUser:
       type: object
-      required: [id, name, initials, cohort, role, directions]
+      required: [id, name, email, initials, cohort, role, directions]
       properties:
         id: { type: string }
         name: { type: string }
+        email: { type: string, format: email }
         initials: { type: string }
         cohort: { type: string }
         role: { type: string, enum: [Visitor, Member, Contributor, Leader, Admin] }

@@ -66,6 +66,8 @@ export interface UploadAsset {
 export interface User {
   id: string
   name: string
+  /** Unique account identity; the backend must enforce a unique constraint. */
+  email?: string
   initials: string
   bio?: string
   cohort: string

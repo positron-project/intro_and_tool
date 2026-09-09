@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { apiConfig } from './api-client'
-import { changePassword, getCurrentUser, login, logout, updateProfile, type LoginCredentials } from './auth.service'
+import { changePassword, getCurrentUser, login, loginWithCode, logout, register, requestLoginCode, requestRegistrationCode, updateProfile, type LoginCodeCredentials, type LoginCredentials, type RegistrationCodeResult, type RegistrationCredentials } from './auth.service'
 import type { AuthSession, AuthUser } from '../types'
 
 export interface AuthContextValue {
@@ -8,6 +8,10 @@ export interface AuthContextValue {
   loading: boolean
   isDemo: boolean
   signIn: (credentials: LoginCredentials) => Promise<AuthSession>
+  signInWithCode: (credentials: LoginCodeCredentials) => Promise<AuthSession>
+  register: (credentials: RegistrationCredentials) => Promise<AuthSession>
+  requestRegistrationCode: (email: string, turnstileToken: string) => Promise<RegistrationCodeResult>
+  requestLoginCode: (email: string, turnstileToken: string) => Promise<RegistrationCodeResult>
   signOut: () => Promise<void>
   refresh: () => Promise<void>
   updateProfile: (patch: Partial<Pick<AuthUser, 'name' | 'initials' | 'avatarUrl' | 'bio'>>) => Promise<AuthUser>
@@ -39,6 +43,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return session
   }, [])
 
+  const signInWithVerificationCode = useCallback(async (credentials: LoginCodeCredentials) => {
+    const session = await loginWithCode(credentials)
+    setUser(session.user)
+    return session
+  }, [])
+
+  const signUp = useCallback(async (credentials: RegistrationCredentials) => {
+    const session = await register(credentials)
+    setUser(session.user)
+    return session
+  }, [])
+
   const signOut = useCallback(async () => {
     await logout()
     setUser(null)
@@ -54,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await changePassword(currentPassword, newPassword)
   }, [])
 
-  const value = useMemo(() => ({ user, loading, isDemo: apiConfig.contentSource !== 'api', signIn, signOut, refresh, updateProfile: saveProfile, changePassword: savePassword }), [user, loading, signIn, signOut, refresh, saveProfile, savePassword])
+  const value = useMemo(() => ({ user, loading, isDemo: apiConfig.contentSource !== 'api', signIn, signInWithCode: signInWithVerificationCode, register: signUp, requestRegistrationCode, requestLoginCode, signOut, refresh, updateProfile: saveProfile, changePassword: savePassword }), [user, loading, signIn, signInWithVerificationCode, signUp, signOut, refresh, saveProfile, savePassword])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -38,6 +38,7 @@ import {
   LockKeyhole,
   LogIn,
   LogOut,
+  Mail,
   Map,
   Menu,
   MessageCircle,
@@ -69,6 +70,7 @@ import {
   Trophy,
   Timer,
   UserCog,
+  UserRound,
   Users,
   X,
   Zap,
@@ -80,6 +82,7 @@ import { canManageContent, demoCredentials, demoOwnerCredentials } from './servi
 import { useAuth } from './services/auth.context'
 import type { AIMessage, AnnouncementCategory, Citation, CompetitionEvent, CompetitionProject, InterviewExperience, LearningNode, LearningRoute, Project, Resource } from './types'
 import { AdminAnnouncementModal, AdminContentManagerModal, AdminContentModal, AdminDeleteConfirm, AdminLearningRouteModal, AdminMemberModal, createLearningRouteDraft, createMemberDraft, type AdminCollectionKind, type AdminDeleteRequest, type AnnouncementDraft, type CollectionDraft, type ContentDraft, type LearningRouteDraft, type MemberDraft } from './components/admin-modals'
+import { TurnstileWidget } from './components/turnstile-widget'
 
 type Theme = 'light' | 'dark'
 type BackgroundPreference = 'follow' | 'campus' | 'mist' | 'paper' | 'custom'
@@ -768,29 +771,136 @@ function PageIntro({ eyebrow, title, description, action }: { eyebrow: string; t
 }
 
 function LoginPage() {
-  const { user, loading, isDemo, signIn, signOut } = useAuth()
-  const [username, setUsername] = useState(isDemo ? demoCredentials.username : '')
+  const { user, loading, isDemo, signIn, signInWithCode, register, requestRegistrationCode, requestLoginCode, signOut } = useAuth()
+  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [loginMethod, setLoginMethod] = useState<'password' | 'code'>('password')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState(isDemo ? demoCredentials.password : '')
+  const [email, setEmail] = useState(isDemo ? demoCredentials.email : '')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const [captchaNonce, setCaptchaNonce] = useState(0)
+  const [rememberMe, setRememberMe] = useState(true)
+  const [codeCooldown, setCodeCooldown] = useState(0)
+  const [loginCodeCooldown, setLoginCodeCooldown] = useState(0)
+  const [demoCode, setDemoCode] = useState<string | null>(null)
+  const [loginDemoCode, setLoginDemoCode] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fillDemoAccount = (account: { username: string; password: string }) => {
-    setUsername(account.username)
+  useEffect(() => {
+    if (!codeCooldown) return
+    const timer = window.setInterval(() => setCodeCooldown((value) => Math.max(0, value - 1)), 1000)
+    return () => window.clearInterval(timer)
+  }, [codeCooldown])
+
+  useEffect(() => {
+    if (!loginCodeCooldown) return
+    const timer = window.setInterval(() => setLoginCodeCooldown((value) => Math.max(0, value - 1)), 1000)
+    return () => window.clearInterval(timer)
+  }, [loginCodeCooldown])
+
+  const handleTurnstileChange = useCallback((token: string) => setTurnstileToken(token), [])
+
+  const fillDemoAccount = (account: { email: string; password: string }) => {
+    setEmail(account.email)
     setPassword(account.password)
     setError(null)
   }
 
-  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!username.trim() || !password) {
-      setError('请输入账号和密码')
+  const switchMode = (nextMode: 'login' | 'register') => {
+    setMode(nextMode)
+    setLoginMethod('password')
+    setError(null)
+    setDemoCode(null)
+    setLoginDemoCode(null)
+    setTurnstileToken('')
+    setCaptchaNonce((value) => value + 1)
+  }
+
+  const sendRegistrationCode = async () => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email.trim())) {
+      setError('请输入合法的邮箱地址')
+      return
+    }
+    if (!turnstileToken) {
+      setError('请先完成验证码校验')
       return
     }
     setSubmitting(true)
     setError(null)
     try {
-      await signIn({ username, password })
+      const result = await requestRegistrationCode(email, turnstileToken)
+      setCodeCooldown(60)
+      setDemoCode(result.demoCode ?? null)
+      // Turnstile tokens are single-use; registration needs a fresh token.
+      setTurnstileToken('')
+      setCaptchaNonce((value) => value + 1)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '验证码发送失败，请稍后再试')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const sendLoginCode = async () => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email.trim())) {
+      setError('请输入合法的邮箱地址')
+      return
+    }
+    if (!turnstileToken) {
+      setError('请先完成验证码校验')
+      return
+    }
+    setSubmitting(true)
+    setError(null)
+    try {
+      const result = await requestLoginCode(email, turnstileToken)
+      setLoginCodeCooldown(60)
+      setLoginDemoCode(result.demoCode ?? null)
+      setTurnstileToken('')
+      setCaptchaNonce((value) => value + 1)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '验证码发送失败，请稍后再试')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email.trim())) {
+      setError('请输入合法的邮箱地址')
+      return
+    }
+    if (!turnstileToken) {
+      setError('请先完成验证码校验')
+      return
+    }
+    if (mode === 'register' && password !== confirmPassword) {
+      setError('两次输入的密码不一致')
+      return
+    }
+    if (mode === 'register' && (!username.trim() || !password)) {
+      setError('请输入账号名和密码')
+      return
+    }
+    if (mode === 'login' && loginMethod === 'password' && !password) {
+      setError('请输入密码')
+      return
+    }
+    if (mode === 'login' && loginMethod === 'code' && !verificationCode.trim()) {
+      setError('请输入邮箱验证码')
+      return
+    }
+    setSubmitting(true)
+    setError(null)
+    try {
+      if (mode === 'register') await register({ username, email, verificationCode, password, turnstileToken })
+      else if (loginMethod === 'code') await signInWithCode({ email, verificationCode, turnstileToken, rememberMe })
+      else await signIn({ email, password, turnstileToken, rememberMe })
       navigate('#/tools')
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '登录失败，请稍后再试')
@@ -818,16 +928,24 @@ function LoginPage() {
       </section>
 
       <section className="panel login-card">
-        <div className="login-card-head"><span className="login-card-icon"><KeyRound size={20} /></span><div><p className="eyebrow">WELCOME BACK</p><h2>登录科技小组</h2></div></div>
-        <p className="login-card-description">使用小组账号继续访问你的工作台。</p>
+        <div className="login-mode-switch" role="tablist" aria-label="登录或注册"><button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => switchMode('login')}>登录</button><button type="button" className={mode === 'register' ? 'active' : ''} onClick={() => switchMode('register')}>注册</button></div>
+        <div className="login-card-head"><span className="login-card-icon">{mode === 'login' ? <KeyRound size={20} /> : <UserRound size={20} />}</span><div><p className="eyebrow">{mode === 'login' ? 'WELCOME BACK' : 'NEW MEMBER'}</p><h2>{mode === 'login' ? '登录科技小组' : '注册小组账号'}</h2></div></div>
+        <p className="login-card-description">{mode === 'login' ? '使用小组账号继续访问你的工作台。' : '填写邮箱并完成验证，创建一个待管理员分配届次的账号。'}</p>
+        {mode === 'login' && <div className="login-method-switch" role="tablist" aria-label="登录方式"><button type="button" className={loginMethod === 'password' ? 'active' : ''} onClick={() => { setLoginMethod('password'); setError(null); setVerificationCode(''); setLoginDemoCode(null) }}>邮箱密码登录</button><button type="button" className={loginMethod === 'code' ? 'active' : ''} onClick={() => { setLoginMethod('code'); setError(null); setPassword(''); setLoginDemoCode(null) }}>邮箱验证码登录</button></div>}
         <form className="login-form" onSubmit={submit}>
-          <label className="login-field"><span>账号</span><div className="login-input-wrap"><LogIn size={16} /><input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" placeholder="输入账号" /></div></label>
-          <label className="login-field"><span>密码</span><div className="login-input-wrap"><KeyRound size={16} /><input value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" type={showPassword ? 'text' : 'password'} placeholder="输入密码" /><button type="button" className="login-password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? '隐藏密码' : '显示密码'}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div></label>
+          {mode === 'register' && <label className="login-field"><span>账号名</span><div className="login-input-wrap"><LogIn size={16} /><input value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" placeholder="设置一个账号名" /></div></label>}
+          <label className="login-field"><span>邮箱</span><div className="login-input-wrap"><Mail size={16} /><input value={email} onChange={(event) => setEmail(event.target.value)} onBlur={() => { if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email.trim())) setError('请输入合法的邮箱地址') }} aria-invalid={Boolean(email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email.trim()))} autoComplete="email" type="email" placeholder="name@example.com" /></div></label>
+          {(mode === 'register' || (mode === 'login' && loginMethod === 'password')) && <label className="login-field"><span>密码</span><div className="login-input-wrap"><KeyRound size={16} /><input value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} type={showPassword ? 'text' : 'password'} placeholder={mode === 'login' ? '输入密码' : '至少 8 位密码'} /><button type="button" className="login-password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? '隐藏密码' : '显示密码'}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div></label>}
+          {mode === 'register' && <label className="login-field"><span>确认密码</span><div className="login-input-wrap"><KeyRound size={16} /><input value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" type={showPassword ? 'text' : 'password'} placeholder="再次输入密码" /></div></label>}
+          {(mode === 'register' || (mode === 'login' && loginMethod === 'code')) && <div className="login-code-row"><label className="login-field"><span>邮箱验证码</span><div className="login-input-wrap"><Mail size={16} /><input value={verificationCode} onChange={(event) => setVerificationCode(event.target.value)} inputMode="numeric" placeholder="6 位验证码" /></div></label><button type="button" className="secondary-button login-code-button" disabled={submitting || (mode === 'register' ? codeCooldown > 0 : loginCodeCooldown > 0)} onClick={() => void (mode === 'register' ? sendRegistrationCode() : sendLoginCode())}>{mode === 'register' ? (codeCooldown > 0 ? `${codeCooldown}s 后重发` : '获取验证码') : (loginCodeCooldown > 0 ? `${loginCodeCooldown}s 后重发` : '获取验证码')}</button></div>}
+          <div className="login-captcha"><TurnstileWidget key={captchaNonce} value={turnstileToken} onChange={handleTurnstileChange} /></div>
+          {mode === 'login' && <label className="login-remember"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} /><span>记住登录状态</span></label>}
           {error && <p className="login-error" role="alert">{error}</p>}
-          <button className="primary-button login-submit" type="submit" disabled={submitting}>{submitting ? <><span className="login-submit-spinner" /> 正在登录</> : <><LogIn size={16} /> 登录</>}</button>
+          {(demoCode || loginDemoCode) && <p className="login-demo-code" role="status">本地测试验证码：<strong>{demoCode ?? loginDemoCode}</strong></p>}
+          <button className="primary-button login-submit" type="submit" disabled={submitting}>{submitting ? <><span className="login-submit-spinner" /> 正在处理</> : mode === 'login' ? <><LogIn size={16} /> 登录</> : <><UserRound size={16} /> 创建账号</>}</button>
         </form>
-        {isDemo && <div className="login-demo-box"><div><span>本地账号模式</span><small>当前使用本地持久化账号，可直接登录管理</small></div><div className="login-demo-actions"><button type="button" onClick={() => fillDemoAccount(demoCredentials)}>组长账号</button><button type="button" onClick={() => fillDemoAccount(demoOwnerCredentials)}>2029 届负责人</button></div><small className="login-demo-hint">初始密码：club2029</small></div>}
-        <p className="login-footer-note">账号权限由管理员维护，登录后可按角色开放对应内容。</p>
+        {isDemo && mode === 'login' && <div className="login-demo-box"><div><span>本地账号模式</span><small>当前使用本地持久化账号，可直接登录管理</small></div><div className="login-demo-actions"><button type="button" onClick={() => fillDemoAccount(demoCredentials)}>组长账号</button><button type="button" onClick={() => fillDemoAccount(demoOwnerCredentials)}>2029 届负责人</button></div><small className="login-demo-hint">初始密码：club2029</small></div>}
+        <p className="login-footer-note">账号权限由管理员维护，注册后需由负责人分配届次和方向。</p>
       </section>
     </div>
   </div>

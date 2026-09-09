@@ -58,7 +58,7 @@ Controller 只处理 HTTP；Service 承担业务规则；Repository 负责数据
 
 | 表 | 关键字段 | 说明 |
 | --- | --- | --- |
-| users | id、username、password_hash、name、role、cohort、avatar_asset_id、status | 账号和成员身份 |
+| users | id、email(unique)、username、password_hash、role、cohort、avatar_asset_id、status | 账号和成员身份；username 作为可修改的显示/登录名称，email 是唯一身份标识 |
 | refresh_tokens | id、user_id、token_hash、expires_at、revoked_at | 可吊销刷新令牌 |
 | content_records | id、kind、payload/jsonb、cohort、visibility、status、created_by、updated_by、created_at、updated_at、archived_at | 统一内容基表或领域表 |
 | assets | id、object_key、url、mime_type、size、sha256、created_by | Node 上传后的文件元数据 |
@@ -95,7 +95,7 @@ Controller 只处理 HTTP；Service 承担业务规则；Repository 负责数据
 
 所有路径均由 Node Gateway 暴露，Java 内部去掉 /api 前缀：
 
-1. Auth：POST /auth/login、GET /auth/me、POST /auth/logout；第二阶段 POST /auth/refresh。
+1. Auth：POST /auth/register/send-code、POST /auth/register、POST /auth/login、POST /auth/login/send-code、POST /auth/login/code、GET /auth/me、POST /auth/logout；第二阶段 POST /auth/refresh。
 2. Learning：learning-routes 列表、详情、创建、编辑、软删除。
 3. Projects：projects 列表、按 id 或 slug 详情、创建、编辑、软删除。
 4. Resources、Interviews、Competitions：同样的列表/详情/CRUD。
@@ -109,7 +109,7 @@ Controller 只处理 HTTP；Service 承担业务规则；Repository 负责数据
 - 新增 DTO 不允许客户端提交 id、createdAt、updatedAt、createdBy、updatedBy、archivedAt。
 - PATCH 只允许白名单字段；未知字段返回 VALIDATION_ERROR 或被明确忽略，团队需统一策略。
 - 项目 slug、用户名、资源 URL 和文件 assetId 做唯一性/格式校验。
-- 成功创建 201，编辑 200，软删除 204，未登录 401，无权限 403，校验失败 422，不存在 404。
+- 注册成功返回 200；其他资源成功创建 201，编辑 200，软删除 204，未登录 401，无权限 403，校验失败 422，不存在 404。
 - 错误统一为 message、code、details，并透传 X-Request-Id。
 - 不要把 Java 异常堆栈、SQL 语句或密码提示返回给浏览器。
 
@@ -117,11 +117,12 @@ Controller 只处理 HTTP；Service 承担业务规则；Repository 负责数据
 
 登录流程：
 
-1. 校验 username/password，密码使用 Argon2id（或 bcrypt cost 12+）哈希比对。
-2. 签发短期 access token（建议 15–30 分钟）和只存哈希的 refresh token（建议 7–30 天）。
-3. access token 仅包含 userId、role、cohort、tokenId 等最小声明。
-4. refresh 时轮换 refresh token，旧 token 立即吊销；logout 吊销当前 token。
-5. Gateway 将 Bearer token 透传；Python 不能自行决定业务权限。
+1. 先在 Java Core 校验 `turnstileToken`，通过 Cloudflare Siteverify 后再校验 email/password；密码使用 Argon2id（或 bcrypt cost 12+）哈希比对。验证码登录走独立的 `/auth/login/send-code` 和 `/auth/login/code`，不得绕过 Turnstile 或邮箱验证码校验。
+2. 签发短期 access token（建议 15–30 分钟）和只存哈希的 refresh token（建议 7–30 天）；`rememberMe=false` 时只创建短会话。
+3. 注册先校验 Turnstile、邮箱格式、邮箱唯一性和发送频率，再发送 6 位验证码（有效期建议 10 分钟）；注册提交时再次校验 Turnstile、验证码和密码（前端确认密码不应传给后端）。
+4. access token 仅包含 userId、role、cohort、tokenId 等最小声明。
+5. refresh 时轮换 refresh token，旧 token 立即吊销；logout 吊销当前 token。
+6. Gateway 将 Bearer token 透传；Python 不能自行决定业务权限。
 
 第一版可以使用数据库会话表，但接口字段仍保留 refreshToken 和 expiresAt，便于后续无痛升级。
 

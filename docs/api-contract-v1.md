@@ -7,16 +7,18 @@
 ## 基本约定
 
 - 网关开发地址：`http://127.0.0.1:3000`；前端配置 `VITE_API_BASE_URL=http://127.0.0.1:3000/api`。
+- 登录成功后前端保存返回的 `accessToken`；后续受保护请求统一发送 `Authorization: Bearer <accessToken>`。未登录的登录、注册和发送验证码请求不携带旧 Token。
 - 所有路径均为 `/api` 后的相对路径；服务内部路径不带 `/api`。
 - 请求和响应使用 UTF-8 JSON；上传使用 `multipart/form-data`。
-- 成功响应统一返回 `{ "data": ..., "meta": { "requestId": "req_123" } }`；列表的 `data` 为数组，`meta` 额外包含 `page`、`pageSize`、`total`、`totalPages`。前端暂时兼容直接数组和旧的 `{ items, page }` 响应。
+- Java 业务响应统一使用 `Result<T>`：`{ "code": 200, "msg": null, "data": ... }`。`code=200` 表示业务成功，前端读取 `data`；其他 `code` 表示业务失败，前端读取 `msg` 提示用户。HTTP 网络层仍建议使用 200/4xx/5xx 表达传输状态，但业务失败不要依赖 HTTP 错误体。
+- 列表的 `data` 为数组；分页信息可放在 `data` 的列表结构或扩展响应字段中，前端服务层会兼容直接数组和旧的 `{ items, page }` 响应。
 - 成功创建返回 `201`；删除/退出登录返回 `204`；未登录/令牌失效返回 `401`；无权限返回 `403`。
 - 每个响应带 `X-Request-Id`，排查问题时把它提供给管理员。
 
-错误格式：
+业务失败格式：
 
 ```json
-{ "error": { "code": "FORBIDDEN", "message": "当前账号没有管理这部分内容的权限", "details": {}, "requestId": "req_123" } }
+{ "code": 403, "msg": "当前账号没有管理这部分内容的权限", "data": null }
 ```
 
 列表查询参数：`search`、`category`、`status`、`cohortId`、`teamId`、`page`、`pageSize`、`sort`、`direction=asc|desc`。后端应限制 `pageSize <= 100`；为兼容旧前端可暂时接受 `cohort` 别名。
@@ -38,11 +40,27 @@
 
 ## 登录与角色
 
+### `POST /api/auth/register/send-code`
+
+请求体 `{ "email": "member@example.com", "turnstileToken": "..." }`。邮箱格式、Turnstile 和发送频率由 Java Core 校验，成功返回验证码有效期。
+
+### `POST /api/auth/register`
+
+请求体 `{ "verificationCode": "123456", "username": "member01", "email": "member@example.com", "password": "********", "turnstileToken": "..." }`。只有 HTTP `200` 表示创建成功；其他状态码均表示失败。`email` 是唯一账号身份，`username` 是用户自行设置的账号名/显示名。
+
 ### `POST /api/auth/login`
 
 ```json
-{ "username": "leader", "password": "********" }
+{ "email": "member@example.com", "password": "********", "turnstileToken": "...", "rememberMe": true }
 ```
+
+### `POST /api/auth/login/send-code`
+
+请求体 `{ "email": "member@example.com", "turnstileToken": "..." }`，发送登录验证码。
+
+### `POST /api/auth/login/code`
+
+请求体 `{ "email": "member@example.com", "verificationCode": "123456", "turnstileToken": "...", "rememberMe": true }`，返回 HTTP `200` 表示验证码登录成功。
 
 ```json
 {
@@ -53,6 +71,7 @@
   "user": {
     "id": "user-1",
     "name": "科技小组组长",
+    "email": "leader@example.com",
     "initials": "组长",
     "cohort": "全站",
     "role": "Leader",
