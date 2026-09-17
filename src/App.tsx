@@ -78,9 +78,11 @@ import {
 import { useContent } from './services/content.context'
 import { useClubConfig } from './services/club-config.context'
 import { askAssistant } from './services/ai.service'
-import { canManageContent, demoCredentials, demoOwnerCredentials } from './services/auth.service'
+import { canManageContent, canViewContent, demoCredentials, demoOwnerCredentials, isDemoAuth, listManagedAccounts, updateManagedAccountStatus } from './services/auth.service'
+import { createInviteCode, listInviteCodes, revokeInviteCode } from './services/invite.service'
+import { createContributionSubmission, listContributionSubmissions, reviewContributionSubmission } from './services/contribution.service'
 import { useAuth } from './services/auth.context'
-import type { AIMessage, AnnouncementCategory, Citation, CompetitionEvent, CompetitionProject, InterviewExperience, LearningNode, LearningRoute, Project, Resource } from './types'
+import type { AccountStatus, AIMessage, AnnouncementCategory, AuthUser, Citation, CompetitionEvent, CompetitionProject, ContributionSubmission, InterviewExperience, InviteCode, LearningNode, LearningRoute, Project, Resource } from './types'
 import { AdminAnnouncementModal, AdminContentManagerModal, AdminContentModal, AdminDeleteConfirm, AdminLearningRouteModal, AdminMemberModal, createLearningRouteDraft, createMemberDraft, type AdminCollectionKind, type AdminDeleteRequest, type AnnouncementDraft, type CollectionDraft, type ContentDraft, type LearningRouteDraft, type MemberDraft } from './components/admin-modals'
 import { TurnstileWidget } from './components/turnstile-widget'
 
@@ -216,16 +218,21 @@ function Avatar({ initials, accent = 'blue', size = 'md' }: { initials: string; 
 function Navbar({ route, theme, onTheme, onSearch, mobileOpen, setMobileOpen }: { route: string; theme: Theme; onTheme: () => void; onSearch: () => void; mobileOpen: boolean; setMobileOpen: (open: boolean) => void }) {
   const { user, signOut } = useAuth()
   const [profileOpen, setProfileOpen] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [closeAccountOpen, setCloseAccountOpen] = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
     setProfileOpen(false)
+    setInviteOpen(false)
+    setCloseAccountOpen(false)
     navigate('#/home')
   }
 
   return (
-    <header className="topbar">
-      <div className="topbar-inner">
+    <>
+      <header className="topbar">
+        <div className="topbar-inner">
         <a href="#/home" className="brand" aria-label="回到首页">
           <img className="brand-logo" src="./assets/college-logo-cropped.png" alt="南昌航空大学科技学院校徽" />
           <span className="brand-copy"><strong>南昌航空大学科技学院</strong><small>计算机科技小组 · Computer Science Club</small></span>
@@ -248,15 +255,104 @@ function Navbar({ route, theme, onTheme, onSearch, mobileOpen, setMobileOpen }: 
               <div className="profile-menu-head"><Avatar initials={user.initials} size="md" /><div><strong>{user.name}</strong><small>{roleLabels[user.role] ?? user.role} · {user.cohort} 届</small></div></div>
               <div className="profile-menu-rule" />
               <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); navigate('#/tools') }}><LayoutDashboard size={15} /> 工作台</button>
+              {user.role === 'Member' && <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); setInviteOpen(true) }}><KeyRound size={15} /> 输入邀请码</button>}
               {canManageContent(user) && <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); navigate('#/admin') }}><Settings2 size={15} /> 管理后台</button>}
+              <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); setCloseAccountOpen(true) }}><Trash2 size={15} /> 注销账号</button>
               <button type="button" role="menuitem" onClick={() => void handleSignOut()}><LogOut size={15} /> 退出登录</button>
             </div>}
           </div>
           <button className="mobile-menu icon-button" onClick={() => setMobileOpen(!mobileOpen)} aria-label={mobileOpen ? '关闭菜单' : '打开菜单'}>{mobileOpen ? <X size={20} /> : <Menu size={20} />}</button>
         </div>
-      </div>
-    </header>
+        </div>
+      </header>
+      {inviteOpen && <InviteRedemptionModal onClose={() => setInviteOpen(false)} />}
+      {closeAccountOpen && <AccountClosureModal onClose={() => setCloseAccountOpen(false)} onClosed={() => { setCloseAccountOpen(false); navigate('#/home') }} />}
+    </>
   )
+}
+
+function InviteRedemptionModal({ onClose }: { onClose: () => void }) {
+  const { user, redeemInviteCode } = useAuth()
+  const [inviteCode, setInviteCode] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  if (!user) return null
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!inviteCode.trim()) { setError('请输入邀请码'); return }
+    setSubmitting(true)
+    setError('')
+    try {
+      await redeemInviteCode(inviteCode)
+      setSuccess('邀请码验证成功，你现在拥有组员身份。')
+      window.setTimeout(onClose, 1200)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '邀请码兑换失败，请稍后重试')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return <div className="admin-modal-scrim invite-modal-scrim" role="presentation" onClick={onClose}><section className="admin-form-modal invite-modal" role="dialog" aria-modal="true" aria-labelledby="invite-redemption-title" onClick={(event) => event.stopPropagation()}><div className="admin-modal-head"><div><p className="eyebrow">MEMBERSHIP / INVITE</p><h2 id="invite-redemption-title">加入小组</h2><p>输入管理员发给你的邀请码，账号会升级为组员。</p></div><button className="icon-button small" onClick={onClose} aria-label="关闭邀请码窗口"><X size={16} /></button></div><form className="invite-redemption-form" onSubmit={submit}><label><span>邀请码</span><input value={inviteCode} onChange={(event) => { setInviteCode(event.target.value.toUpperCase()); setError('') }} placeholder="例如 OS-7K4M-9Q2P" autoComplete="off" autoFocus /></label><div className="invite-redemption-hint"><KeyRound size={15} /><span>邀请码有有效期和使用次数限制，每个账号只能兑换一次。</span></div>{error && <p className="login-error" role="alert">{error}</p>}{success && <p className="login-success" role="status">{success}</p>}<div className="admin-modal-foot"><span>{user.name} · 当前为{roleLabels[user.role] ?? user.role}</span><div><button type="button" className="secondary-button admin-small-button" onClick={onClose}>取消</button><button type="submit" className="primary-button admin-small-button" disabled={submitting}>{submitting ? '验证中…' : '兑换邀请码'}</button></div></div></form><p className="invite-demo-note">{isDemoAuth ? '当前使用本地演示数据。' : '当前由后端验证邀请码并更新账号权限。'}</p></section></div>
+}
+
+function ContributionSubmissionModal({ onClose, onSubmitted }: { onClose: () => void; onSubmitted?: () => void }) {
+  const { user } = useAuth()
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [category, setCategory] = useState('后端')
+  const [resourceUrl, setResourceUrl] = useState('')
+  const [fileName, setFileName] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  if (!user) return null
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!title.trim() || !description.trim()) { setError('请填写资料标题和说明'); return }
+    if (!resourceUrl.trim() && !fileName) { setError('请填写资料链接或选择一个文件'); return }
+    setSubmitting(true)
+    setError('')
+    try {
+      await createContributionSubmission({ submitterId: user.id, submitterName: user.name, title: title.trim(), description: description.trim(), category, resourceUrl: resourceUrl.trim() || undefined, fileName: fileName || undefined })
+      setSuccess('投稿已提交，管理员审核通过后会进入资源库。')
+      onSubmitted?.()
+      window.setTimeout(onClose, 1400)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '投稿失败，请稍后重试')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return <div className="admin-modal-scrim contribution-modal-scrim" role="presentation" onClick={onClose}><section className="admin-editor-modal contribution-modal" role="dialog" aria-modal="true" aria-labelledby="contribution-title" onClick={(event) => event.stopPropagation()}><div className="admin-modal-head"><div><p className="eyebrow">RESOURCE / SUBMIT</p><h2 id="contribution-title">贡献一份资料</h2><p>普通成员也可以投稿，但资料会先进入审核队列。</p></div><button className="icon-button small" onClick={onClose} aria-label="关闭投稿窗口"><X size={16} /></button></div><form className="admin-editor-form" onSubmit={submit}><label><span>资料标题</span><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例如：FastAPI 数据库连接笔记" autoFocus /></label><div className="admin-editor-form-grid"><label><span>资料分类</span><select value={category} onChange={(event) => setCategory(event.target.value)}><option>前端</option><option>后端</option><option>算法</option><option>Python</option><option>AI</option><option>数据库</option><option>DevOps</option></select></label><label><span>资料链接（可选）</span><input value={resourceUrl} onChange={(event) => setResourceUrl(event.target.value)} placeholder="https://..." /></label></div><label><span>资料说明</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={4} placeholder="说明这份资料解决什么问题，适合谁使用" /></label><label className="contribution-file-field"><span>附件（可选其一）</span><input type="file" onChange={(event) => setFileName(event.target.files?.[0]?.name ?? '')} /><small>{fileName ? `已选择：${fileName}` : '演示模式只记录文件名，正式版由后端保存文件内容。'}</small></label>{error && <p className="login-error" role="alert">{error}</p>}{success && <p className="login-success" role="status">{success}</p>}<div className="admin-modal-foot"><span>投稿人：{user.name} · {roleLabels[user.role] ?? user.role}</span><div><button type="button" className="secondary-button admin-small-button" onClick={onClose}>取消</button><button type="submit" className="primary-button admin-small-button" disabled={submitting}>{submitting ? '提交中…' : '提交审核'}</button></div></div></form></section></div>
+}
+
+function AccountClosureModal({ onClose, onClosed }: { onClose: () => void; onClosed: () => void }) {
+  const { user, closeAccount } = useAuth()
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  if (!user) return null
+
+  const confirmClose = async () => {
+    setSubmitting(true)
+    setError('')
+    try {
+      await closeAccount()
+      onClosed()
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '注销失败，请稍后重试')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return <div className="admin-modal-scrim" role="presentation" onClick={onClose}><section className="admin-form-modal account-closure-modal" role="alertdialog" aria-modal="true" aria-labelledby="account-closure-title" onClick={(event) => event.stopPropagation()}><div className="admin-modal-head"><div><p className="eyebrow">ACCOUNT / CLOSE</p><h2 id="account-closure-title">注销当前账号？</h2><p>注销后会退出当前会话，账号不能再登录。演示数据也会标记为已注销。</p></div><button className="icon-button small" onClick={onClose} aria-label="关闭注销确认"><X size={16} /></button></div><div className="admin-note-card warning"><ShieldAlert size={15} /><div><strong>{user.email ?? user.name}</strong><p>这不是“退出登录”。退出登录只清除当前设备会话；注销会让账号本身失效。</p></div></div>{error && <p className="login-error" role="alert">{error}</p>}<div className="admin-modal-foot"><span>此操作不可在前端恢复</span><div><button className="secondary-button admin-small-button" onClick={onClose}>保留账号</button><button className="admin-danger-button admin-small-button" disabled={submitting} onClick={() => void confirmClose()}><Trash2 size={14} /> {submitting ? '注销中…' : '确认注销'}</button></div></div></section></div>
 }
 
 function CampusIllustration() {
@@ -292,6 +388,7 @@ function Hero({ onNavigate, onOnboarding }: { onNavigate: (path: string) => void
 
 function ToolsLivePulse({ onOpenProject }: { onOpenProject: (project: Project) => void }) {
   const { data: { projects } } = useContent()
+  const { user } = useAuth()
   const [active, setActive] = useState(0)
   const [projectActive, setProjectActive] = useState(0)
   const [now, setNow] = useState(() => new Date())
@@ -301,7 +398,7 @@ function ToolsLivePulse({ onOpenProject }: { onOpenProject: (project: Project) =
     { label: '知识库', title: 'FastAPI 学习路线新增 3 条资料', detail: '来自 2025 届 · 12 分钟前', icon: 'book', tone: 'mint' },
     { label: '小组活动', title: '本周项目分享会开放报名', detail: '周四 18:40 · 线上会议室', icon: 'calendar', tone: 'orange' },
   ]
-  const activeProjects = projects.filter((project) => project.status !== '已归档')
+  const activeProjects = projects.filter((project) => project.status !== '已归档' && canViewContent(user, project.visibility))
 
   useEffect(() => {
     const rotation = window.setInterval(() => setActive((current) => (current + 1) % pulseItems.length), 4200)
@@ -363,8 +460,9 @@ function ProjectCard({ project, onOpen }: { project: Project; onOpen: (project: 
 
 function FeaturedProjects({ onOpen }: { onOpen: (project: Project) => void }) {
   const { data: { projects } } = useContent()
+  const { user } = useAuth()
   const [active, setActive] = useState(0)
-  const visible = projects.filter((item) => item.featured)
+  const visible = projects.filter((item) => item.featured && canViewContent(user, item.visibility))
   useEffect(() => {
     if (visible.length < 2) return
     const timer = window.setInterval(() => setActive((value) => (value + 1) % visible.length), 5200)
@@ -789,6 +887,7 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   useEffect(() => {
     if (!codeCooldown) return
@@ -814,6 +913,7 @@ function LoginPage() {
     setMode(nextMode)
     setLoginMethod('password')
     setError(null)
+    setNotice(null)
     setDemoCode(null)
     setLoginDemoCode(null)
     setTurnstileToken('')
@@ -897,11 +997,20 @@ function LoginPage() {
     }
     setSubmitting(true)
     setError(null)
+    setNotice(null)
     try {
-      if (mode === 'register') await register({ username, email, verificationCode, password, turnstileToken })
-      else if (loginMethod === 'code') await signInWithCode({ email, verificationCode, turnstileToken, rememberMe })
-      else await signIn({ email, password, turnstileToken, rememberMe })
-      navigate('#/tools')
+      if (mode === 'register') {
+        await register({ username, email, verificationCode, password, turnstileToken })
+        setPassword('')
+        setConfirmPassword('')
+        setVerificationCode('')
+        switchMode('login')
+        setNotice('注册成功，请使用刚创建的账号登录')
+      } else {
+        if (loginMethod === 'code') await signInWithCode({ email, verificationCode, turnstileToken, rememberMe })
+        else await signIn({ email, password, turnstileToken, rememberMe })
+        navigate('#/tools')
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '登录失败，请稍后再试')
     } finally {
@@ -941,6 +1050,7 @@ function LoginPage() {
           <div className="login-captcha"><TurnstileWidget key={captchaNonce} value={turnstileToken} onChange={handleTurnstileChange} /></div>
           {mode === 'login' && <label className="login-remember"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} /><span>记住登录状态</span></label>}
           {error && <p className="login-error" role="alert">{error}</p>}
+          {notice && <p className="login-success" role="status">{notice}</p>}
           {(demoCode || loginDemoCode) && <p className="login-demo-code" role="status">本地测试验证码：<strong>{demoCode ?? loginDemoCode}</strong></p>}
           <button className="primary-button login-submit" type="submit" disabled={submitting}>{submitting ? <><span className="login-submit-spinner" /> 正在处理</> : mode === 'login' ? <><LogIn size={16} /> 登录</> : <><UserRound size={16} /> 创建账号</>}</button>
         </form>
@@ -953,20 +1063,21 @@ function LoginPage() {
 
 function LearningPage({ onOpenProject }: { onOpenProject: (project: Project) => void }) {
   const { data: { learningRoutes, projects } } = useContent()
-  const [activeRouteId, setActiveRouteId] = useState('pyagent')
+  const { user } = useAuth()
+  const [activeRouteId, setActiveRouteId] = useState('')
   const [projectIndex, setProjectIndex] = useState(0)
-  const tracks = useMemo(() => {
-    const configured = learningRoutes.map((route) => ({ id: route.id, label: route.direction?.trim() || route.title.trim(), route })).filter((item) => item.label)
-    return configured
-  }, [learningRoutes])
+  const visibleRoutes = useMemo(() => learningRoutes.filter((item) => canViewContent(user, item.visibility)), [learningRoutes, user])
+  const visibleProjects = useMemo(() => projects.filter((item) => canViewContent(user, item.visibility)), [projects, user])
+  const tracks = useMemo(() => visibleRoutes.map((route) => ({ id: route.id, label: route.direction?.trim() || route.title.trim(), route })).filter((item) => item.label), [visibleRoutes])
+  const hasConfiguredRoutes = learningRoutes.length > 0
   const activeTrack = tracks.find((track) => track.id === activeRouteId) ?? tracks[0]
-  const active = activeTrack?.label ?? 'PyAgent'
+  const active = activeTrack?.label ?? ''
   const route = activeTrack?.route
   const visibleNodes = route?.nodes ?? []
-  const routeProjects = (route?.featuredProjectIds ?? []).map((id) => projects.find((project) => project.id === id)).filter((project): project is Project => Boolean(project))
+  const routeProjects = (route?.featuredProjectIds ?? []).map((id) => visibleProjects.find((project) => project.id === id)).filter((project): project is Project => Boolean(project))
   const currentProject = routeProjects[projectIndex % Math.max(routeProjects.length, 1)]
   useEffect(() => {
-    if (!tracks.some((track) => track.id === activeRouteId)) setActiveRouteId(tracks[0]?.id ?? 'pyagent')
+    if (!tracks.some((track) => track.id === activeRouteId)) setActiveRouteId(tracks[0]?.id ?? '')
   }, [activeRouteId, tracks])
   useEffect(() => { setProjectIndex(0) }, [activeRouteId, route?.id])
   useEffect(() => {
@@ -974,14 +1085,25 @@ function LearningPage({ onOpenProject }: { onOpenProject: (project: Project) => 
     const timer = window.setInterval(() => setProjectIndex((value) => (value + 1) % routeProjects.length), 5200)
     return () => window.clearInterval(timer)
   }, [routeProjects.length, route?.id])
-  const routeTitle = route?.title ?? `${active} · 进阶路径`
-  const routeDescription = route?.description ?? '这个方向还没有发布路线，管理员可以在管理后台添加第一阶段。'
-  return <div className="page learning-page"><PageIntro eyebrow="LEARNING OS / 01" title="学习路线" description={routeDescription} /><div className="learning-layout"><aside className="track-sidebar"><div className="sidebar-label">TECH TRACKS</div>{tracks.map((track, index) => <button key={track.id} className={`track-button ${activeRouteId === track.id ? 'active' : ''}`} onClick={() => setActiveRouteId(track.id)}><span className="track-number">{String(index + 1).padStart(2, '0')}</span>{track.label}{activeRouteId === track.id && <ChevronRight size={15} />}</button>)}<div className="sidebar-tip"><Sparkles size={16} /><strong>给下一步留一点空间</strong><span>路线是参考地图，学习内容可以来自你信任的平台。</span></div></aside><main className="roadmap-wrap"><div className="roadmap-topline"><div><span className="live-dot" /> {routeTitle}</div><span>{visibleNodes.length} 个学习节点</span></div>{visibleNodes.length ? <div className="roadmap"><div className="roadmap-line" />{visibleNodes.map((node, index) => <LearningNodeCard key={node.id} node={node} index={index} onOpenProject={onOpenProject} />)}</div> : <div className="empty-state learning-route-empty"><Route size={28} /><strong>这个方向还没有学习节点</strong><span>管理员可以在后台为“{active}”创建路线并绑定项目。</span></div>}</main><aside className="learning-aside"><section className="panel route-guide"><p className="eyebrow">ROUTE GUIDE</p><h3>把路线当作地图</h3><p>按自己的节奏选择课程、资源和项目，不记录个人完成度。</p><div className="route-guide-steps"><span><b>01</b>基础</span><span><b>02</b>实践</span><span><b>03</b>交付</span></div></section><section className="panel next-project"><p className="eyebrow">PROJECT ENTRY</p>{currentProject ? <><div className="next-project-icon"><Icon name={currentProject.icon} size={20} /></div><h3>{currentProject.name}</h3><p>{currentProject.description}</p><button className="text-button" onClick={() => onOpenProject(currentProject)}>查看项目入口 <ArrowRight size={14} /></button>{routeProjects.length > 1 && <div className="next-project-dots">{routeProjects.map((project, index) => <button key={project.id} className={index === projectIndex ? 'active' : ''} onClick={() => setProjectIndex(index)} aria-label={`查看${project.name}`} />)}</div>}</> : <div className="next-project-empty"><div className="next-project-icon"><Rocket size={20} /></div><h3>等待项目入口</h3><p>管理员可以在路线编辑器中选择要展示的项目。</p></div>}</section></aside></div></div>
+  const routeTitle = route?.title ?? (active ? `${active} · 进阶路径` : '暂无学习路线')
+  const routeDescription = route?.description ?? (hasConfiguredRoutes ? user ? '当前账号暂时无法查看这些路线。' : '登录以查看全部学习路线。' : '暂时没有发布学习路线。')
+  const emptyTitle = !hasConfiguredRoutes ? '暂时没有学习路线' : route ? '这个方向还没有学习节点' : user ? '暂无可查看的学习路线' : '请先登录'
+  const emptyDescription = !hasConfiguredRoutes ? '' : route ? '' : user ? '当前账号暂时无法查看这些路线。' : '登录以查看全部学习路线。'
+  return <div className="page learning-page">
+    <PageIntro eyebrow="LEARNING OS / 01" title="学习路线" description={routeDescription} />
+    {!user && hasConfiguredRoutes && <div className="access-policy-note"><LockKeyhole size={16} /><div><strong>请先登录</strong><span>登录以查看全部学习路线。</span></div></div>}
+    <div className={`learning-layout ${tracks.length ? '' : 'learning-layout-empty'}`}>
+      {tracks.length > 0 && <aside className="track-sidebar"><div className="sidebar-label">TECH TRACKS</div>{tracks.map((track, index) => <button key={track.id} className={`track-button ${activeRouteId === track.id ? 'active' : ''}`} onClick={() => setActiveRouteId(track.id)}><span className="track-number">{String(index + 1).padStart(2, '0')}</span>{track.label}{activeRouteId === track.id && <ChevronRight size={15} />}</button>)}<div className="sidebar-tip"><Sparkles size={16} /><strong>给下一步留一点空间</strong><span>路线是参考地图，学习内容可以来自你信任的平台。</span></div></aside>}
+      <main className="roadmap-wrap">{route && <div className="roadmap-topline"><div><span className="live-dot" /> {routeTitle}</div><span>{visibleNodes.length} 个学习节点</span></div>}{visibleNodes.length ? <div className="roadmap"><div className="roadmap-line" />{visibleNodes.map((node, index) => <LearningNodeCard key={node.id} node={node} index={index} onOpenProject={onOpenProject} />)}</div> : <div className="empty-state learning-route-empty"><Route size={28} /><strong>{emptyTitle}</strong>{emptyDescription && <span>{emptyDescription}</span>}</div>}</main>
+      {tracks.length > 0 && <aside className="learning-aside"><section className="panel route-guide"><p className="eyebrow">ROUTE GUIDE</p><h3>把路线当作地图</h3><p>按自己的节奏选择课程、资源和项目，不记录个人完成度。</p><div className="route-guide-steps"><span><b>01</b>基础</span><span><b>02</b>实践</span><span><b>03</b>交付</span></div></section><section className="panel next-project"><p className="eyebrow">PROJECT ENTRY</p>{currentProject ? <><div className="next-project-icon"><Icon name={currentProject.icon} size={20} /></div><h3>{currentProject.name}</h3><p>{currentProject.description}</p><button className="text-button" onClick={() => onOpenProject(currentProject)}>查看项目入口 <ArrowRight size={14} /></button>{routeProjects.length > 1 && <div className="next-project-dots">{routeProjects.map((project, index) => <button key={project.id} className={index === projectIndex ? 'active' : ''} onClick={() => setProjectIndex(index)} aria-label={`查看${project.name}`} />)}</div>}</> : <div className="next-project-empty"><div className="next-project-icon"><Rocket size={20} /></div><h3>等待项目入口</h3><p>暂时没有关联项目。</p></div>}</section></aside>}
+    </div>
+  </div>
 }
 
 function LearningNodeCard({ node, index, onOpenProject }: { node: LearningNode; index: number; onOpenProject: (project: Project) => void }) {
   const { data: { projects } } = useContent()
-  const nodeProjects = (node.projectIds ?? []).map((id) => projects.find((project) => project.id === id)).filter((project): project is Project => Boolean(project))
+  const { user } = useAuth()
+  const nodeProjects = (node.projectIds ?? []).map((id) => projects.find((project) => project.id === id)).filter((project): project is Project => Boolean(project)).filter((project) => canViewContent(user, project.visibility))
   return <motion.div className="learning-node" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}><div className="node-marker"><span>{String(index + 1).padStart(2, '0')}</span></div><div className="node-card"><div className="node-card-heading"><div><span className="node-status">学习节点 {String(index + 1).padStart(2, '0')}</span><h3>{node.title}</h3></div><span className="node-duration"><Clock3 size={13} /> {node.duration}</span></div><p>{node.description}</p><div className="node-card-meta"><span><BookOpen size={14} /> {node.resources} 个资源</span><span><Rocket size={14} /> {node.projects} 个相关项目</span>{nodeProjects.map((project) => <button key={project.id} className="project-entry" onClick={() => onOpenProject(project)}><Rocket size={13} /> {project.name} <ArrowUpRight size={13} /></button>)}</div></div></motion.div>
 }
 
@@ -991,24 +1113,37 @@ function FilterBar({ search, setSearch, filters, activeFilter, setActiveFilter }
 
 function ProjectsPage({ onOpenProject }: { onOpenProject: (project: Project) => void }) {
   const { data: { projects } } = useContent()
+  const { user } = useAuth()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('全部')
-  const filtered = projects.filter((p) => (filter === '全部' || p.category === filter) && `${p.name}${p.description}${p.stack.join('')}`.toLowerCase().includes(search.toLowerCase()))
-  return <div className="page listing-page"><PageIntro eyebrow="PROJECT OS / 02" title="项目库" description="探索历届优秀项目，在真实实践中成长。" action={<button className="primary-button" onClick={() => onOpenProject(projects[0])}>提交项目 <ArrowUpRight size={16} /></button>} /><FilterBar search={search} setSearch={setSearch} filters={['全部', 'AI', 'Web', 'Backend', 'Algorithm', 'Tools']} activeFilter={filter} setActiveFilter={setFilter} /><div className="listing-grid">{filtered.map((project) => <ProjectCard key={project.id} project={project} onOpen={onOpenProject} />)}</div>{filtered.length === 0 && <div className="empty-state"><CircleHelp size={28} /><strong>没有找到匹配的项目</strong><span>试试更短的关键词，或者换一个方向。</span></div>}</div>
+  const accessibleProjects = projects.filter((project) => canViewContent(user, project.visibility))
+  const filtered = accessibleProjects.filter((p) => (filter === '全部' || p.category === filter) && `${p.name}${p.description}${p.stack.join('')}`.toLowerCase().includes(search.toLowerCase()))
+  const emptyTitle = accessibleProjects.length ? '没有找到匹配的项目' : !user ? '请先登录' : projects.length ? '暂无可查看的项目' : '暂时没有项目'
+  const emptyDescription = accessibleProjects.length ? '试试更短的关键词，或者换一个方向。' : !user ? '登录以查看全部项目资料。' : projects.length ? '当前账号暂时无法查看这些项目。' : '项目资料还在整理中。'
+  return <div className="page listing-page"><PageIntro eyebrow="PROJECT OS / 02" title="项目库" description="探索历届优秀项目，在真实实践中成长。" action={<button className="primary-button" disabled={!accessibleProjects.length} onClick={() => accessibleProjects[0] && onOpenProject(accessibleProjects[0])}>查看项目 <ArrowUpRight size={16} /></button>} />{!user && <div className="access-policy-note"><LockKeyhole size={16} /><div><strong>请先登录</strong><span>登录以查看全部项目资料。</span></div></div>}<FilterBar search={search} setSearch={setSearch} filters={['全部', 'AI', 'Web', 'Backend', 'Algorithm', 'Tools']} activeFilter={filter} setActiveFilter={setFilter} /><div className="listing-grid">{filtered.map((project) => <ProjectCard key={project.id} project={project} onOpen={onOpenProject} />)}</div>{filtered.length === 0 && <div className="empty-state"><CircleHelp size={28} /><strong>{emptyTitle}</strong><span>{emptyDescription}</span></div>}</div>
 }
 
 function EventsPage() {
   const { data: { competitionEvents } } = useContent()
+  const { user } = useAuth()
   const [selected, setSelected] = useState<CompetitionEvent | null>(null)
   const [reminderSet, setReminderSet] = useState(false)
-  return <div className="page listing-page events-page"><PageIntro eyebrow="COMPETITION HUB / 08" title="比赛中心" description="把学习带进赛场，在一次次交付里找到自己的节奏。" action={<button className="secondary-button" onClick={() => setReminderSet((value) => !value)}><CalendarDays size={16} /> {reminderSet ? "已加入赛事提醒" : "加入赛事提醒"}</button>} /><div className="event-banner"><div><p className="eyebrow">UP NEXT</p><h2>本学期，和队友一起交付一次。</h2><p>从练习题到一个完整 Demo，比赛会让你的能力变得可见。</p></div><Trophy size={65} /></div><div className="event-grid">{competitionEvents.map((event) => <article className={`event-card event-${event.accent}`} key={event.id} onClick={() => setSelected(event)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(event) } }}><div className="event-card-top"><Tag tone={event.status === '报名中' ? 'mint' : 'violet'}>{event.status}</Tag><span>{event.type}</span></div><div className="event-date"><strong>{event.date.split('.')[0]}</strong><span>．{event.date.split('.')[1]}<small>{event.date.slice(0, 4)}</small></span></div><h3>{event.title}</h3><p>{event.description}</p><div className="event-meta"><span><Clock3 size={13} /> {event.deadline}</span><button className="text-button" onClick={(e) => { e.stopPropagation(); setSelected(event) }}>查看详情 <ArrowUpRight size={13} /></button></div></article>)}</div>{selected && <CompetitionDetailModal event={selected} onClose={() => setSelected(null)} />}</div>
+  const accessibleEvents = competitionEvents.filter((event) => canViewContent(user, event.visibility))
+  const emptyTitle = !user ? '请先登录' : competitionEvents.length ? '暂无可查看的赛事' : '暂时没有赛事'
+  const emptyDescription = !user ? '登录以查看全部赛事资料。' : competitionEvents.length ? '当前账号暂时无法查看这些赛事。' : '赛事资料还在整理中。'
+  return <div className="page listing-page events-page"><PageIntro eyebrow="COMPETITION HUB / 08" title="比赛中心" description="把学习带进赛场，在一次次交付里找到自己的节奏。" action={<button className="secondary-button" onClick={() => setReminderSet((value) => !value)}><CalendarDays size={16} /> {reminderSet ? "已加入赛事提醒" : "加入赛事提醒"}</button>} />{!user && <div className="access-policy-note"><LockKeyhole size={16} /><div><strong>请先登录</strong><span>登录以查看全部赛事资料。</span></div></div>}<div className="event-banner"><div><p className="eyebrow">UP NEXT</p><h2>本学期，和队友一起交付一次。</h2><p>从练习题到一个完整 Demo，比赛会让你的能力变得可见。</p></div><Trophy size={65} /></div><div className="event-grid">{accessibleEvents.map((event) => <article className={`event-card event-${event.accent}`} key={event.id} onClick={() => setSelected(event)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(event) } }}><div className="event-card-top"><Tag tone={event.status === '报名中' ? 'mint' : 'violet'}>{event.status}</Tag><span>{event.type}</span></div><div className="event-date"><strong>{event.date.split('.')[0]}</strong><span>．{event.date.split('.')[1]}<small>{event.date.slice(0, 4)}</small></span></div><h3>{event.title}</h3><p>{event.description}</p><div className="event-meta"><span><Clock3 size={13} /> {event.deadline}</span><button className="text-button" onClick={(e) => { e.stopPropagation(); setSelected(event) }}>查看详情 <ArrowUpRight size={13} /></button></div></article>)}</div>{!accessibleEvents.length && <div className="empty-state"><LockKeyhole size={28} /><strong>{emptyTitle}</strong><span>{emptyDescription}</span></div>}{selected && <CompetitionDetailModal event={selected} onClose={() => setSelected(null)} />}</div>
 }
 
 function CompetitionDetailModal({ event, onClose }: { event: CompetitionEvent; onClose: () => void }) {
   return <div className="admin-modal-scrim competition-detail-scrim" role="presentation" onClick={onClose}><section className="admin-editor-modal competition-detail-modal" role="dialog" aria-modal="true" aria-labelledby="competition-detail-title" onClick={(e) => e.stopPropagation()}><div className="admin-modal-head"><div><p className="eyebrow">COMPETITION / PROJECT ARCHIVE</p><h2 id="competition-detail-title">{event.title}</h2><p>{event.description}</p></div><button className="icon-button small" onClick={onClose} aria-label="关闭比赛详情"><X size={16} /></button></div><div className="competition-detail-meta"><Tag tone={event.status === '报名中' ? 'mint' : 'violet'}>{event.status}</Tag><span><CalendarDays size={14} /> {event.date}</span><span><Clock3 size={14} /> 报名截止 {event.deadline}</span></div><div className="competition-projects"><div className="admin-card-head"><div><p className="eyebrow">COHORT PROJECTS</p><h3>历届学长姐项目</h3></div><span>{event.projects?.length ?? 0} 个项目</span></div>{event.projects?.length ? <div className="competition-project-grid">{event.projects.map((project) => { const projectUrl = safeLink(project.projectUrl); const projectImage = safeImageSource(project.imageUrl); return <article className="competition-project-card" key={project.id}>{projectImage ? <img src={projectImage} alt="" /> : <div className="competition-project-placeholder"><Rocket size={22} /></div>}<div><span className="eyebrow">{project.cohort} 届</span><h4>{project.title}</h4><p>{project.description || '管理员还没有补充项目说明。'}</p>{projectUrl && <a href={projectUrl} target={projectUrl.startsWith('#/') ? undefined : '_blank'} rel="noreferrer" className="text-button" onClick={(e) => e.stopPropagation()}>打开项目 <ExternalLink size={13} /></a>}</div></article> })}</div> : <div className="admin-empty"><Trophy size={22} /><strong>还没有历届项目</strong><span>管理员可以在后台为这项比赛添加届次、项目说明和图片。</span></div>}</div><div className="admin-modal-foot"><span>比赛资料由管理员维护</span><button className="secondary-button admin-small-button" onClick={onClose}>关闭</button></div></section></div>
 }
 function ProjectDetailPage({ project, onNavigate }: { project?: Project; onNavigate: (path: string) => void }) {
+  const { user } = useAuth()
   if (!project) return <div className="page"><div className="empty-state"><Rocket size={28} /><strong>项目暂不可用</strong><span>项目数据尚未同步，请稍后再试。</span><button className="secondary-button" onClick={() => onNavigate('#/projects')}>返回项目库</button></div></div>
+  if (!canViewContent(user, project.visibility)) {
+    const accessDescription = !user ? '登录后可以查看这个项目。' : project.visibility === 'contributors' ? '升级为组员后才能查看完整项目资料。' : '当前账号暂时无法查看这个项目。'
+    return <div className="page"><div className="empty-state access-denied-state"><LockKeyhole size={28} /><strong>{!user ? '请先登录' : '这个项目需要更高权限'}</strong><span>{accessDescription}</span><button className="primary-button" onClick={() => onNavigate(user ? '#/tools' : '#/login')}>{user ? '返回工作台' : '去登录'} <ArrowRight size={15} /></button></div></div>
+  }
   const { data: { members } } = useContent()
   const projectMembers = (project.memberIds ?? []).map((id) => members.find((member) => member.id === id)).filter((member): member is typeof members[number] => Boolean(member))
   const milestones = project.milestones ?? []
@@ -1076,13 +1211,16 @@ function SkillBar({ label, value, tone }: { label: string; value: number; tone: 
 
 function ResourcesPage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const { data: { resources } } = useContent()
+  const { user } = useAuth()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('全部')
   const [sort, setSort] = useState<'hot' | 'new'>('hot')
   const [selected, setSelected] = useState<Resource | null>(null)
+  const [contributionOpen, setContributionOpen] = useState(false)
   const filters = ['全部', '前端', '后端', '算法', 'Python', 'AI', 'Agent', '数据库', 'DevOps']
-  const visible = useMemo(() => resources.filter((item) => (filter === '全部' || item.category === filter) && (item.title + item.description + item.tags.join('')).toLowerCase().includes(search.toLowerCase())).sort((a, b) => sort === 'hot' ? b.views - a.views : b.updated.localeCompare(a.updated)), [resources, filter, search, sort])
-  return <div className="page listing-page"><PageIntro eyebrow="KNOWLEDGE BASE / 03" title="资源库" description="学习资料、路线与实践文档，来自每一届成员的真实积累。" action={<button className="secondary-button" onClick={() => onNavigate('#/resources/prompts')}><Sparkles size={16} /> Prompt 模板库</button>} /><div className="filter-bar"><div className="filter-search"><Search size={16} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索资源、标签..." aria-label="搜索资源" /></div><div className="filter-pills">{filters.map((f) => <button key={f} className={'filter-pill ' + (filter === f ? 'active' : '')} onClick={() => setFilter(f)}>{f}</button>)}</div><button className="filter-sort" onClick={() => setSort((value) => value === 'hot' ? 'new' : 'hot')}><Filter size={15} /> {sort === 'hot' ? '热门' : '最新'} <ChevronDown size={14} /></button></div><div className="resource-list">{visible.map((item) => <ResourceRow key={item.id} resource={item} onOpen={setSelected} />)}</div>{visible.length === 0 && <div className="empty-state"><CircleHelp size={28} /><strong>还没有这类资源</strong><span>换个关键词，或者向小组贡献一份吧。</span></div>}{selected && <div className="admin-modal-scrim" role="presentation" onClick={() => setSelected(null)}><section className="admin-editor-modal" role="dialog" aria-modal="true" aria-labelledby="resource-detail-title" onClick={(event) => event.stopPropagation()}><div className="admin-modal-head"><div><p className="eyebrow">RESOURCE DETAIL</p><h2 id="resource-detail-title">{selected.title}</h2><p>{selected.description}</p></div><button className="icon-button small" onClick={() => setSelected(null)} aria-label="关闭资源详情"><X size={16} /></button></div><div className="resource-detail-body"><div className="resource-meta"><Tag tone="blue">{selected.category}</Tag><Tag>{selected.type}</Tag>{selected.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}</div><p>由 {selected.author} 更新 · {selected.updated} · {selected.views.toLocaleString()} 次浏览</p></div><div className="admin-modal-foot"><span>资源内容由管理员维护</span><button className="secondary-button admin-small-button" onClick={() => setSelected(null)}>关闭</button></div></section></div>}</div>
+  const lockedCount = resources.filter((item) => !canViewContent(user, item.visibility)).length
+  const visible = useMemo(() => resources.filter((item) => canViewContent(user, item.visibility) && (filter === '全部' || item.category === filter) && (item.title + item.description + item.tags.join('')).toLowerCase().includes(search.toLowerCase())).sort((a, b) => sort === 'hot' ? b.views - a.views : b.updated.localeCompare(a.updated)), [resources, user, filter, search, sort])
+  return <div className="page listing-page"><PageIntro eyebrow="KNOWLEDGE BASE / 03" title="资源库" description="学习资料、路线与实践文档，来自每一届成员的真实积累。" action={<div className="resource-page-actions"><button className="secondary-button" onClick={() => onNavigate('#/resources/prompts')}><Sparkles size={16} /> Prompt 模板库</button><button className="primary-button" onClick={() => user ? setContributionOpen(true) : onNavigate('#/login')}><Send size={16} /> {user ? '贡献资料' : '登录后投稿'}</button></div>} />{!user && <div className="access-policy-note"><LockKeyhole size={16} /><div><strong>请先登录</strong><span>登录以查看全部资源。</span></div><button className="text-button" onClick={() => onNavigate('#/login')}>去登录 <ArrowRight size={14} /></button></div>}{lockedCount > 0 && user && <div className="access-policy-note"><LockKeyhole size={16} /><div><strong>还有 {lockedCount} 份资料需要组员权限</strong><span>升级为组员后可以查看全部受限资料。</span></div></div>}<div className="filter-bar"><div className="filter-search"><Search size={16} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索资源、标签..." aria-label="搜索资源" /></div><div className="filter-pills">{filters.map((f) => <button key={f} className={'filter-pill ' + (filter === f ? 'active' : '')} onClick={() => setFilter(f)}>{f}</button>)}</div><button className="filter-sort" onClick={() => setSort((value) => value === 'hot' ? 'new' : 'hot')}><Filter size={15} /> {sort === 'hot' ? '热门' : '最新'} <ChevronDown size={14} /></button></div><div className="resource-list">{visible.map((item) => <ResourceRow key={item.id} resource={item} onOpen={setSelected} />)}</div>{visible.length === 0 && <div className="empty-state"><CircleHelp size={28} /><strong>{!user ? '请先登录' : lockedCount ? '需要组员权限' : '还没有这类资源'}</strong><span>{!user ? '登录以查看全部资源。' : lockedCount ? '升级为组员后可以查看全部受限资料。' : '换个关键词，或者贡献一份资料吧。'}</span></div>}{selected && <div className="admin-modal-scrim" role="presentation" onClick={() => setSelected(null)}><section className="admin-editor-modal" role="dialog" aria-modal="true" aria-labelledby="resource-detail-title" onClick={(event) => event.stopPropagation()}><div className="admin-modal-head"><div><p className="eyebrow">RESOURCE DETAIL</p><h2 id="resource-detail-title">{selected.title}</h2><p>{selected.description}</p></div><button className="icon-button small" onClick={() => setSelected(null)} aria-label="关闭资源详情"><X size={16} /></button></div><div className="resource-detail-body"><div className="resource-meta"><Tag tone="blue">{selected.category}</Tag><Tag>{selected.type}</Tag>{selected.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}</div><p>由 {selected.author} 更新 · {selected.updated} · {selected.views.toLocaleString()} 次浏览</p></div><div className="admin-modal-foot"><span>资源内容由管理员维护</span><button className="secondary-button admin-small-button" onClick={() => setSelected(null)}>关闭</button></div></section></div>}{contributionOpen && <ContributionSubmissionModal onClose={() => setContributionOpen(false)} />}</div>
 }
 
 function ResourceRow({ resource, onOpen }: { resource: Resource; onOpen: (resource: Resource) => void }) {
@@ -1091,21 +1229,28 @@ function ResourceRow({ resource, onOpen }: { resource: Resource; onOpen: (resour
 
 function PromptsPage() {
   const { data: { prompts } } = useContent()
+  const { user } = useAuth()
   const [copied, setCopied] = useState<string | null>(null)
   const [category, setCategory] = useState('全部')
   const copyPrompt = async (prompt: string, id: string) => { try { await navigator.clipboard.writeText(prompt) } catch { /* clipboard may be unavailable in preview */ } setCopied(id); window.setTimeout(() => setCopied(null), 1600) }
   const categories = ['全部', '编程', '代码 Review', 'Debug', '学习', '论文', '数据分析', 'Agent']
   const visible = prompts.filter((prompt) => category === '全部' || prompt.category === category)
-  return <div className="page listing-page"><PageIntro eyebrow="PROMPT LIBRARY / 04" title="Prompt 模板库" description="把好问题保存下来，让每一次思考都更接近答案。" action={<button className="primary-button" onClick={() => navigate('#/login')}><Copy size={16} /> 登录后提交模板</button>} /><div className="prompt-categories">{categories.map((item) => <button className={category === item ? 'active' : ''} onClick={() => setCategory(item)} key={item}>{item}</button>)}</div><div className="prompt-grid">{visible.map((prompt) => <article className="prompt-card" key={prompt.id}><div className="prompt-card-head"><Tag tone="violet">{prompt.category}</Tag><span>{prompt.model}</span></div><h3>{prompt.title}</h3><p>{prompt.usage}</p><div className="prompt-preview"><span>›</span>{prompt.preview}</div><button className={'secondary-button copy-button ' + (copied === prompt.id ? 'copied' : '')} onClick={() => copyPrompt(prompt.preview, prompt.id)}>{copied === prompt.id ? <><Check size={15} /> 已复制</> : <><Copy size={15} /> 复制 Prompt</>}</button></article>)}</div>{visible.length === 0 && <div className="empty-state"><CircleHelp size={28} /><strong>还没有这个分类的模板</strong><span>可以换个分类，或登录后提交一条。</span></div>}</div>
+  const emptyTitle = prompts.length === 0 ? '暂时没有模板' : '还没有这个分类的模板'
+  const emptyDescription = prompts.length === 0 ? '模板资料还在整理中。' : user ? '换个分类再试试。' : '可以换个分类，或登录后提交一条。'
+  return <div className="page listing-page"><PageIntro eyebrow="PROMPT LIBRARY / 04" title="Prompt 模板库" description="把好问题保存下来，让每一次思考都更接近答案。" action={!user ? <button className="primary-button" onClick={() => navigate('#/login')}><Copy size={16} /> 登录后提交模板</button> : undefined} /><div className="prompt-categories">{categories.map((item) => <button className={category === item ? 'active' : ''} onClick={() => setCategory(item)} key={item}>{item}</button>)}</div><div className="prompt-grid">{visible.map((prompt) => <article className="prompt-card" key={prompt.id}><div className="prompt-card-head"><Tag tone="violet">{prompt.category}</Tag><span>{prompt.model}</span></div><h3>{prompt.title}</h3><p>{prompt.usage}</p><div className="prompt-preview"><span>›</span>{prompt.preview}</div><button className={'secondary-button copy-button ' + (copied === prompt.id ? 'copied' : '')} onClick={() => copyPrompt(prompt.preview, prompt.id)}>{copied === prompt.id ? <><Check size={15} /> 已复制</> : <><Copy size={15} /> 复制 Prompt</>}</button></article>)}</div>{visible.length === 0 && <div className="empty-state"><CircleHelp size={28} /><strong>{emptyTitle}</strong><span>{emptyDescription}</span></div>}</div>
 }
 
 function InterviewsPage() {
   const { data: { interviews } } = useContent()
+  const { user } = useAuth()
   const [filter, setFilter] = useState('全部')
   const [sortDesc, setSortDesc] = useState(true)
   const filters = ['全部', '实习', '校招', '前端', '后端', 'AI']
-  const visible = useMemo(() => interviews.filter((item) => filter === '全部' || item.role.includes(filter) || item.tags.some((tag) => tag.includes(filter))).sort((a, b) => sortDesc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date)), [interviews, filter, sortDesc])
-  return <div className="page listing-page"><PageIntro eyebrow="INTERVIEW WALL / 05" title="面经墙" description="把一次面试的经验，变成下一次更从容的准备。" action={<button className="primary-button" onClick={() => navigate('#/login')}><MessageCircle size={16} /> 登录后分享面经</button>} /><div className="interview-filters">{filters.map((item) => <button key={item} className={'filter-pill ' + (filter === item ? 'active' : '')} onClick={() => setFilter(item)}>{item}</button>)}<span className="filter-spacer" /><button className="filter-sort" onClick={() => setSortDesc((value) => !value)}><Filter size={15} /> {sortDesc ? '最新' : '最早'}</button></div><div className="interview-list">{visible.map((item) => <article className="interview-card" key={item.id}><div className="company-logo">{item.company.slice(0, 1)}</div><div className="interview-main"><div className="interview-title"><h3>{item.company} · {item.role}</h3><Tag tone={item.difficulty === '困难' ? 'red' : item.difficulty === '中等' ? 'orange' : 'mint'}>{item.difficulty}</Tag></div><p>{item.summary}</p><div className="interview-meta"><span><Avatar initials={item.author.slice(0, 2)} size="sm" /> {item.author} · {item.cohort}</span><span>{item.date}</span><span>{item.rounds} 轮面试</span>{item.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}</div></div></article>)}</div>{visible.length === 0 && <div className="empty-state"><CircleHelp size={28} /><strong>还没有匹配的面经</strong><span>换个分类或关键词再试试。</span></div>}</div>
+  const accessibleInterviews = interviews.filter((item) => canViewContent(user, item.visibility))
+  const visible = useMemo(() => accessibleInterviews.filter((item) => filter === '全部' || item.role.includes(filter) || item.tags.some((tag) => tag.includes(filter))).sort((a, b) => sortDesc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date)), [accessibleInterviews, filter, sortDesc])
+  const emptyTitle = accessibleInterviews.length ? '还没有匹配的面经' : !user ? '请先登录' : interviews.length ? '暂无可查看的面经' : '暂时没有面经'
+  const emptyDescription = accessibleInterviews.length ? '换个分类或关键词再试试。' : !user ? '登录以查看全部面经。' : interviews.length ? '当前账号暂时无法查看这些面经。' : '面经资料还在整理中。'
+  return <div className="page listing-page"><PageIntro eyebrow="INTERVIEW WALL / 05" title="面经墙" description="把一次面试的经验，变成下一次更从容的准备。" action={!user ? <button className="primary-button" onClick={() => navigate('#/login')}><MessageCircle size={16} /> 登录后分享面经</button> : undefined} />{!user && <div className="access-policy-note"><LockKeyhole size={16} /><div><strong>请先登录</strong><span>登录以查看全部面经。</span></div></div>}<div className="interview-filters">{filters.map((item) => <button key={item} className={'filter-pill ' + (filter === item ? 'active' : '')} onClick={() => setFilter(item)}>{item}</button>)}<span className="filter-spacer" /><button className="filter-sort" onClick={() => setSortDesc((value) => !value)}><Filter size={15} /> {sortDesc ? '最新' : '最早'}</button></div><div className="interview-list">{visible.map((item) => <article className="interview-card" key={item.id}><div className="company-logo">{item.company.slice(0, 1)}</div><div className="interview-main"><div className="interview-title"><h3>{item.company} · {item.role}</h3><Tag tone={item.difficulty === '困难' ? 'red' : item.difficulty === '中等' ? 'orange' : 'mint'}>{item.difficulty}</Tag></div><p>{item.summary}</p><div className="interview-meta"><span><Avatar initials={item.author.slice(0, 2)} size="sm" /> {item.author} · {item.cohort}</span><span>{item.date}</span><span>{item.rounds} 轮面试</span>{item.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}</div></div></article>)}</div>{visible.length === 0 && <div className="empty-state"><CircleHelp size={28} /><strong>{emptyTitle}</strong><span>{emptyDescription}</span></div>}</div>
 }
 function DynamicClubDirections() {
   const { data: { members: managedMembers, membersManaged } } = useContent()
@@ -1172,7 +1317,7 @@ function AiDrawer({ open, onClose, messages, onSend }: { open: boolean; onClose:
   return <AnimatePresence>{open && <><motion.div className="drawer-scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} /><motion.aside className="ai-drawer" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ duration: 0.24, ease: 'easeOut' }}><div className="drawer-head"><div className="ai-title"><span className="ai-live-icon"><Bot size={16} /></span><strong>AI 助手</strong><span className="online-status"><i /> 在线</span></div><button className="icon-button small" onClick={onClose} aria-label="关闭 AI 助手"><X size={17} /></button></div><div className="drawer-body">{messages.slice(-3).map((message) => <div className={`drawer-message ${message.role}`} key={message.id}><span className="drawer-avatar">{message.role === 'assistant' ? <Bot size={15} /> : '你'}</span><div><p>{message.content}</p>{message.citations && <CitationCard citations={message.citations.slice(0, 2)} />}</div></div>)}<div className="drawer-suggestions"><span>试试这样问</span><button onClick={() => onSend('我现在能参加哪些项目？')}>我现在能参加哪些项目？</button><button onClick={() => onSend('给我一条后端学习建议')}>给我一条后端学习建议</button></div></div><div className="drawer-composer"><textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="问问科技小组 AI..." rows={1} /><button onClick={send} aria-label="发送"><Send size={16} /></button><small>回答会标注可追溯的参考资料</small></div></motion.aside></>}</AnimatePresence>
 }
 
-type AdminSection = 'overview' | 'cohorts' | 'members' | 'content' | 'announcements' | 'personalization' | 'security' | 'logs'
+type AdminSection = 'overview' | 'cohorts' | 'members' | 'content' | 'announcements' | 'contributions' | 'invites' | 'personalization' | 'security' | 'logs'
 
 type CompetitionEditorValue = {
   title: string
@@ -1447,6 +1592,8 @@ const adminNavItems: AdminNavItem[] = [
   { id: 'members', label: '成员账号', description: '资料与权限', icon: UserCog },
   { id: 'content', label: '内容管理', description: '项目、资源与面经', icon: Folder },
   { id: 'announcements', label: '公告管理', description: '发布与下线', icon: Megaphone },
+  { id: 'contributions', label: '投稿审核', description: '审核外部资料', icon: Send, leaderOnly: true },
+  { id: 'invites', label: '邀请码', description: '生成加入凭证', icon: KeyRound, leaderOnly: true },
   { id: 'personalization', label: '个性化设置', description: '主题与文案', icon: Palette },
   { id: 'security', label: '安全设置', description: '访问策略与会话', icon: ShieldAlert, leaderOnly: true },
   { id: 'logs', label: '操作日志', description: '审计与追踪', icon: ScrollText },
@@ -1458,6 +1605,8 @@ const adminSectionMeta: Record<AdminSection, { eyebrow: string; title: string; d
   members: { eyebrow: 'ADMIN / ACCOUNTS', title: '成员账号', description: '管理成员资料、角色与账号状态。密码只通过安全流程重置。' },
   content: { eyebrow: 'ADMIN / CONTENT', title: '内容管理', description: '统一维护学习路线、项目、资源、面经和比赛数据。' },
   announcements: { eyebrow: 'ADMIN / BROADCAST', title: '公告管理', description: '发布、编辑和下线面向小组成员的站内公告。' },
+  contributions: { eyebrow: 'ADMIN / MODERATION', title: '投稿审核', description: '审核注册成员提交的资料，只有通过审核的内容才会进入资源库。' },
+  invites: { eyebrow: 'ADMIN / INVITES', title: '邀请码', description: '生成有有效期和使用次数限制的组员邀请凭证。' },
   personalization: { eyebrow: 'ADMIN / EXPERIENCE', title: '个性化设置', description: '控制全局视觉基线，同时保留成员自己的背景与头像偏好。' },
   security: { eyebrow: 'ADMIN / SECURITY', title: '安全设置', description: '配置后台访问策略与会话规则；隧道进程由服务器运维管理。' },
   logs: { eyebrow: 'ADMIN / AUDIT', title: '操作日志', description: '查看登录、内容变更和权限调整记录，方便追溯责任。' },
@@ -1475,6 +1624,27 @@ function readAdminPreference<T>(key: string, fallback: T): T {
 function writeAdminPreference(key: string, value: unknown) {
   try { window.localStorage.setItem(key, JSON.stringify(value)) } catch { /* Storage may be unavailable. */ }
 }
+
+function toDateTimeLocal(date: Date) {
+  const offset = date.getTimezoneOffset()
+  return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 16)
+}
+
+function formatInviteExpiry(expiresAt: string) {
+  const remainingMs = Date.parse(expiresAt) - Date.now()
+  if (remainingMs <= 0) return '已过期'
+  const remainingHours = Math.ceil(remainingMs / (60 * 60 * 1000))
+  if (remainingHours < 24) return `还剩 ${remainingHours} 小时`
+  return `还剩 ${Math.ceil(remainingHours / 24)} 天`
+}
+
+const inviteStatusLabels: Record<InviteCode['status'], string> = {
+  active: '可使用',
+  expired: '已过期',
+  exhausted: '次数用完',
+  revoked: '已撤销',
+}
+
 function AdminPage({ onNavigate, theme, onThemeChange, backgroundPreference, onBackgroundPreferenceChange, backgroundImage, onBackgroundImageChange }: { onNavigate: (path: string) => void; theme: Theme; onThemeChange: () => void; backgroundPreference: BackgroundPreference; onBackgroundPreferenceChange: (value: BackgroundPreference) => void; backgroundImage: string | null; onBackgroundImageChange: (value: string | null) => void }) {
   const { user, loading, updateProfile, changePassword } = useAuth()
   const { sortedCohorts, currentCohort } = useClubConfig()
@@ -1519,6 +1689,12 @@ function AdminPage({ onNavigate, theme, onThemeChange, backgroundPreference, onB
   const [ipRestriction, setIpRestriction] = useState(() => readAdminPreference('club-admin-ip-restriction', false))
   const [sessionPolicy, setSessionPolicy] = useState(() => readAdminPreference('club-admin-session-policy', true))
   const [tunnelStatus, setTunnelStatus] = useState(() => readAdminPreference('club-admin-tunnel-status', '未连接'))
+  const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([])
+  const [inviteExpiresAt, setInviteExpiresAt] = useState(() => toDateTimeLocal(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)))
+  const [inviteMaxUses, setInviteMaxUses] = useState('1')
+  const [contributionSubmissions, setContributionSubmissions] = useState<ContributionSubmission[]>([])
+  const [accountStatuses, setAccountStatuses] = useState<Record<string, AccountStatus>>(() => readAdminPreference('club-demo-account-statuses', {}))
+  const [demoAccountDirectory, setDemoAccountDirectory] = useState<AuthUser[]>([])
 
 
   useEffect(() => { writeAdminPreference('club-admin-global-theme', globalTheme) }, [globalTheme])
@@ -1526,6 +1702,23 @@ function AdminPage({ onNavigate, theme, onThemeChange, backgroundPreference, onB
   useEffect(() => { writeAdminPreference('club-admin-ip-restriction', ipRestriction) }, [ipRestriction])
   useEffect(() => { writeAdminPreference('club-admin-session-policy', sessionPolicy) }, [sessionPolicy])
   useEffect(() => { writeAdminPreference('club-admin-tunnel-status', tunnelStatus) }, [tunnelStatus])
+  useEffect(() => { writeAdminPreference('club-demo-account-statuses', accountStatuses) }, [accountStatuses])
+
+  useEffect(() => {
+    if (!user) return
+    const loadAdminApiData = async () => {
+      try { setInviteCodes(await listInviteCodes()) } catch { setInviteCodes([]) }
+      try { setDemoAccountDirectory(await listManagedAccounts()) } catch { setDemoAccountDirectory([]) }
+    }
+    void loadAdminApiData()
+    const refreshInviteStatuses = () => { void listInviteCodes().then(setInviteCodes).catch(() => setInviteCodes([])) }
+    const timer = window.setInterval(refreshInviteStatuses, 60_000)
+    return () => window.clearInterval(timer)
+  }, [user])
+
+  useEffect(() => {
+    void listContributionSubmissions().then(setContributionSubmissions).catch(() => setContributionSubmissions([]))
+  }, [])
 
   useEffect(() => {
     if (!toast) return
@@ -1587,6 +1780,79 @@ function AdminPage({ onNavigate, theme, onThemeChange, backgroundPreference, onB
     { time: '05-16 21:11', action: '编辑项目资料', target: '校园 AI 智能助手', tone: 'violet' },
   ]
   const showToast = (message: string) => setToast(message)
+  const handleCreateInviteCode = async () => {
+    try {
+      const created = await createInviteCode({ expiresAt: inviteExpiresAt, maxUses: Number(inviteMaxUses) })
+      setInviteCodes(await listInviteCodes())
+      setInviteExpiresAt(toDateTimeLocal(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)))
+      setInviteMaxUses('1')
+      showToast(`邀请码 ${created.code} 已生成`)
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '邀请码生成失败，请检查设置')
+    }
+  }
+  const handleCopyInviteCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code)
+      showToast('邀请码已复制到剪贴板')
+    } catch {
+      showToast(`复制失败，请手动复制 ${code}`)
+    }
+  }
+  const handleRevokeInviteCode = async (id: string) => {
+    try {
+      await revokeInviteCode(id)
+      setInviteCodes(await listInviteCodes())
+      showToast('邀请码已撤销，之后不能再兑换')
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '邀请码撤销失败')
+    }
+  }
+  const handleReviewSubmission = async (submission: ContributionSubmission, status: 'approved' | 'rejected') => {
+    try {
+      if (status === 'approved') {
+        const extraLink = submission.resourceUrl ? `\n资料链接：${submission.resourceUrl}` : ''
+        const extraFile = submission.fileName ? `\n附件：${submission.fileName}` : ''
+        await createResource({ title: submission.title, description: `${submission.description}${extraLink}${extraFile}`, category: submission.category, type: submission.fileName ? '文件' : '链接', tags: ['成员投稿'], author: submission.submitterName, updated: new Date().toLocaleDateString('zh-CN'), views: 0, accent: 'blue', visibility: 'members' })
+      }
+      await reviewContributionSubmission(submission.id, status, status === 'approved' ? '管理员已审核通过' : '管理员暂未通过这份投稿')
+      setContributionSubmissions(await listContributionSubmissions())
+      showToast(status === 'approved' ? '投稿已通过并进入资源库' : '投稿已退回，资源库不会展示')
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '投稿审核失败，请稍后重试')
+    }
+  }
+  const getMemberAccountStatus = (memberId: string): AccountStatus => accountStatuses[memberId] ?? 'active'
+  const handleToggleMemberAccount = (memberId: string) => {
+    if (!isLeader) { showToast('只有组长可以修改账号状态'); return }
+    setAccountStatuses((current) => ({ ...current, [memberId]: current[memberId] === 'disabled' ? 'active' : 'disabled' }))
+    showToast(getMemberAccountStatus(memberId) === 'disabled' ? '账号已恢复使用' : '账号已禁用，不能继续登录')
+  }
+  const handleCloseMemberAccount = (memberId: string) => {
+    if (!isLeader) { showToast('只有组长可以注销账号'); return }
+    setAccountStatuses((current) => ({ ...current, [memberId]: 'closed' }))
+    showToast('账号已注销，后续不能再登录')
+  }
+  const handleToggleDemoAccount = async (accountId: string) => {
+    if (!isLeader) { showToast('只有组长可以修改登录账号状态'); return }
+    if (accountId === user.id) { showToast('不能在当前登录会话中禁用自己'); return }
+    const account = demoAccountDirectory.find((item) => item.id === accountId)
+    if (!account) return
+    try {
+      await updateManagedAccountStatus(accountId, account.status === 'disabled' ? 'active' : 'disabled')
+      setDemoAccountDirectory(await listManagedAccounts())
+      showToast(account.status === 'disabled' ? '账号已恢复使用' : '账号已禁用，之后不能登录')
+    } catch (error) { showToast(error instanceof Error ? error.message : '账号状态更新失败') }
+  }
+  const handleCloseDemoAccount = async (accountId: string) => {
+    if (!isLeader) { showToast('只有组长可以注销登录账号'); return }
+    if (accountId === user.id) { showToast('请在右上角个人菜单中注销自己的账号'); return }
+    try {
+      await updateManagedAccountStatus(accountId, 'closed')
+      setDemoAccountDirectory(await listManagedAccounts())
+      showToast('账号已注销，之后不能登录')
+    } catch (error) { showToast(error instanceof Error ? error.message : '账号注销失败') }
+  }
   const openCohortManager = (cohortId?: string) => {
     setCohortManagerInitialId(cohortId)
     setCohortManagerOpen(true)
@@ -1741,7 +2007,7 @@ function AdminPage({ onNavigate, theme, onThemeChange, backgroundPreference, onB
     const title = contentDraft.title.trim()
     const description = contentDraft.description.trim()
     const now = new Date().getFullYear()
-    const visibility = isLeader && contentDraft.visibility === '全站公开' ? 'public' as const : 'members' as const
+    const visibility = contentDraft.visibility === '组员可见' ? 'contributors' as const : isLeader && contentDraft.visibility === '全站公开' ? 'public' as const : 'members' as const
     try {
       if (contentDraft.module === '项目库') {
         await createProject({ name: title, slug: `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`, description, stack: [], members: 0, stars: 0, status: contentDraft.status === '已归档' ? '已归档' : contentDraft.status === '已发布' ? '招募中' : '维护中', difficulty: 1, year: now, category: '科技小组', accent: 'blue', icon: 'rocket', featured: false, visibility })
@@ -1769,7 +2035,7 @@ function AdminPage({ onNavigate, theme, onThemeChange, backgroundPreference, onB
   const saveCollection = async (draft: CollectionDraft) => {
     if (!draft.title.trim()) { showToast('请填写内容标题'); return }
     if (!draft.description.trim()) { showToast('请填写内容简介'); return }
-    const visibility = isLeader && draft.visibility === '全站公开' ? 'public' as const : 'members' as const
+    const visibility = draft.visibility === '组员可见' ? 'contributors' as const : isLeader && draft.visibility === '全站公开' ? 'public' as const : 'members' as const
     const asNumber = (value: string, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback
     let savedId: string | undefined
     try {
@@ -1942,6 +2208,10 @@ function AdminPage({ onNavigate, theme, onThemeChange, backgroundPreference, onB
 
 
   const renderMembers = () => <div className="admin-stack">
+    <section className="admin-card admin-account-directory">
+      <div className="admin-card-head"><div><p className="eyebrow">LOGIN ACCOUNTS</p><h2>登录账号状态</h2></div><span className="admin-card-hint">{isDemoAuth ? '本地演示账号目录' : '后端账号目录'}</span></div>
+      {demoAccountDirectory.length ? <div className="admin-login-account-list">{demoAccountDirectory.map((account) => { const accountStatus = account.status ?? 'active'; const statusLabel = accountStatus === 'disabled' ? '已禁用' : accountStatus === 'closed' ? '已注销' : '正常'; return <div className="admin-login-account-row" key={account.id}><Avatar initials={account.initials} size="sm" /><div><strong>{account.name}</strong><small>{account.email} · {roleLabels[account.role] ?? account.role}</small></div><span className={`admin-member-status ${accountStatus}`}><i /> {statusLabel}</span><div className="admin-row-actions">{accountStatus !== 'closed' && <button className="admin-link-button" onClick={() => handleToggleDemoAccount(account.id)} disabled={!isLeader || account.id === user.id}>{accountStatus === 'disabled' ? <><Check size={13} /> 启用</> : <><ShieldAlert size={13} /> 禁用</>}</button>}{accountStatus !== 'closed' && <button className="admin-link-button admin-danger-link" onClick={() => handleCloseDemoAccount(account.id)} disabled={!isLeader || account.id === user.id}>注销</button>}</div></div> })}</div> : <div className="admin-empty admin-account-empty"><UserCog size={20} /><strong>{isDemoAuth ? '暂无演示账号' : '暂无后端账号'}</strong><span>{isDemoAuth ? '本地演示模式会在这里显示可测试账号。' : '后端暂时没有返回可管理的账号。'}</span></div>}
+    </section>
     <section className="admin-card">
       <div className="admin-card-head"><div><p className="eyebrow">ACCOUNT DIRECTORY</p><h2>成员账号</h2></div><div className="admin-head-actions">{isLeader && <button className="secondary-button admin-small-button" onClick={() => openMemberEditor()}><Plus size={15} /> 添加成员</button>}<button className="primary-button admin-small-button" onClick={() => showToast('批量导入将在后端接入 CSV 接口后启用')}><UserCog size={15} /> 批量导入</button></div></div>
       <div className="admin-member-cohort-nav" aria-label="按届次查看成员"><button type="button" className={memberCohortFilter === '全部' ? 'active' : ''} onClick={() => { setMemberCohortFilter('全部'); setMemberTeamFilter('全部'); setMemberPage(1) }}><strong>全部成员</strong><small>{scopedMembers.length} 人</small></button>{sortedCohorts.filter((cohort) => isLeader || cohort.year === user.cohort.replace(" 届", "")).map((cohort) => { const count = scopedMembers.filter((member) => member.cohort.replace(/\D/g, '') === cohort.year).length; return <button type="button" key={cohort.id} className={memberCohortFilter === cohort.year ? 'active' : ''} onClick={() => { setMemberCohortFilter(cohort.year); setMemberTeamFilter('全部'); setMemberPage(1) }}><strong>{cohort.year} 届</strong><small>{count} 人</small></button> })}</div>
@@ -1953,18 +2223,44 @@ function AdminPage({ onNavigate, theme, onThemeChange, backgroundPreference, onB
         </div>
         <span>{visibleMembers.length} 个结果 · {scopeLabel}</span>
       </div>
-      {visibleMembers.length ? <><div className="admin-member-list">{pagedMembers.map((member) => <div className="admin-member-row" key={member.id}><Avatar initials={member.initials} accent={member.accent} size="sm" /><div className="admin-member-main"><strong>{member.name}</strong><small>{member.direction} · {member.cohort}</small></div><Tag tone={member.role.includes('组长') ? 'blue' : member.role === '负责人' ? 'mint' : 'neutral'}>{member.role}</Tag><span className="admin-member-status"><i /> 正常</span><div className="admin-row-actions"><button className="admin-link-button" onClick={() => openMemberEditor(member)}>编辑 <ArrowUpRight size={13} /></button>{isLeader && <button className="admin-link-button admin-danger-link" onClick={() => { void removeMember(member.id) }}>删除</button>}</div></div>)}</div>{memberPageCount > 1 && <div className="admin-member-pagination"><span>第 {safeMemberPage} / {memberPageCount} 页 · 共 {visibleMembers.length} 人</span><div><button type="button" className="secondary-button admin-small-button" disabled={safeMemberPage === 1} onClick={() => setMemberPage((page) => Math.max(1, page - 1))}>上一页</button><button type="button" className="secondary-button admin-small-button" disabled={safeMemberPage === memberPageCount} onClick={() => setMemberPage((page) => Math.min(memberPageCount, page + 1))}>下一页</button></div></div>}</> : <div className="admin-empty"><UserCog size={22} /><strong>{memberSearch ? '没有匹配的成员' : memberCohortFilter !== '全部' || memberTeamFilter !== '全部' ? '这个筛选下还没有成员' : user.cohort + '成员资料还未同步'}</strong><span>管理员登录后可在这里补充头像、简介、方向和账号状态。</span><button className="secondary-button admin-small-button" onClick={() => openMemberEditor()} disabled={!isLeader}>开始整理</button></div>}
+      {visibleMembers.length ? <><div className="admin-member-list">{pagedMembers.map((member) => { const accountStatus = getMemberAccountStatus(member.id); const statusLabel = accountStatus === 'disabled' ? '已禁用' : accountStatus === 'closed' ? '已注销' : '正常'; return <div className="admin-member-row" key={member.id}><Avatar initials={member.initials} accent={member.accent} size="sm" /><div className="admin-member-main"><strong>{member.name}</strong><small>{member.direction} · {member.cohort}</small></div><Tag tone={member.role.includes('组长') ? 'blue' : member.role === '负责人' ? 'mint' : 'neutral'}>{member.role}</Tag><span className={`admin-member-status ${accountStatus}`}><i /> {statusLabel}</span><div className="admin-row-actions"><button className="admin-link-button" onClick={() => openMemberEditor(member)}>编辑 <ArrowUpRight size={13} /></button>{isLeader && accountStatus !== 'closed' && <button className="admin-link-button" onClick={() => handleToggleMemberAccount(member.id)}>{accountStatus === 'disabled' ? <><Check size={13} /> 启用</> : <><ShieldAlert size={13} /> 禁用</>}</button>}{isLeader && accountStatus !== 'closed' && <button className="admin-link-button admin-danger-link" onClick={() => handleCloseMemberAccount(member.id)}>注销</button>}{isLeader && <button className="admin-link-button admin-danger-link" onClick={() => { void removeMember(member.id) }}>删除</button>}</div></div> })}</div>{memberPageCount > 1 && <div className="admin-member-pagination"><span>第 {safeMemberPage} / {memberPageCount} 页 · 共 {visibleMembers.length} 人</span><div><button type="button" className="secondary-button admin-small-button" disabled={safeMemberPage === 1} onClick={() => setMemberPage((page) => Math.max(1, page - 1))}>上一页</button><button type="button" className="secondary-button admin-small-button" disabled={safeMemberPage === memberPageCount} onClick={() => setMemberPage((page) => Math.min(memberPageCount, page + 1))}>下一页</button></div></div>}</> : <div className="admin-empty"><UserCog size={22} /><strong>{memberSearch ? '没有匹配的成员' : memberCohortFilter !== '全部' || memberTeamFilter !== '全部' ? '这个筛选下还没有成员' : user.cohort + '成员资料还未同步'}</strong><span>管理员登录后可在这里补充头像、简介、方向和账号状态。</span><button className="secondary-button admin-small-button" onClick={() => openMemberEditor()} disabled={!isLeader}>开始整理</button></div>}
     </section>
     <section className="admin-note-card"><LockKeyhole size={16} /><div><strong>密码安全提示</strong><p>后台不显示成员原密码。重置密码时生成一次性链接，并写入操作日志。</p></div></section>
   </div>
   const renderContent = () => {
     const modules = [{ label: '学习路线', count: data.learningRoutes.length, icon: Route, tone: 'blue', note: '路线标题与节点' }, { label: '项目库', count: data.projects.length, icon: Rocket, tone: 'violet', note: '项目状态与成员' }, { label: '资源库', count: data.resources.length, icon: Folder, tone: 'mint', note: '资料、文档与链接' }, { label: '面经墙', count: data.interviews.length, icon: MessageCircle, tone: 'orange', note: '经验、轮次与标签' }, { label: '比赛中心', count: data.competitionEvents.length, icon: Trophy, tone: 'rose', note: '赛事与报名状态' }, { label: '历届合影', count: sortedCohorts.length, icon: Camera, tone: 'blue', note: '照片墙与管理员上传' }]
-    return <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">CONTENT REGISTRY</p><h2>内容模块</h2></div><button className="primary-button admin-small-button" onClick={() => openCollectionManager('项目库')}><Plus size={15} /> 新建内容</button></div><div className="admin-content-grid">{modules.map(({ label, count, icon: ContentIcon, tone, note }) => <button className="admin-content-module" key={label} onClick={() => { if (label === '历届合影') setPhotoManagerOpen(true); else if (label === '比赛中心') setCompetitionManagerOpen(true); else if (label === '学习路线') openLearningRouteEditor(); else openCollectionManager(label as AdminCollectionKind) }}><span className={`admin-content-icon tone-${tone}`}><ContentIcon size={17} /></span><span><strong>{label}</strong><small>{count} 条 · {note}</small></span><ArrowUpRight size={14} /></button>)}</div></section><section className="admin-card admin-api-card"><div className="admin-api-mark"><ServerCog size={19} /></div><div><p className="eyebrow">API READY</p><h2>内容编辑器已接通</h2><p>学习路线、项目、资源和面经都通过独立 CRUD 接口保存；本地开发使用浏览器持久化，接入后端时无需重写页面。</p></div><Tag tone="mint">可直接接 API</Tag></section></div>
+    return <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">CONTENT REGISTRY</p><h2>内容模块</h2></div><button className="primary-button admin-small-button" onClick={() => openCollectionManager('项目库')}><Plus size={15} /> 新建内容</button></div><div className="admin-content-grid">{modules.map(({ label, count, icon: ContentIcon, tone, note }) => <button className="admin-content-module" key={label} onClick={() => { if (label === '历届合影') setPhotoManagerOpen(true); else if (label === '比赛中心') setCompetitionManagerOpen(true); else if (label === '学习路线') openLearningRouteEditor(); else openCollectionManager(label as AdminCollectionKind) }}><span className={`admin-content-icon tone-${tone}`}><ContentIcon size={17} /></span><span><strong>{label}</strong><small>{count} 条 · {note}</small></span><ArrowUpRight size={14} /></button>)}</div></section><section className="admin-card admin-api-card"><div className="admin-api-mark"><ServerCog size={19} /></div><div><p className="eyebrow">API READY</p><h2>内容编辑器已接通</h2><p>{isDemoAuth ? '当前使用浏览器持久化保存内容；切换到 API 模式后，页面会改为通过后端接口读写。' : '当前页面会通过后端 CRUD 接口读取和保存内容；后端完成对应路由后即可在这里管理。'}</p></div><Tag tone="mint">可直接接 API</Tag></section></div>
   }
   const renderAnnouncements = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">BROADCAST CENTER</p><h2>公告列表</h2></div><button className="primary-button admin-small-button" onClick={() => openAnnouncementEditor()}><Plus size={15} /> 新建公告</button></div><div className="admin-announcement-list">{announcementItems.map((announcement) => <div className="admin-announcement-row" key={announcement.id}><Tag tone={announcement.category === '重要' ? 'red' : announcement.category === '比赛' ? 'orange' : 'blue'}>{announcement.category}</Tag><div><strong>{announcement.title}</strong><small>{announcement.detail}</small></div><time>{announcement.date}</time><span className={`admin-announcement-status ${announcement.published ? 'published' : 'draft'}`}>{announcement.published ? '已发布' : '草稿'}</span><div className="admin-row-actions"><button className="admin-link-button" onClick={() => openAnnouncementEditor(announcement)}>编辑 <ArrowUpRight size={13} /></button><button className="admin-link-button admin-danger-link" onClick={() => { void removeAnnouncement(announcement.id) }}>删除</button></div></div>)}</div></section><section className="admin-card admin-publish-card"><div><p className="eyebrow">PUBLISHING RULE</p><h2>发布前检查</h2><p>公告发布后会记录发布人、发布时间和可见范围。本届负责人只能发布到自己负责的届次空间。</p></div><div className="admin-check-list"><span><Check size={13} /> 需要明确公告分类</span><span><Check size={13} /> 支持保存草稿</span><span><Check size={13} /> 发布记录可追溯</span></div></section></div>
   const renderPersonalization = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">GLOBAL EXPERIENCE</p><h2>全局个性化</h2></div><Tag tone="blue">组长可发布</Tag></div><div className="admin-settings-list"><div className="admin-setting-row"><span className="admin-setting-icon tone-blue"><Palette size={16} /></span><div><strong>全局主题基线</strong><small>为未自定义的成员使用浅色校园蓝主题</small></div><button disabled={!isLeader} className={`admin-switch ${globalTheme ? 'on' : ''}`} onClick={() => { setGlobalTheme((value) => !value); onThemeChange() }} aria-pressed={globalTheme}><i /></button></div><div className="admin-setting-row"><span className="admin-setting-icon tone-violet"><ImagePlus size={16} /></span><div><strong>校园背景图</strong><small>{globalBackground ? '已启用：白天校园晨曦，夜间静谧星空' : backgroundImage ? '已关闭：当前使用个人背景图片' : '已关闭：当前使用个人背景主题'}</small></div><button disabled={!isLeader} className={`admin-switch ${globalBackground ? 'on' : ''}`} onClick={() => { const next = !globalBackground; setGlobalBackground(next); onBackgroundPreferenceChange(next ? 'follow' : (backgroundImage ? 'custom' : 'mist')); showToast(next ? '校园背景已启用，个人背景暂时保留' : backgroundImage ? '校园背景已关闭，正在使用个人背景' : '校园背景已关闭，正在使用个人主题') }} aria-pressed={globalBackground}><i /></button></div><div className="admin-setting-row"><span className="admin-setting-icon tone-mint"><FileText size={16} /></span><div><strong>首页文案</strong><small>“我们的目的”与公告标题由内容服务统一管理</small></div><button disabled={!isLeader} className="secondary-button admin-small-button" onClick={() => setCopyManagerOpen(true)}>编辑文案</button></div></div></section><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">MEMBER PREFERENCES</p><h2>成员个人设置范围</h2></div><span className="admin-card-hint">由成员自己控制</span></div><div className="admin-preference-grid"><button className="admin-preference-tile" onClick={() => setProfileOpen(true)}><UserCog size={16} /><strong>头像与简介</strong><span>每位成员可自行维护公开资料</span><ArrowUpRight size={14} /></button><button className="admin-preference-tile" onClick={() => setBackgroundOpen(true)}><Palette size={16} /><strong>背景与主题</strong><span>可覆盖全局默认，不影响他人</span><ArrowUpRight size={14} /></button><button className="admin-preference-tile" onClick={() => setPasswordOpen(true)}><KeyRound size={16} /><strong>密码与会话</strong><span>支持修改密码和退出所有设备</span><ArrowUpRight size={14} /></button></div></section></div>
 
   const renderSecurity = () => <div className="admin-stack"><section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">ACCESS POLICY</p><h2>安全策略</h2></div><Tag tone="orange">组长专属</Tag></div><div className="admin-security-grid"><article><span className="admin-security-icon tone-blue"><LockKeyhole size={17} /></span><strong>后台 IP 白名单</strong><small>当前：{ipRestriction ? '已启用' : '未启用'} · 建议仅允许校园网或 VPN</small><button className={`admin-switch ${ipRestriction ? "on" : ""}`} onClick={() => { setIpRestriction((value) => !value); showToast(ipRestriction ? "IP 白名单已关闭" : "IP 白名单已启用") }} aria-pressed={ipRestriction}><i /></button></article><article><span className="admin-security-icon tone-mint"><ServerCog size={17} /></span><strong>Cloudflared / FRP</strong><small>当前：{tunnelStatus} · 仅展示状态，不在网页内启动或停止隧道进程</small><button className="secondary-button admin-small-button" onClick={() => { setTunnelStatus((value) => value === "未连接" ? "运行中" : "未连接"); showToast("隧道状态已刷新") }}>刷新状态</button></article><article><span className="admin-security-icon tone-violet"><ShieldCheck size={17} /></span><strong>会话与密码</strong><small>登录过期、强密码、重置链接和多设备退出</small><button className={`admin-switch ${sessionPolicy ? "on" : ""}`} onClick={() => { setSessionPolicy((value) => !value); showToast(sessionPolicy ? "会话强制退出已关闭" : "会话强制退出已启用") }} aria-pressed={sessionPolicy}><i /></button></article></div></section><section className="admin-note-card warning"><ShieldAlert size={16} /><div><strong>安全边界</strong><p>后台只管理访问策略和隧道状态，不直接控制服务器进程。实际暴露公网、证书和防火墙由运维脚本或云平台完成。</p></div></section></div>
+
+  const renderInvites = () => <div className="admin-invite-layout">
+    <section className="admin-card admin-invite-create">
+      <div className="admin-card-head"><div><p className="eyebrow">INVITE / CREATE</p><h2>生成邀请码</h2></div><KeyRound size={18} /></div>
+      <p className="admin-card-description">邀请码只负责把已注册的普通成员升级为组员，不会绕过注册、登录或邮箱验证。</p>
+      <div className="admin-editor-form">
+        <label><span>有效期截止</span><input type="datetime-local" value={inviteExpiresAt} min={toDateTimeLocal(new Date())} onChange={(event) => setInviteExpiresAt(event.target.value)} /></label>
+        <label><span>最大使用次数</span><input type="number" min="1" max="999" value={inviteMaxUses} onChange={(event) => setInviteMaxUses(event.target.value)} /></label>
+        <label><span>兑换后角色</span><input value="组员（Contributor）" readOnly /></label>
+      </div>
+      <button className="primary-button admin-invite-create-button" onClick={handleCreateInviteCode}><Plus size={15} /> 生成邀请码</button>
+      <div className="admin-note-card"><ShieldCheck size={15} /><div><strong>{isDemoAuth ? '本地演示模式' : '后端 API 模式'}</strong><p>{isDemoAuth ? '数据保存在当前浏览器。' : '邀请码由后端保存并通过数据库验证。'}</p></div></div>
+    </section>
+    <section className="admin-card admin-invite-list">
+      <div className="admin-card-head"><div><p className="eyebrow">INVITE / DIRECTORY</p><h2>已创建的邀请码</h2></div><span className="admin-card-hint">{inviteCodes.length} 个凭证</span></div>
+      {inviteCodes.length ? <div className="admin-invite-rows">{inviteCodes.map((inviteCode) => <article className="admin-invite-row" key={inviteCode.id}><div className="admin-invite-row-head"><code>{inviteCode.code}</code><span className={`admin-invite-status ${inviteCode.status}`}><i /> {inviteStatusLabels[inviteCode.status]}</span></div><div className="admin-invite-meta"><span>{inviteCode.usedCount} / {inviteCode.maxUses} 次</span><span>{inviteCode.status === 'active' ? formatInviteExpiry(inviteCode.expiresAt) : `截止 ${new Date(inviteCode.expiresAt).toLocaleString('zh-CN')}`}</span><time>创建于 {new Date(inviteCode.createdAt).toLocaleString('zh-CN')}</time></div><div className="admin-row-actions"><button className="admin-link-button" onClick={() => void handleCopyInviteCode(inviteCode.code)}><Copy size={13} /> 复制</button><button className="admin-link-button admin-danger-link" disabled={inviteCode.status === 'revoked'} onClick={() => handleRevokeInviteCode(inviteCode.id)}><ShieldAlert size={13} /> 撤销</button></div></article>)}</div> : <div className="admin-empty admin-invite-empty"><KeyRound size={22} /><strong>还没有邀请码</strong><span>设置有效期和使用次数后，生成第一张加入凭证。</span></div>}
+    </section>
+  </div>
+
+  const renderContributions = () => <div className="admin-stack">
+    <section className="admin-card">
+      <div className="admin-card-head"><div><p className="eyebrow">CONTRIBUTIONS / MODERATION</p><h2>资料投稿审核</h2></div><span className="admin-card-hint">仅通过审核的内容会公开</span></div>
+      {contributionSubmissions.length ? <div className="admin-contribution-list">{contributionSubmissions.map((submission) => <article className="admin-contribution-row" key={submission.id}><div className="admin-contribution-icon"><FileText size={16} /></div><div className="admin-contribution-main"><div><strong>{submission.title}</strong><Tag tone={submission.status === 'pending' ? 'orange' : submission.status === 'approved' ? 'mint' : 'red'}>{submission.status === 'pending' ? '待审核' : submission.status === 'approved' ? '已通过' : '已退回'}</Tag></div><p>{submission.description}</p><small>{submission.category} · {submission.submitterName} · {new Date(submission.submittedAt).toLocaleString('zh-CN')}</small>{submission.reviewNote && <em>{submission.reviewNote}</em>}</div>{submission.status === 'pending' && <div className="admin-row-actions"><button className="admin-link-button" onClick={() => void handleReviewSubmission(submission, 'approved')}><Check size={13} /> 通过</button><button className="admin-link-button admin-danger-link" onClick={() => void handleReviewSubmission(submission, 'rejected')}><ShieldAlert size={13} /> 退回</button></div>}</article>)}</div> : <div className="admin-empty"><Send size={22} /><strong>暂时没有投稿</strong><span>注册成员提交资料后，会先出现在这里等待审核。</span></div>}
+    </section>
+    <section className="admin-note-card"><ShieldCheck size={16} /><div><strong>审核规则</strong><p>投稿者可以是普通成员，不需要先升级为组员。管理员审核通过后，资料默认对已登录成员可见；是否公开到访客页面可以以后再配置。</p></div></section>
+  </div>
 
   const renderLogs = () => <section className="admin-card"><div className="admin-card-head"><div><p className="eyebrow">AUDIT TRAIL</p><h2>操作日志</h2></div><button className="secondary-button admin-small-button" onClick={exportLogs}><ArrowUpRight size={15} /> 导出日志</button></div><div className="admin-log-table"><div className="admin-log-head"><span>时间</span><span>操作者</span><span>动作</span><span>对象</span><span>结果</span></div>{recentLogs.concat([{ time: '05-14 10:20', action: '修改主题配置', target: '全局浅色主题', tone: 'mint' }]).map((log, index) => <div className="admin-log-row" key={`${log.time}-${log.action}`}><time>{log.time}</time><span className="admin-log-user"><Avatar initials={index === 0 ? user.initials : '组长'} size="sm" />{index === 0 ? '当前账号' : '科技小组组长'}</span><strong>{log.action}</strong><span>{log.target}</span><Tag tone="mint">成功</Tag></div>)}</div></section>
 
@@ -1974,6 +2270,8 @@ function AdminPage({ onNavigate, theme, onThemeChange, backgroundPreference, onB
     if (activeSection === 'members') return renderMembers()
     if (activeSection === 'content') return renderContent()
     if (activeSection === 'announcements') return renderAnnouncements()
+    if (activeSection === 'contributions') return renderContributions()
+    if (activeSection === 'invites') return renderInvites()
     if (activeSection === 'personalization') return renderPersonalization()
     if (activeSection === 'security') return renderSecurity()
     return renderLogs()

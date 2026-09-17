@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { apiConfig } from './api-client'
-import { changePassword, getCurrentUser, login, loginWithCode, logout, register, requestLoginCode, requestRegistrationCode, updateProfile, type LoginCodeCredentials, type LoginCredentials, type RegistrationCodeResult, type RegistrationCredentials } from './auth.service'
+import { changePassword, closeAccount as closeAccountService, getCurrentUser, login, loginWithCode, logout, redeemInviteCode as redeemInviteCodeService, register, requestLoginCode, requestRegistrationCode, updateProfile, type LoginCodeCredentials, type LoginCredentials, type RegistrationCodeResult, type RegistrationCredentials } from './auth.service'
 import type { AuthSession, AuthUser } from '../types'
 
 export interface AuthContextValue {
@@ -9,13 +9,15 @@ export interface AuthContextValue {
   isDemo: boolean
   signIn: (credentials: LoginCredentials) => Promise<AuthSession>
   signInWithCode: (credentials: LoginCodeCredentials) => Promise<AuthSession>
-  register: (credentials: RegistrationCredentials) => Promise<AuthSession>
+  register: (credentials: RegistrationCredentials) => Promise<void>
   requestRegistrationCode: (email: string, turnstileToken: string) => Promise<RegistrationCodeResult>
   requestLoginCode: (email: string, turnstileToken: string) => Promise<RegistrationCodeResult>
   signOut: () => Promise<void>
   refresh: () => Promise<void>
   updateProfile: (patch: Partial<Pick<AuthUser, 'name' | 'initials' | 'avatarUrl' | 'bio'>>) => Promise<AuthUser>
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>
+  redeemInviteCode: (inviteCode: string) => Promise<AuthUser>
+  closeAccount: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -50,9 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signUp = useCallback(async (credentials: RegistrationCredentials) => {
-    const session = await register(credentials)
-    setUser(session.user)
-    return session
+    await register(credentials)
   }, [])
 
   const signOut = useCallback(async () => {
@@ -70,7 +70,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await changePassword(currentPassword, newPassword)
   }, [])
 
-  const value = useMemo(() => ({ user, loading, isDemo: apiConfig.contentSource !== 'api', signIn, signInWithCode: signInWithVerificationCode, register: signUp, requestRegistrationCode, requestLoginCode, signOut, refresh, updateProfile: saveProfile, changePassword: savePassword }), [user, loading, signIn, signInWithVerificationCode, signUp, signOut, refresh, saveProfile, savePassword])
+  const redeemInvite = useCallback(async (inviteCode: string) => {
+    const nextUser = await redeemInviteCodeService(inviteCode)
+    setUser(nextUser)
+    return nextUser
+  }, [])
+
+  const closeCurrentAccount = useCallback(async () => {
+    await closeAccountService()
+    setUser(null)
+  }, [])
+
+  const value = useMemo(() => ({ user, loading, isDemo: apiConfig.contentSource !== 'api', signIn, signInWithCode: signInWithVerificationCode, register: signUp, requestRegistrationCode, requestLoginCode, signOut, refresh, updateProfile: saveProfile, changePassword: savePassword, redeemInviteCode: redeemInvite, closeAccount: closeCurrentAccount }), [user, loading, signIn, signInWithVerificationCode, signUp, signOut, refresh, saveProfile, savePassword, redeemInvite, closeCurrentAccount])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

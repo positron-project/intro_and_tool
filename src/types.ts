@@ -30,7 +30,42 @@ export interface Paginated<T> {
   page: PageInfo
 }
 
-export type ContentVisibility = 'public' | 'members'
+/** Content audience used by both the local demo and the future API. */
+export type ContentVisibility = 'public' | 'members' | 'contributors'
+
+export type AccountStatus = 'active' | 'disabled' | 'closed'
+
+export type InviteCodeStatus = 'active' | 'expired' | 'exhausted' | 'revoked'
+
+/** A temporary credential that upgrades a member to the contributor role. */
+export interface InviteCode {
+  id: string
+  code: string
+  role: 'Contributor'
+  expiresAt: string
+  maxUses: number
+  usedCount: number
+  createdAt: string
+  revokedAt?: string
+  status: InviteCodeStatus
+}
+
+export type ContributionSubmissionStatus = 'pending' | 'approved' | 'rejected'
+
+/** Local demo record for a resource submitted by a member for moderation. */
+export interface ContributionSubmission {
+  id: string
+  submitterId: string
+  submitterName: string
+  title: string
+  description: string
+  category: string
+  resourceUrl?: string
+  fileName?: string
+  status: ContributionSubmissionStatus
+  submittedAt: string
+  reviewNote?: string
+}
 
 /** Server-managed fields returned with editable content records. */
 export interface ContentMeta {
@@ -45,6 +80,7 @@ export interface ContentMeta {
 
 export interface AuthUser extends User {
   avatarUrl?: string
+  status?: AccountStatus
 }
 
 export interface AuthSession {
