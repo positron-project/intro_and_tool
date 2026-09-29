@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="theme-light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>预选方案三 · 解构主义工坊蓝图与全景技术总线 (The Deconstructed Engineering Ledger)</title>
+  <style>
+    :root {
+      /* Impeccable Kinpaku & Blueprint Palette */
+      --ks-gold: #C99738;
+      --ks-gold-hover: #DBA946;
+      --ks-patina: #10B981;
+      --ks-cyan: #0284C7;
+      
+      /* Light: Architectural Parchment & Dark Roast */
+      --bg-blueprint: #F9F6F0;
+      --bg-surface: #FFFFFF;
+      --bg-muted: #EFE9DE;
+      --text-main: #130B07;
+      --text-sub: #48382D;
+      --text-muted: #827065;
+      --hairline: rgba(70, 40, 25, 0.16);
+      --hairline-heavy: rgba(70, 40, 25, 0.35);
+      --blueprint-line: rgba(201, 151, 56, 0.22);
+    }
+
+    html.theme-dark {
+      /* Dark: Deep Truffle Black & Radiant Gold */
+      --bg-blueprint: #0A0604;
+      --bg-surface: #140C08;
+      --bg-muted: #1A110B;
+      --text-main: #F9F6F0;
+      --text-sub: #C6B6AB;
+      --text-muted: #7E6D63;
+      --hairline: rgba(229, 184, 105, 0.18);
+      --hairline-heavy: rgba(229, 184, 105, 0.4);
+      --blueprint-line: rgba(201, 151, 56, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-blueprint);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      padding-bottom: 140px;
+    }
+
+    /* Screen 01 Hero Preserved Banner */
+    .hero-preserve-banner {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--hairline);
+      padding: 13px 40px;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .banner-left strong {
+      color: var(--ks-gold);
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .theme-switch-btn {
+      background: var(--bg-muted);
+      border: 1px solid var(--hairline);
+      color: var(--text-main);
+      padding: 5px 15px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: monospace;
+      font-weight: 700;
+      transition: all 0.15s;
+    }
+    .theme-switch-btn:hover {
+      border-color: var(--ks-gold);
+      color: var(--ks-gold);
+    }
+
+    /* Expansive Blueprint Wrap (94% width, max 1440px) */
+    .blueprint-wrap {
+      width: 94%;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    .blueprint-section {
+      padding: 96px 0;
+      border-bottom: 1px solid var(--hairline);
+      position: relative;
+    }
+
+    /* Architectural Metadata Coordinates */
+    .section-coord-tag {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "Space Grotesk", monospace;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--ks-gold);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    /* Massive Editorial Headline (大字突出) */
+    h2.blueprint-headline {
+      font-size: clamp(42px, 5.2vw, 70px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -1.6px;
+      margin-bottom: 24px;
+      text-wrap: pretty;
+    }
+    h2.blueprint-headline em {
+      font-style: normal;
+      color: var(--ks-gold);
+    }
+
+    p.blueprint-lead {
+      font-size: clamp(17px, 1.4vw, 21px);
+      line-height: 1.75;
+      color: var(--text-sub);
+      max-width: 1040px;
+      margin-bottom: 56px;
+    }
+
+    /* ========================================================
+       SECTION 02: THE CRAFTSMAN LOG (双栏非对称解构立论)
+       Left 58% / Right 42%
+       ======================================================== */
+    .craftsman-duo-grid {
+      display: grid;
+      grid-template-columns: 58% 42%;
+      border-top: 1px solid var(--hairline);
+      border-bottom: 1px solid var(--hairline);
+    }
+    .craftsman-col-left {
+      padding: 56px 48px 56px 0;
+      border-right: 1px solid var(--hairline);
+    }
+    .craftsman-callout {
+      font-size: clamp(26px, 2.6vw, 38px);
+      font-weight: 900;
+      line-height: 1.3;
+      letter-spacing: -0.8px;
+      margin-bottom: 24px;
+      color: var(--text-main);
+    }
+    .craftsman-col-left p {
+      font-size: 16px;
+      color: var(--text-sub);
+      line-height: 1.8;
+      max-width: 680px;
+    }
+
+    .craftsman-col-right {
+      padding: 56px 0 56px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .blueprint-audit-tape {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .tape-item {
+      display: flex;
+      gap: 16px;
+      align-items: baseline;
+    }
+    .tape-item .tape-code {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--ks-gold);
+      background: var(--bg-muted);
+      padding: 3px 8px;
+      border: 1px solid var(--hairline);
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+    .tape-text h4 {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .tape-text p {
+      font-size: 13.5px;
+      color: var(--text-sub);
+      line-height: 1.6;
+    }
+
+    /* ========================================================
+       SECTION 03: THE DECONSTRUCTED BLUEPRINT STUDIO
+       Asymmetrical 65% / 35% Studio Layout
+       Zero 3-column parallel grids!
+       ======================================================== */
+    .domain-selector-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 44px;
+      border-bottom: 1px solid var(--hairline);
+      padding-bottom: 16px;
+      overflow-x: auto;
+    }
+    .domain-btn {
+      background: transparent;
+      border: 1px solid var(--hairline);
+      color: var(--text-sub);
+      padding: 8px 22px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .domain-btn.active {
+      background: var(--ks-gold);
+      color: #0A0604;
+      border-color: var(--ks-gold);
+    }
+    .domain-btn:hover:not(.active) {
+      border-color: var(--ks-gold);
+      color: var(--text-main);
+    }
+
+    /* The Blueprint Board: 64% / 36% */
+    .blueprint-stage-grid {
+      display: grid;
+      grid-template-columns: 64% 36%;
+      border-top: 1px solid var(--hairline);
+      border-bottom: 1px solid var(--hairline);
+      margin-bottom: 56px;
+    }
+    .stage-diagram-area {
+      padding: 48px 48px 48px 0;
+      border-right: 1px solid var(--hairline);
+    }
+    .stage-meta-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 16px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .stage-system-title {
+      font-size: clamp(34px, 3.8vw, 50px);
+      font-weight: 900;
+      letter-spacing: -1.2px;
+      margin-bottom: 16px;
+      line-height: 1.15;
+    }
+    .stage-system-desc {
+      font-size: 16.5px;
+      line-height: 1.7;
+      color: var(--text-sub);
+      margin-bottom: 36px;
+      max-width: 780px;
+    }
+
+    /* SVG Interactive Architectural Canvas */
+    .blueprint-svg-canvas {
+      width: 100%;
+      height: 240px;
+      border: 1px dashed var(--blueprint-line);
+      background: rgba(201, 151, 56, 0.02);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 20px;
+      overflow: hidden;
+    }
+    .node-box {
+      border: 1px solid var(--hairline-heavy);
+      background: var(--bg-surface);
+      padding: 14px 18px;
+      font-family: monospace;
+      font-size: 12px;
+      text-align: center;
+      min-width: 140px;
+      position: relative;
+      z-index: 2;
+    }
+    .node-box strong {
+      display: block;
+      color: var(--text-main);
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+    .node-box span {
+      color: var(--ks-gold);
+      font-size: 11px;
+    }
+    .flow-arrow-line {
+      flex: 1;
+      height: 1px;
+      background: var(--ks-gold);
+      position: relative;
+      margin: 0 8px;
+    }
+    .flow-arrow-line::after {
+      content: '▶';
+      position: absolute;
+      right: -2px;
+      top: -6px;
+      font-size: 9px;
+      color: var(--ks-gold);
+    }
+
+    /* Right Metrics & Ledger Spec */
+    .stage-spec-area {
+      padding: 48px 0 48px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .spec-huge-stat {
+      margin-bottom: 32px;
+    }
+    .spec-huge-stat strong {
+      display: block;
+      font-size: clamp(50px, 5.2vw, 74px);
+      font-weight: 900;
+      font-family: "Space Grotesk", sans-serif;
+      line-height: 1;
+      letter-spacing: -2px;
+      color: var(--ks-gold);
+      margin-bottom: 6px;
+    }
+    .spec-huge-stat span {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .spec-table-flush {
+      border-top: 1px solid var(--hairline);
+      padding-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .spec-table-row {
+      display: flex;
+      justify-content: space-between;
+    }
+    .spec-table-row dt {
+      color: var(--text-muted);
+    }
+    .spec-table-row dd {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    /* ========================================================
+       SECTION 03-PART 2: THE FULL-WIDTH HORIZONTAL LEDGER
+       Non-3-Column Bespoke Register Strip
+       ======================================================== */
+    .ledger-strip-container {
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid var(--hairline);
+    }
+    .ledger-row {
+      display: grid;
+      grid-template-columns: 22% 48% 30%;
+      padding: 32px 0;
+      border-bottom: 1px solid var(--hairline);
+      align-items: center;
+      transition: background-color 0.2s;
+    }
+    .ledger-row:hover {
+      background: rgba(201, 151, 56, 0.02);
+    }
+    .ledger-col-id {
+      font-family: "Space Grotesk", monospace;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--ks-gold);
+      letter-spacing: 1px;
+    }
+    .ledger-col-id strong {
+      display: block;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text-main);
+      margin-top: 4px;
+      letter-spacing: -0.5px;
+    }
+    .ledger-col-desc {
+      padding: 0 28px;
+    }
+    .ledger-col-desc p {
+      font-size: 14.5px;
+      color: var(--text-sub);
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    .ledger-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .ledger-chip {
+      font-family: monospace;
+      font-size: 11.5px;
+      padding: 3px 8px;
+      background: var(--bg-muted);
+      border: 1px solid var(--hairline);
+      border-radius: 3px;
+      color: var(--text-muted);
+    }
+    .ledger-col-metrics {
+      text-align: right;
+      font-family: monospace;
+    }
+    .ledger-metric-val {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--text-main);
+      display: block;
+    }
+    .ledger-metric-lbl {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ========================================================
+       SECTION 04: DEV PROTOCOL (非对称双轨工程纪律)
+       Left 50% / Right 50%
+       ======================================================== */
+    .protocol-split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--hairline);
+      border-bottom: 1px solid var(--hairline);
+    }
+    .protocol-pane {
+      padding: 56px 44px;
+    }
+    .protocol-pane:first-child {
+      padding-left: 0;
+      border-right: 1px solid var(--hairline);
+    }
+    .protocol-pane:last-child {
+      padding-right: 0;
+    }
+    .protocol-tag {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--ks-gold);
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+      display: block;
+    }
+    .protocol-pane h3 {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--text-main);
+      letter-spacing: -0.6px;
+      margin-bottom: 14px;
+    }
+    .protocol-pane p {
+      font-size: 15px;
+      color: var(--text-sub);
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .protocol-list-check {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--text-sub);
+    }
+    .protocol-list-check li {
+      list-style: none;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .protocol-list-check li::before {
+      content: '✓';
+      color: var(--ks-patina);
+      font-weight: 900;
+    }
+
+    /* ========================================================
+       SECTION 05: ADMISSION GATES (双轨入口)
+       Left 50% / Right 50%
+       ======================================================== */
+    .admission-grid {
+      display: grid;
+      grid-template-columns: 50% 50%;
+      border-top: 1px solid var(--hairline);
+      border-bottom: 1px solid var(--hairline);
+    }
+    .admission-gate {
+      padding: 60px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 290px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .admission-gate:first-child {
+      padding-left: 0;
+      border-right: 1px solid var(--hairline);
+    }
+    .admission-gate:last-child {
+      padding-right: 0;
+    }
+    .admission-gate:hover {
+      background: rgba(201, 151, 56, 0.03);
+    }
+    .gate-num {
+      font-family: "Space Grotesk", monospace;
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--ks-gold);
+      margin-bottom: 16px;
+    }
+    .admission-gate h3 {
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--text-main);
+      margin-bottom: 14px;
+      letter-spacing: -0.6px;
+    }
+    .admission-gate p {
+      font-size: 15px;
+      color: var(--text-sub);
+      line-height: 1.7;
+    }
+    .gate-action-arrow {
+      margin-top: 36px;
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--ks-gold);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    @media (max-width: 960px) {
+      .craftsman-duo-grid,
+      .blueprint-stage-grid,
+      .ledger-row,
+      .protocol-split-grid,
+      .admission-grid {
+        grid-template-columns: 1fr;
+      }
+      .craftsman-col-left,
+      .craftsman-col-right,
+      .stage-diagram-area,
+      .stage-spec-area,
+      .protocol-pane,
+      .admission-gate {
+        padding: 36px 0;
+        border-right: none;
+        border-bottom: 1px solid var(--hairline);
+      }
+      .ledger-col-desc {
+        padding: 16px 0;
+      }
+      .ledger-col-metrics {
+        text-align: left;
+        margin-top: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen 01 Hero Preserved Banner -->
+  <header class="hero-preserve-banner">
+    <div class="banner-left">
+      <strong>[SCREEN 01 · HERO 保留屏]</strong>
+      <span>首页首屏粒子引力场与全校大门主图严格保留不变。下方为<strong>方案三 · 解构主义工坊蓝图与全景技术总线</strong>：</span>
+    </div>
+    <button class="theme-switch-btn" id="themeSwitchBtn" onclick="toggleTheme()">切换至深色生巧模式</button>
+  </header>
+
+  <main class="blueprint-wrap">
+
+    <!-- Screen 02: The Craftsman Log (解构主义立论 58/42 双轴) -->
+    <section class="blueprint-section" id="story-log">
+      <div class="section-coord-tag">
+        <span>02 // PHILOSOPHY · 项目组技术立场</span>
+        <span>LAT. 28.68° N / PRODUCTION CLUSTER</span>
+      </div>
+
+      <h2 class="blueprint-headline">
+        数字基建总览。<br />
+        <em>驱动全校运转的真实代码工坊。</em>
+      </h2>
+      <p class="blueprint-lead">
+        专注实打实的分布式架构与生产指标。项目组致力于让每一行代码经受真实高并发、向量检索与自动化审校的淬炼。
+      </p>
+
+      <div class="craftsman-duo-grid">
+        <div class="craftsman-col-left">
+          <div class="craftsman-callout">
+            “软件不是用来证明自己很聪明的装饰品，而是用来消除混乱、解决痛点的锋利工具。”
+          </div>
+          <p>
+            我们相信，最扎实的计算机教育不是背诵期末考试试卷，而是在真实的服务器集群上发布一个有两万人使用的系统。从大一新生完成第一次结对 Git Commit，到大三同学主导 LangGraph Agent 架构，项目组搭建起了一座通往工业级软件工程师的实战桥梁。
+          </p>
+        </div>
+
+        <div class="craftsman-col-right">
+          <div class="blueprint-audit-tape">
+            <div class="tape-item">
+              <span class="tape-code">SPEC-A</span>
+              <div class="tape-text">
+                <h4>真实容器编排与 CI/CD 门禁</h4>
+                <p>杜绝“在我电脑上能跑就行”。所有系统均通过标准 Dockerfile 封装并交付 Kubernetes 生产集群。</p>
+              </div>
+            </div>
+            <div class="tape-item">
+              <span class="tape-code">SPEC-B</span>
+              <div class="tape-text">
+                <h4>全链路可观测性看板</h4>
+                <p>集成 Prometheus 吞吐统计与 Grafana 延迟追踪，每一处微服务瓶颈都一目了然。</p>
+              </div>
+            </div>
+            <div class="tape-item">
+              <span class="tape-code">SPEC-C</span>
+              <div class="tape-text">
+                <h4>无死角安全沙箱隔离</h4>
+                <p>评测机群采用 Linux cgroups 与 seccomp 双重防御，保障高并发下的宿主机安全性。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 03: The Deconstructed Blueprint Studio (按技术架构层级展陈，彻底告别年份！) -->
+    <section class="blueprint-section" id="story-studio">
+      <div class="section-coord-tag">
+        <span>03 // BLUEPRINT STUDIO · 核心系统拓扑</span>
+        <span>ARCH-SPEC // VERIFIED</span>
+      </div>
+
+      <h2 class="blueprint-headline">
+        全景工程蓝图，<em>透视系统数据流向</em>
+      </h2>
+      <p class="blueprint-lead">
+        按技术领域解构核心工程。支持在认知智能体、分布式沙箱评测与校园物联网之间自由切换，查阅拓扑图与运行参数。
+      </p>
+
+      <!-- Domain Selector -->
+      <div class="domain-selector-strip">
+        <button class="domain-btn active" onclick="switchDomain(this, 'agent')">
+          <span>●</span> 01 / 认知计算与自主智能体
+        </button>
+        <button class="domain-btn" onclick="switchDomain(this, 'judge')">
+          <span>●</span> 02 / 高性能在线评测与沙箱
+        </button>
+        <button class="domain-btn" onclick="switchDomain(this, 'spatial')">
+          <span>●</span> 03 / 物联网与空间拓扑基建
+        </button>
+      </div>
+
+      <!-- Asymmetric Blueprint Stage: 64% / 36% -->
+      <div class="blueprint-stage-grid">
+        <div class="stage-diagram-area">
+          <div class="stage-meta-head">
+            <span style="color:var(--ks-gold); font-weight:800;">TOPOLOGY // CAMPUS AGENT OS</span>
+            <span style="color:var(--ks-patina);">● ACTIVE PIPELINE RUNNING</span>
+          </div>
+          <h3 class="stage-system-title" id="stageTitle">校园 AI 智能助手中枢</h3>
+          <p class="stage-system-desc" id="stageDesc">
+            基于多层 LangGraph 状态机编排与 PostgreSQL pgvector 混合检索，集成教务通知规程、空闲教室预约与历届项目代码索引，提供权威带切片溯源的智能问答服务。
+          </p>
+
+          <!-- SVG Flow Canvas -->
+          <div class="blueprint-svg-canvas">
+            <div class="node-box">
+              <strong>API GATEWAY</strong>
+              <span>FastAPI / SSL</span>
+            </div>
+            <div class="flow-arrow-line"></div>
+            <div class="node-box">
+              <strong>INTENT ROUTER</strong>
+              <span>LangGraph Graph</span>
+            </div>
+            <div class="flow-arrow-line"></div>
+            <div class="node-box">
+              <strong>VECTOR HYBRID</strong>
+              <span>pgvector + BM25</span>
+            </div>
+            <div class="flow-arrow-line"></div>
+            <div class="node-box">
+              <strong>TRACE OUTPUT</strong>
+              <span>Vue 3 / Stream</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-spec-area">
+          <div>
+            <div class="spec-huge-stat">
+              <strong id="statNumber">128,000+</strong>
+              <span id="statLabel">精准切片知识向量</span>
+            </div>
+            <div class="spec-huge-stat">
+              <strong id="statLatency">42.8 ms</strong>
+              <span>P95 混合召回延迟</span>
+            </div>
+          </div>
+
+          <dl class="spec-table-flush">
+            <div class="spec-table-row">
+              <dt>Core Tech</dt>
+              <dd id="specTech">FastAPI + LangGraph</dd>
+            </div>
+            <div class="spec-table-row">
+              <dt>Vector Store</dt>
+              <dd>PostgreSQL (pgvector)</dd>
+            </div>
+            <div class="spec-table-row">
+              <dt>Open Source</dt>
+              <dd>MIT License / GitHub</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Non-3-Column Bespoke Register Strip -->
+      <div class="section-coord-tag" style="margin-top: 24px;">
+        <span>CAMPUS ENGINEERING LEDGER // 校园数字资产台账</span>
+      </div>
+
+      <div class="ledger-strip-container">
+        <!-- Row 1 -->
+        <div class="ledger-row">
+          <div class="ledger-col-id">
+            <span>SYS-02 // WEB & JUDGE</span>
+            <strong>在线题库与评测系统</strong>
+          </div>
+          <div class="ledger-col-desc">
+            <p>支持 ACM 竞赛规则与多校联考的高性能判题平台，采用分布式微服务架构与隔离沙箱。</p>
+            <div class="ledger-chips">
+              <span class="ledger-chip">NestJS</span>
+              <span class="ledger-chip">Next.js 14</span>
+              <span class="ledger-chip">Go Judge</span>
+              <span class="ledger-chip">Redis</span>
+            </div>
+          </div>
+          <div class="ledger-col-metrics">
+            <span class="ledger-metric-val">2,400 次/分</span>
+            <span class="ledger-metric-lbl">极限并发判题吞吐能力</span>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="ledger-row">
+          <div class="ledger-col-id">
+            <span>SYS-03 // IOT AUDIT</span>
+            <strong>实验室设备预约网关</strong>
+          </div>
+          <div class="ledger-col-desc">
+            <p>打通全校 8 个机房的硬件预约与门禁审计，实现设备借还状态实时同步与超时告警。</p>
+            <div class="ledger-chips">
+              <span class="ledger-chip">Spring Boot</span>
+              <span class="ledger-chip">Vue 3</span>
+              <span class="ledger-chip">MQTT</span>
+              <span class="ledger-chip">MySQL</span>
+            </div>
+          </div>
+          <div class="ledger-col-metrics">
+            <span class="ledger-metric-val">100% 审计</span>
+            <span class="ledger-metric-lbl">硬件设备全生命周期追溯</span>
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="ledger-row">
+          <div class="ledger-col-id">
+            <span>SYS-04 // GEO SPATIAL</span>
+            <strong>校园空间拓扑导航雷达</strong>
+          </div>
+          <div class="ledger-col-desc">
+            <p>全校楼宇室内外矢量实景拓扑建模，支持新生实景导航寻路与空闲机房自习室一键查询。</p>
+            <div class="ledger-chips">
+              <span class="ledger-chip">React</span>
+              <span class="ledger-chip">Go</span>
+              <span class="ledger-chip">PostGIS</span>
+              <span class="ledger-chip">WebGL</span>
+            </div>
+          </div>
+          <div class="ledger-col-metrics">
+            <span class="ledger-metric-val">16 栋楼宇</span>
+            <span class="ledger-metric-lbl">室内外高精拓扑网格覆盖</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 04: Engineering Disciplines (双轨工程纪律) -->
+    <section class="blueprint-section" id="story-discipline">
+      <div class="section-coord-tag">
+        <span>04 // DISCIPLINE · 工程规约与质量底线</span>
+        <span>PRODUCTION CRITERIA</span>
+      </div>
+
+      <h2 class="blueprint-headline">
+        严谨治码，<em>守住系统健壮性的底线</em>
+      </h2>
+      <p class="blueprint-lead">
+        优秀的代码源于严密的约束。项目组推行全生命周期工程质量保障体系。
+      </p>
+
+      <div class="protocol-split-grid">
+        <div class="protocol-pane">
+          <span class="protocol-tag">STAGE 01 // 编码与提交规范</span>
+          <h3>类型安全与静态检查</h3>
+          <p>
+            禁止任何未定义的隐式类型穿透。前端全面开启 TypeScript strict 模式，后端使用 Pydantic V2 进行严密的输入模型序列化。
+          </p>
+          <ul class="protocol-list-check">
+            <li>通过 ESLint 与 Ruff 零报警门禁</li>
+            <li>单元测试分支覆盖率指标必须高于 85%</li>
+            <li>Git Commit 信息必须遵循 Conventional Commits 规范</li>
+          </ul>
+        </div>
+
+        <div class="protocol-pane">
+          <span class="protocol-tag">STAGE 02 // 生产发布与监控</span>
+          <h3>可观测性与回滚机制</h3>
+          <p>
+            每一个上线模块都必须接入健康检查探针与结构化日志输出，确保在任何异常情况下具备秒级告警与自动回滚能力。
+          </p>
+          <ul class="protocol-list-check">
+            <li>所有 API 请求均记录唯一 Trace ID</li>
+            <li>具备自动化热备与数据库自动快照备份</li>
+            <li>定期进行压测与混沌容灾演练</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 05: Admission (50/50 双轨入口) -->
+    <section class="blueprint-section" id="story-admission">
+      <div class="section-coord-tag">
+        <span>05 // ADMISSION · 项目组工位认领</span>
+        <span>TALENT NETWORK OPEN</span>
+      </div>
+
+      <h2 class="blueprint-headline">
+        加入工坊，<em>开启你的真实全栈工程征程</em>
+      </h2>
+      <p class="blueprint-lead">
+        不需要你已经是技术大师，但需要你对代码怀抱敬畏与好奇。从认领你的第一个真实 Issue 开始。
+      </p>
+
+      <div class="admission-grid">
+        <div class="admission-gate">
+          <div>
+            <div class="gate-num">01 // TRACK</div>
+            <h3>新生工程孵化营</h3>
+            <p>
+              专为大一与大二新手打造的导师制实战营。包含现代前端构建工具、FastAPI 接口开发与 Git PR 全流程辅导。
+            </p>
+          </div>
+          <span class="gate-action-arrow">
+            申请新生工位 ➔
+          </span>
+        </div>
+
+        <div class="admission-gate">
+          <div>
+            <div class="gate-num">02 // TRACK</div>
+            <h3>核心系统主程席位</h3>
+            <p>
+              面向具备独立开发能力的高年级同学。直接负责大规模向量检索优化、Linux 沙箱逃逸对抗与分布式微服务治理。
+            </p>
+          </div>
+          <span class="gate-action-arrow">
+            申请核心研发席位 ➔
+          </span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const btn = document.getElementById('themeSwitchBtn');
+      if (html.classList.contains('theme-light')) {
+        html.classList.remove('theme-light');
+        html.classList.add('theme-dark');
+        btn.textContent = '切换至暖奶霜模式';
+      } else {
+        html.classList.remove('theme-dark');
+        html.classList.add('theme-light');
+        btn.textContent = '切换至深色生巧模式';
+      }
+    }
+
+    const domainData = {
+      agent: {
+        title: "校园 AI 智能助手中枢",
+        desc: "基于多层 LangGraph 状态机编排与 PostgreSQL pgvector 混合检索，集成教务通知规程、空闲教室预约与历届项目代码索引，提供权威带切片溯源的智能问答服务。",
+        number: "128,000+",
+        label: "精准切片知识向量",
+        latency: "42.8 ms",
+        tech: "FastAPI + LangGraph"
+      },
+      judge: {
+        title: "在线题库与高并发沙箱 (STC-OJ)",
+        desc: "分布式算法判题集群，采用 Linux cgroup 安全隔离沙箱，支持秒级滚榜、代码查重与 ACM 规则实时评测。",
+        number: "2,400 次/分",
+        label: "极限并发判题吞吐能力",
+        latency: "18.2 ms",
+        tech: "NestJS + Go Daemon + cgroups"
+      },
+      spatial: {
+        title: "校园物联网与空间导航拓扑",
+        desc: "全校 16 栋楼宇高精室内外拓扑建模与硬件实验室设备网关，支持门禁 MQTT 联动与时空路径规划。",
+        number: "100%",
+        label: "硬件设备实时审计追踪率",
+        latency: "15.0 ms",
+        tech: "Spring Boot + PostGIS + MQTT"
+      }
+    };
+
+    function switchDomain(btn, key) {
+      document.querySelectorAll('.domain-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const d = domainData[key];
+      if (d) {
+        document.getElementById('stageTitle').textContent = d.title;
+        document.getElementById('stageDesc').textContent = d.desc;
+        document.getElementById('statNumber').textContent = d.number;
+        document.getElementById('statLabel').textContent = d.label;
+        document.getElementById('statLatency').textContent = d.latency;
+        document.getElementById('specTech').textContent = d.tech;
+      }
+    }
+  </script>
+</body>
+</html>

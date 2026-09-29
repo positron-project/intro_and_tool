@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>候选三：解构主义大字报与阶梯错落流 (Deconstructed Poster)</title>
+  <style>
+    :root {
+      --ks-gold: #C99738;
+      --bg-page: #F8F5EE;
+      --text-dark: #120904;
+      --text-secondary: #4A372C;
+      --text-muted: #826E62;
+      --hairline: rgba(70, 40, 25, 0.16);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-dark);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", sans-serif;
+      line-height: 1.6;
+      padding-bottom: 120px;
+    }
+    .top-notice {
+      padding: 14px 48px;
+      background: var(--bg-page);
+      border-bottom: 1px solid var(--hairline);
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .poster-wrap {
+      width: 94%;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    .poster-section {
+      padding: 96px 0;
+      border-bottom: 1px solid var(--hairline);
+    }
+    .kicker {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: var(--ks-gold);
+      margin-bottom: 20px;
+      display: block;
+    }
+    h2.giant-heading {
+      font-size: clamp(42px, 5.2vw, 68px);
+      font-weight: 900;
+      line-height: 1.12;
+      letter-spacing: -1.5px;
+      margin-bottom: 24px;
+    }
+    h2.giant-heading em {
+      font-style: normal;
+      color: var(--ks-gold);
+    }
+    p.lead-text {
+      font-size: clamp(18px, 1.5vw, 22px);
+      color: var(--text-secondary);
+      max-width: 960px;
+      line-height: 1.7;
+      margin-bottom: 64px;
+    }
+
+    /* ==========================================================
+       SECTION 05: 阶梯错落大字排印流 (Staggered Poster Stream)
+       彻底摒弃三排并列！利用左右重心交错与巨大时间水印
+       ========================================================== */
+    .staggered-timeline-stream {
+      position: relative;
+      border-top: 1px solid var(--hairline);
+    }
+
+    /* Epoch 1: 2024 (Left Heavy, 60% Width) */
+    .epoch-block-left {
+      padding: 64px 0;
+      border-bottom: 1px solid var(--hairline);
+      position: relative;
+      width: 72%;
+    }
+    .watermark-year {
+      position: absolute;
+      right: 0;
+      top: 30px;
+      font-size: 140px;
+      font-weight: 900;
+      font-family: "Space Grotesk", sans-serif;
+      color: rgba(201, 151, 56, 0.12);
+      line-height: 1;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .epoch-content {
+      position: relative;
+      z-index: 1;
+    }
+    .epoch-badge-line {
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ks-gold);
+      margin-bottom: 12px;
+    }
+    .epoch-block-left h3 {
+      font-size: clamp(32px, 3vw, 44px);
+      font-weight: 850;
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+    }
+    .epoch-block-left p.desc {
+      font-size: 17px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 680px;
+      margin-bottom: 20px;
+    }
+    .epoch-handover-tag {
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--text-dark);
+      background: rgba(201, 151, 56, 0.08);
+      padding: 6px 14px;
+      border-left: 3px solid var(--ks-gold);
+      display: inline-block;
+    }
+
+    /* Epoch 2: 2025 (Right Shifted, 75% Width with 25% Left Indent) */
+    .epoch-block-right {
+      padding: 64px 0;
+      border-bottom: 1px solid var(--hairline);
+      position: relative;
+      margin-left: 28%;
+      width: 72%;
+    }
+    .epoch-block-right .watermark-year {
+      left: -80px;
+      right: auto;
+      color: rgba(70, 40, 25, 0.08);
+    }
+    .epoch-block-right h3 {
+      font-size: clamp(32px, 3vw, 44px);
+      font-weight: 850;
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+    }
+    .epoch-block-right p.desc {
+      font-size: 17px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 680px;
+      margin-bottom: 20px;
+    }
+
+    /* Epoch 3: 2026 NOW (Full-Width Panoramic Stage) */
+    .epoch-block-full {
+      padding: 72px 0 32px;
+      background: rgba(201, 151, 56, 0.04);
+      border-bottom: 1px solid var(--hairline);
+      padding: 64px 48px;
+      margin-top: 24px;
+      border-left: 4px solid var(--ks-gold);
+    }
+    .epoch-full-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .epoch-full-head .year-tag {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 54px;
+      font-weight: 900;
+      color: var(--ks-gold);
+      line-height: 1;
+    }
+    .epoch-full-head .status-beacon {
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 800;
+      color: #047857;
+      background: #D1FAE5;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+    .epoch-block-full h3 {
+      font-size: clamp(36px, 3.8vw, 52px);
+      font-weight: 900;
+      letter-spacing: -0.8px;
+      margin-bottom: 18px;
+    }
+    .epoch-block-full p.desc {
+      font-size: 18px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      max-width: 860px;
+      margin-bottom: 28px;
+    }
+    .epoch-action-bar {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .epoch-btn-primary {
+      background: var(--text-dark);
+      color: var(--bg-page);
+      padding: 12px 28px;
+      font-size: 14.5px;
+      font-weight: 700;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 960px) {
+      .epoch-block-left, .epoch-block-right {
+        width: 100%;
+        margin-left: 0;
+      }
+      .watermark-year {
+        display: none;
+      }
+      .epoch-block-full {
+        padding: 40px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-notice">
+    <div><strong>[候选三 · 解构主义大字报与阶梯错落流]</strong> 彻底抛弃三排并列，采用左右非对称交错节拍与全景高光屏：</div>
+    <span style="font-family:monospace; color:var(--ks-gold);">DECONSTRUCTED POSTER</span>
+  </header>
+
+  <main class="poster-wrap">
+
+    <section class="poster-section" id="story-relay">
+      <span class="kicker">CHRONOLOGY · 05 / VINTAGE RELAY</span>
+      <h2 class="giant-heading">历届项目在时光里的<em>代际演进</em></h2>
+      <p class="lead-text">
+        在这里，技术不是呆板的并列货架。一代人拓荒、一代人重构骨架、一代人冲刺智能中枢。错落有致的工程节拍，跨越六届技术周期。
+      </p>
+
+      <!-- 错落式大字报流水 -->
+      <div class="staggered-timeline-stream">
+
+        <!-- 2024 左侧偏置 -->
+        <div class="epoch-block-left">
+          <div class="watermark-year">2024</div>
+          <div class="epoch-content">
+            <div class="epoch-badge-line">01 · 拓荒年代 / Vue 2 · Flask · SQLite</div>
+            <h3>校园问答系统 v1</h3>
+            <p class="desc">
+              从 0 到 1 破局：第一代成员针对新生资料散落的痛点，用严密的倒排索引与精校问答库手工建立第一座知识灯塔。
+            </p>
+            <div class="epoch-handover-tag">
+              ★ 传承资产：1200+ 精校校园语料库与初始爬虫套件
+            </div>
+          </div>
+        </div>
+
+        <!-- 2025 右侧错位大偏置 -->
+        <div class="epoch-block-right">
+          <div class="watermark-year">2025</div>
+          <div class="epoch-content">
+            <div class="epoch-badge-line">02 · 微服务跃迁 / FastAPI · pgvector · Docker</div>
+            <h3>RAG 知识向量中枢 v2</h3>
+            <p class="desc">
+              技术骨架彻底重构：全面接入嵌入模型与向量数据库，打通校园微服务微集群，告别静态规则，迈入语义检索时代。
+            </p>
+            <div class="epoch-handover-tag">
+              ★ 传承资产：pgvector 知识流水线、后端高并发微服务框架
+            </div>
+          </div>
+        </div>
+
+        <!-- 2026 全宽压轴聚光灯 -->
+        <div class="epoch-block-full">
+          <div class="epoch-full-head">
+            <span class="year-tag">2026 ACTIVE</span>
+            <span class="status-beacon">● 当前主力冲刺中</span>
+          </div>
+          <h3>Agent 智能协同体 v3</h3>
+          <p class="desc">
+            从被动问答跨越到主动意图编排与自动化工具调度。基于 LangGraph 构建多智能体状态机，支持校园地图、空房查询工具调用与严格评测集，正由第四代主力推进。
+          </p>
+          <div class="epoch-action-bar">
+            <button class="epoch-btn-primary">认领当前 2026 Issue 工位 ➔</button>
+            <span style="font-family:monospace; font-size:13px; color:var(--ks-gold); font-weight:700;">STCNCHU CS ATELIER · 全栈/算法席位开放中</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+</body>
+</html>

@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import {
-  Activity,
+  ArrowDown,
   ArrowRight,
   ArrowUpRight,
+  Award,
   BookOpen,
   Bot,
+  Briefcase,
   Camera,
   CalendarDays,
   Check,
@@ -28,18 +30,15 @@ import {
   Filter,
   Folder,
   Github,
-  Gauge,
+  GraduationCap,
   History,
   Home,
   ImagePlus,
+  Layers,
   LayoutDashboard,
-  Layers3,
-  KeyRound,
-  LockKeyhole,
-  LogIn,
-  LogOut,
   Mail,
   Map,
+  MapPin,
   Menu,
   MessageCircle,
   Megaphone,
@@ -75,16 +74,29 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import { useContent } from './services/content.context'
-import { useClubConfig } from './services/club-config.context'
-import { askAssistant } from './services/ai.service'
-import { canManageContent, canViewContent, demoCredentials, demoOwnerCredentials, isDemoAuth, listManagedAccounts, updateManagedAccountStatus } from './services/auth.service'
-import { createInviteCode, listInviteCodes, revokeInviteCode } from './services/invite.service'
-import { createContributionSubmission, listContributionSubmissions, reviewContributionSubmission } from './services/contribution.service'
-import { useAuth } from './services/auth.context'
-import type { AccountStatus, AIMessage, AnnouncementCategory, AuthUser, Citation, CompetitionEvent, CompetitionProject, ContributionSubmission, InterviewExperience, InviteCode, LearningNode, LearningRoute, Project, Resource } from './types'
-import { AdminAnnouncementModal, AdminContentManagerModal, AdminContentModal, AdminDeleteConfirm, AdminLearningRouteModal, AdminMemberModal, createLearningRouteDraft, createMemberDraft, type AdminCollectionKind, type AdminDeleteRequest, type AnnouncementDraft, type CollectionDraft, type ContentDraft, type LearningRouteDraft, type MemberDraft } from './components/admin-modals'
-import { TurnstileWidget } from './components/turnstile-widget'
+import {
+  announcements,
+  citations,
+  competitionEvents,
+  growthStats,
+  interviews,
+  learningNodes,
+  members,
+  projects,
+  prompts,
+  resources,
+  starterMessages,
+} from './data/mock'
+import type { AIMessage, AnnouncementCategory, LearningNode, Project, Resource } from './types'
+import { HomeLanding } from './components/home/HomeLanding'
+import { SiteHeader } from './components/home/SiteHeader'
+import { AboutSection } from './components/home/AboutSection'
+import { OfferSection } from './components/home/OfferSection'
+import { PicksSection } from './components/home/PicksSection'
+import { BlogSection } from './components/home/BlogSection'
+import { JoinSection } from './components/home/JoinSection'
+import Lenis from 'lenis'
+import 'lenis/dist/lenis.css'
 
 type Theme = 'light' | 'dark'
 type BackgroundPreference = 'follow' | 'campus' | 'mist' | 'paper' | 'custom'
@@ -127,8 +139,6 @@ const navItems = [
   { label: 'AI 助手', href: '#/ai', icon: Bot },
 ]
 
-const campusEntranceAsset = './assets/campus-entrance.png'
-
 const categoryClass: Record<AnnouncementCategory, string> = {
   重要: 'badge-red',
   比赛: 'badge-orange',
@@ -147,6 +157,9 @@ const roleLabels: Record<string, string> = {
 
 function routeFromHash() {
   const raw = window.location.hash.replace(/^#/, '') || '/home'
+  if (raw.startsWith('story-') || raw === '' || raw === '/') {
+    return '/home'
+  }
   return raw.replace(/\/$/, '') || '/home'
 }
 
@@ -242,7 +255,7 @@ function Navbar({ route, theme, onTheme, onSearch, mobileOpen, setMobileOpen }: 
           {navItems.map(({ label, href, icon: NavIcon }) => {
             const target = href.slice(1)
             const active = route === target || (target !== '/home' && route.startsWith(target))
-            return <a key={href} href={href} className={`nav-link ${active ? 'active' : ''}`} onClick={() => setMobileOpen(false)}><NavIcon size={16} />{label}</a>
+            return <a key={href} href={href} className={`nav-link ${active ? 'active' : ''}`} onClick={() => setMobileOpen(false)} aria-current={active ? 'page' : undefined}><NavIcon size={16} />{label}</a>
           })}
         </nav>
 
@@ -524,239 +537,7 @@ function QuoteCard() {
   return <aside className="quote-card"><Quote size={22} /><p>“{quote?.title ?? '代码是写给人看的，附带能在机器上运行。'}”</p><span>— {quote?.author ?? 'Harold Abelson'}</span><div className="quote-mark">/ 今日名言</div></aside>
 }
 
-function LandingPage({ onNavigate }: { onNavigate: (path: string) => void }) {
-  const landingRef = useRef<HTMLDivElement>(null)
-  const particleCanvasRef = useRef<HTMLCanvasElement>(null)
 
-  useEffect(() => {
-    const root = landingRef.current
-    const canvas = particleCanvasRef.current
-    const context = canvas?.getContext('2d')
-    if (!root || !canvas || !context) return
-
-    type Particle = { x: number; y: number; vx: number; vy: number; radius: number; alpha: number; life: number; maxLife: number; color: string }
-    type Star = { x: number; y: number; radius: number; alpha: number; twinkle: number; phase: number }
-    const colors = ['37, 99, 235', '90, 145, 238', '124, 92, 229', '16, 185, 129']
-    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-    const pointer = { x: -1000, y: -1000, lastX: -1000, lastY: -1000, active: false, dragging: false }
-    const particles: Particle[] = []
-    const stars: Star[] = []
-    let width = 0
-    let height = 0
-    let pixelRatio = 1
-    let frame = 0
-    let lastFrame = performance.now()
-
-    const randomParticle = (x = Math.random() * width, y = Math.random() * height, burst = false): Particle => {
-      const angle = Math.random() * Math.PI * 2
-      const speed = burst ? Math.random() * 1.4 + .35 : Math.random() * .18 + .03
-      const maxLife = burst ? Math.random() * 42 + 28 : 1
-      return { x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, radius: burst ? Math.random() * 1.7 + .65 : Math.random() * 1.35 + .45, alpha: burst ? .7 : Math.random() * .42 + .18, life: burst ? maxLife : Math.random(), maxLife, color: colors[Math.floor(Math.random() * colors.length)] }
-    }
-
-    const randomStar = (): Star => ({ x: Math.random() * width, y: Math.random() * height, radius: Math.random() * 1.15 + .25, alpha: Math.random() * .48 + .16, twinkle: Math.random() * .9 + .55, phase: Math.random() * Math.PI * 2 })
-
-    const resize = () => {
-      const rect = root.getBoundingClientRect()
-      width = rect.width
-      height = rect.height
-      pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
-      canvas.width = Math.floor(width * pixelRatio)
-      canvas.height = Math.floor(height * pixelRatio)
-      canvas.style.width = `${width}px`
-      canvas.style.height = `${height}px`
-      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
-    }
-
-    const seed = () => {
-      particles.length = 0
-      stars.length = 0
-      const count = Math.min(115, Math.max(48, Math.floor((width * height) / 11500)))
-      for (let index = 0; index < count; index += 1) particles.push(randomParticle())
-      const starCount = Math.min(180, Math.max(80, Math.floor((width * height) / 7600)))
-      for (let index = 0; index < starCount; index += 1) stars.push(randomStar())
-    }
-
-    const pointFromEvent = (event: PointerEvent) => {
-      const rect = root.getBoundingClientRect()
-      return { x: event.clientX - rect.left, y: event.clientY - rect.top }
-    }
-
-    const addBurst = (x: number, y: number, amount: number) => {
-      for (let index = 0; index < amount; index += 1) particles.push(randomParticle(x + (Math.random() - .5) * 12, y + (Math.random() - .5) * 12, true))
-      if (particles.length > 190) particles.splice(0, particles.length - 190)
-    }
-
-    const onPointerMove = (event: PointerEvent) => {
-      const point = pointFromEvent(event)
-      pointer.lastX = pointer.x
-      pointer.lastY = pointer.y
-      pointer.x = point.x
-      pointer.y = point.y
-      pointer.active = true
-      if (pointer.dragging) {
-        const distance = Math.hypot(pointer.x - pointer.lastX, pointer.y - pointer.lastY)
-        addBurst(pointer.x, pointer.y, Math.min(5, Math.max(1, Math.floor(distance / 8))))
-      }
-    }
-    const onPointerDown = (event: PointerEvent) => {
-      const point = pointFromEvent(event)
-      pointer.x = point.x
-      pointer.y = point.y
-      pointer.lastX = point.x
-      pointer.lastY = point.y
-      pointer.active = true
-      pointer.dragging = true
-      addBurst(point.x, point.y, 14)
-    }
-    const onPointerUp = () => { pointer.dragging = false }
-    const onPointerLeave = () => { pointer.active = false; pointer.dragging = false }
-
-    const draw = (now: number) => {
-      const delta = Math.min(2.2, (now - lastFrame) / 16.67)
-      lastFrame = now
-      context.clearRect(0, 0, width, height)
-      for (const star of stars) {
-        const pulse = .72 + Math.sin(now / 900 * star.twinkle + star.phase) * .28
-        context.fillStyle = `rgba(126, 153, 190, ${star.alpha * pulse * .58})`
-        context.beginPath()
-        context.arc(star.x, star.y, star.radius, 0, Math.PI * 2)
-        context.fill()
-        if (star.radius > 1.05) {
-          context.fillStyle = `rgba(92, 132, 190, ${star.alpha * pulse * .1})`
-          context.beginPath()
-          context.arc(star.x, star.y, star.radius * 3.6, 0, Math.PI * 2)
-          context.fill()
-        }
-      }
-      for (let index = particles.length - 1; index >= 0; index -= 1) {
-        const particle = particles[index]
-        particle.x += particle.vx * delta
-        particle.y += particle.vy * delta
-        if (pointer.active) {
-          const dx = pointer.x - particle.x
-          const dy = pointer.y - particle.y
-          const distance = Math.hypot(dx, dy)
-          if (distance < 125) {
-            const influence = (125 - distance) / 125
-            particle.vx += (dx / Math.max(distance, 1)) * influence * .009 * delta
-            particle.vy += (dy / Math.max(distance, 1)) * influence * .009 * delta
-          }
-        }
-        particle.vx *= .995
-        particle.vy *= .995
-        if (particle.maxLife !== 1) { particle.life -= delta; particle.alpha *= .985 }
-        if (particle.x < -20 || particle.x > width + 20 || particle.y < -20 || particle.y > height + 20 || particle.life <= 0) particles.splice(index, 1)
-      }
-      while (particles.length < 80) particles.push(randomParticle())
-
-      for (let first = 0; first < particles.length; first += 1) {
-        const particle = particles[first]
-        for (let second = first + 1; second < particles.length; second += 1) {
-          const other = particles[second]
-          const distance = Math.hypot(particle.x - other.x, particle.y - other.y)
-          if (distance < 82) {
-            context.strokeStyle = `rgba(${particle.color}, ${(1 - distance / 82) * .12})`
-            context.lineWidth = .55
-            context.beginPath()
-            context.moveTo(particle.x, particle.y)
-            context.lineTo(other.x, other.y)
-            context.stroke()
-          }
-        }
-      }
-      for (const particle of particles) {
-        context.fillStyle = `rgba(${particle.color}, ${particle.alpha})`
-        context.beginPath()
-        context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2)
-        context.fill()
-      }
-      if (pointer.active) {
-        if (pointer.dragging) {
-          for (const particle of particles) {
-            const distance = Math.hypot(pointer.x - particle.x, pointer.y - particle.y)
-            if (distance < 145) {
-              context.strokeStyle = `rgba(74, 116, 190, ${(1 - distance / 145) * .24})`
-              context.lineWidth = .7
-              context.beginPath()
-              context.moveTo(pointer.x, pointer.y)
-              context.lineTo(particle.x, particle.y)
-              context.stroke()
-            }
-          }
-        }
-        const glow = context.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, pointer.dragging ? 95 : 65)
-        glow.addColorStop(0, `rgba(37, 99, 235, ${pointer.dragging ? .16 : .09})`)
-        glow.addColorStop(1, 'rgba(37, 99, 235, 0)')
-        context.fillStyle = glow
-        context.beginPath()
-        context.arc(pointer.x, pointer.y, pointer.dragging ? 95 : 65, 0, Math.PI * 2)
-        context.fill()
-        if (pointer.dragging) {
-          context.strokeStyle = 'rgba(37, 99, 235, .33)'
-          context.lineWidth = 1
-          context.beginPath()
-          context.arc(pointer.x, pointer.y, 17 + Math.sin(now / 120) * 2, 0, Math.PI * 2)
-          context.stroke()
-        }
-      }
-      if (!prefersReducedMotion) frame = window.requestAnimationFrame(draw)
-    }
-
-    resize()
-    seed()
-    window.addEventListener('resize', resize)
-    root.addEventListener('pointermove', onPointerMove, { passive: true })
-    root.addEventListener('pointerdown', onPointerDown, { passive: true })
-    root.addEventListener('pointerup', onPointerUp, { passive: true })
-    root.addEventListener('pointercancel', onPointerUp, { passive: true })
-    root.addEventListener('pointerleave', onPointerLeave, { passive: true })
-    if (prefersReducedMotion) draw(performance.now())
-    else frame = window.requestAnimationFrame(draw)
-    return () => {
-      window.cancelAnimationFrame(frame)
-      window.removeEventListener('resize', resize)
-      root.removeEventListener('pointermove', onPointerMove)
-      root.removeEventListener('pointerdown', onPointerDown)
-      root.removeEventListener('pointerup', onPointerUp)
-      root.removeEventListener('pointercancel', onPointerUp)
-      root.removeEventListener('pointerleave', onPointerLeave)
-    }
-  }, [])
-
-  return <div ref={landingRef} className="landing-page">
-    <div className="landing-media" aria-hidden="true"><img src={campusEntranceAsset} alt="" /><div className="landing-photo-overlay" /></div>
-    <canvas ref={particleCanvasRef} className="landing-particles" aria-hidden="true" />
-    <header className="landing-header">
-      <button className="landing-brand" onClick={() => onNavigate('#/home')} aria-label="南昌航空大学科技学院计算机科技小组首页">
-        <img className="landing-brand-logo" src="./assets/college-logo-cropped.png" alt="南昌航空大学科技学院校徽" />
-        <span><strong>南昌航空大学科技学院</strong><small>计算机科技小组</small></span>
-      </button>
-      <div className="landing-header-right"><span className="landing-cohort">CS CLUB · 2026</span><span className="landing-language">中 <i /> EN</span></div>
-    </header>
-    <main className="landing-content">
-      <div className="landing-copy">
-        <p className="landing-eyebrow"><span /><span>南昌航空大学科技学院 · COMPUTER SCIENCE CLUB</span></p>
-        <h1>计算机科技小组<br /><em>让知识持续发生</em></h1>
-        <p className="landing-lead">一个连接学习、项目与传承的技术社区。<br />从第一个节点开始，和下一届一起把想法做出来。</p>
-        <div className="landing-proof"><span className="proof-number">04</span><span>代成员持续共建</span><i /><span className="proof-number">68</span><span>个项目正在传承</span></div>
-      </div>
-      <div className="landing-visual" aria-label="学习路线与项目传承可视化">
-        <div className="landing-orbit orbit-large" /><div className="landing-orbit orbit-small" />
-        <div className="landing-node node-main"><span className="node-main-kicker"><i /> CS CLUB</span><strong>计算机科技小组</strong><small>学习 · 实践 · 传承</small></div>
-        <div className="landing-node node-top"><span><Route size={15} /></span><small>学习路线</small></div>
-        <div className="landing-node node-right"><span><Rocket size={15} /></span><small>项目库</small></div>
-        <div className="landing-node node-bottom"><span><History size={15} /></span><small>历届知识</small></div>
-        <div className="landing-node node-left"><span><Users size={15} /></span><small>成员协作</small></div>
-        <div className="landing-connector connector-one" /><div className="landing-connector connector-two" /><div className="landing-connector connector-three" /><div className="landing-connector connector-four" />
-        <div className="landing-code-card"><span className="code-card-dot" /><span>第 4 代 · 知识持续生长</span></div>
-      </div>
-    </main>
-    <div className="landing-footer-left"><a className="school-link" href="https://www.stcnchu.edu.cn/" target="_blank" rel="noreferrer">南昌航空大学科技学院官网 <ArrowUpRight size={14} /></a></div>
-    <div className="landing-footer-center"><span /> <small>把这一届的经验，留给下一届。</small></div>
-    <button className="landing-arrow" onClick={() => onNavigate('#/tools')} aria-label="进入工具页"><span>进入</span><ArrowRight size={21} /></button>
-  </div>
-}
 
 
 function ToolsRadar() {
@@ -2302,6 +2083,197 @@ function OnboardingModal({ open, onClose, onNavigate }: { open: boolean; onClose
   return <AnimatePresence><motion.div className="modal-scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><motion.section className="onboarding-modal" initial={{ opacity: 0, y: 18, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 18, scale: 0.98 }}><button className="icon-button modal-close" onClick={onClose} aria-label="关闭"><X size={18} /></button><div className="modal-progress"><span style={{ width: `${((step + 1) / steps.length) * 100}%` }} /></div><p className="eyebrow">STARTER PATH / 0{step + 1}</p><h2>{current.title}</h2><div className="onboarding-options">{current.options.map((option) => <button key={option} className={(step === 0 ? grade : interest) === option ? 'selected' : ''} onClick={() => step === 0 ? setGrade(option) : setInterest(option)}>{option}{(step === 0 ? grade : interest) === option && <Check size={15} />}</button>)}</div><div className="modal-footer"><span>{step + 1} / {steps.length}</span><button className="primary-button" onClick={() => { if (step < steps.length - 1) setStep(step + 1); else { onClose(); onNavigate('#/learning') } }}>{step < steps.length - 1 ? '下一步' : '生成我的路线'} <ArrowRight size={15} /></button></div></motion.section></motion.div></AnimatePresence>
 }
 
+type StorySection = {
+  id: string
+  label: string
+}
+
+const STORY_SECTIONS: StorySection[] = [
+  { id: 'story-hero', label: '01 / 首页' },
+  { id: 'story-about', label: '02 / 关于我们' },
+  { id: 'story-offer', label: '03 / 带来什么' },
+  { id: 'story-picks', label: '04 / 小组力荐' },
+  { id: 'story-blog', label: '05 / 小组博客' },
+  { id: 'story-join', label: '06 / 加入我们' },
+]
+
+function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [isPastTrigger, setIsPastTrigger] = useState(false)
+  const heroFrameRef = useRef<HTMLDivElement | null>(null)
+  const lenisRef = useRef<Lenis | null>(null)
+
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 1.5,
+    })
+
+    lenisRef.current = lenis
+    ;(window as any).__lenis = lenis
+
+    let rafId: number
+    function raf(time: number) {
+      lenis.raf(time)
+      rafId = requestAnimationFrame(raf)
+    }
+    rafId = requestAnimationFrame(raf)
+
+    lenis.on('scroll', ({ scroll }: { scroll: number }) => {
+      const vh = window.innerHeight || 800
+      const frame = heroFrameRef.current
+      if (frame) {
+        if (scroll <= vh * 1.3) {
+          const progress = Math.min(1, Math.max(0, scroll / vh))
+          frame.style.transform = `translate3d(0, ${scroll * 0.18}px, 0) scale(${1 - progress * 0.02})`
+          frame.style.opacity = String(1 - progress * 0.4)
+          frame.style.visibility = 'visible'
+        } else {
+          frame.style.visibility = 'hidden'
+        }
+      }
+
+      // 用户要求：滚动屏幕约 35% 到 40% 后继续，02 入场居中悬念大字淡出，02 页面元素分步登场
+      const triggerThreshold = vh * 0.38
+      setIsPastTrigger(scroll >= triggerThreshold)
+    })
+
+    const handleNativeScroll = () => {
+      const vh = window.innerHeight || 800
+      const triggerThreshold = vh * 0.38
+      setIsPastTrigger(window.scrollY >= triggerThreshold)
+    }
+    window.addEventListener('scroll', handleNativeScroll, { passive: true })
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      window.removeEventListener('scroll', handleNativeScroll)
+      lenis.destroy()
+      delete (window as any).__lenis
+    }
+  }, [])
+
+  /* 观察当前处于哪一屏 */
+  useEffect(() => {
+    const sectionIds = STORY_SECTIONS.map((s) => s.id)
+    const elements = sectionIds.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[]
+    if (elements.length === 0) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const idx = sectionIds.indexOf(entry.target.id)
+            if (idx !== -1) {
+              setActiveIndex(idx)
+            }
+          }
+        })
+      },
+      {
+        threshold: 0.15,
+        rootMargin: '-5% 0px -20% 0px',
+      }
+    )
+
+    elements.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
+  /* 初始哈希锚点平滑定位 */
+  useEffect(() => {
+    const rawHash = window.location.hash.replace(/^#/, '')
+    if (rawHash && rawHash !== 'story-hero') {
+      const timer = setTimeout(() => {
+        scrollToSection(rawHash)
+      }, 350)
+      return () => clearTimeout(timer)
+    }
+  }, [])
+
+  const scrollToSection = (target: number | string) => {
+    let targetId = ''
+    if (typeof target === 'number') {
+      targetId = STORY_SECTIONS[target]?.id ?? ''
+    } else {
+      targetId = target.replace(/^#/, '')
+    }
+    if (!targetId) return
+    const lenis = lenisRef.current
+    if (targetId === 'story-hero') {
+      if (lenis) {
+        lenis.scrollTo(0, { duration: 1.2 })
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+      return
+    }
+    const targetElement = document.getElementById(targetId)
+    if (targetElement) {
+      if (lenis) {
+        lenis.scrollTo(targetElement, { offset: -70, duration: 1.2 })
+      } else {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }
+  }
+
+  return (
+    <div className="home-story-scroll" data-active-screen={activeIndex}>
+      {/* 顶部全局悬浮导航 */}
+      <SiteHeader
+        onNavigate={onNavigate}
+        onScrollToSection={(sectionId) => scrollToSection(sectionId)}
+      />
+
+      <div className="hero-sticky-container">
+        <div ref={heroFrameRef} className="hero-sticky-frame">
+          <HomeLanding
+            onScrollDown={() => scrollToSection('story-about')}
+          />
+        </div>
+      </div>
+
+      {/* 02 / ABOUT US (项目组介绍) */}
+      <AboutSection
+        onNavigate={onNavigate}
+        onNextSection={() => scrollToSection('story-offer')}
+        isPastTrigger={isPastTrigger}
+      />
+
+      {/* 03 / WHAT WE OFFER (我们可以给你带来什么) */}
+      <OfferSection
+        onNavigate={onNavigate}
+        onNextSection={() => scrollToSection('story-picks')}
+      />
+
+      {/* 04 / OUR PICKS (小组力荐) */}
+      <PicksSection
+        onNavigate={onNavigate}
+        onNextSection={() => scrollToSection('story-blog')}
+      />
+
+      {/* 05 / BLOG (小组博客 · 最近文章) */}
+      <BlogSection
+        onNavigate={onNavigate}
+        onNextSection={() => scrollToSection('story-join')}
+      />
+
+      {/* 06 / JOIN US (加入我们 & 整站一体化 Footer) */}
+      <JoinSection
+        onNavigate={onNavigate}
+        onScrollToTop={() => scrollToSection('story-hero')}
+        onScrollToSection={(sectionId) => scrollToSection(sectionId)}
+      />
+    </div>
+  )
+}
+
 function App() {
   const { data: { projects, starterMessages } } = useContent()
   const [route, setRoute] = useState(routeFromHash())
@@ -2315,27 +2287,26 @@ function App() {
   const [aiOpen, setAiOpen] = useState(false)
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [messages, setMessages] = useState<AIMessage[]>(starterMessages)
-  useEffect(() => { const updateRoute = () => { setRoute(routeFromHash()); setMobileOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }) }; window.addEventListener('hashchange', updateRoute); return () => window.removeEventListener('hashchange', updateRoute) }, [])
-  useEffect(() => { document.documentElement.dataset.theme = theme; try { localStorage.setItem('club-theme', theme) } catch { /* file:// privacy modes may disable storage */ } }, [theme])
-  useEffect(() => { try { localStorage.setItem('club-background-preference', backgroundPreference) } catch { /* file:// privacy modes may disable storage */ } }, [backgroundPreference])
-  useEffect(() => { try { if (backgroundImage) localStorage.setItem('club-background-image', backgroundImage); else localStorage.removeItem('club-background-image') } catch { /* file:// privacy modes may disable storage */ } }, [backgroundImage])
-  useEffect(() => { const handler = (event: KeyboardEvent) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setCommandOpen(true) } }; window.addEventListener('keydown', handler); return () => window.removeEventListener('keydown', handler) }, [])
+  useEffect(() => {
+    const updateRoute = () => {
+      setRoute(routeFromHash())
+      setMobileOpen(false)
+      const rawHash = window.location.hash.replace(/^#/, '')
+      if (!rawHash.startsWith('story-')) {
+        window.scrollTo({ top: 0, behavior: 'auto' })
+      }
+    }
+    window.addEventListener('hashchange', updateRoute)
+    return () => window.removeEventListener('hashchange', updateRoute)
+  }, [])
   const openProject = (project: Project) => navigate(`#/projects/${project.slug}`)
-  const sendMessage = (text: string, options: { openDrawer?: boolean } = {}) => {
-    const userMessage: AIMessage = { id: `u-${Date.now()}`, role: 'user', content: text }
-    setMessages((current) => [...current, userMessage])
-    if (options.openDrawer !== false) setAiOpen(true)
-    void askAssistant(text)
-      .then((assistant) => setMessages((current) => [...current, assistant]))
-      .catch(() => setMessages((current) => [...current, { id: `assistant-${Date.now()}`, role: 'assistant', content: '暂时无法连接 AI 服务，请稍后再试。' }]))
-  }
-  const renderPage = () => { if (route === '/home') return <LandingPage onNavigate={navigate} />; if (route === '/tools') return <HomePage onNavigate={navigate} onOnboarding={() => setOnboardingOpen(true)} onOpenProject={openProject} />; if (route === '/login') return <LoginPage />; if (route === '/admin') return <AdminPage onNavigate={navigate} theme={theme} onThemeChange={() => setTheme((value) => value === 'light' ? 'dark' : 'light')} backgroundPreference={backgroundPreference} onBackgroundPreferenceChange={setBackgroundPreference} backgroundImage={backgroundImage} onBackgroundImageChange={setBackgroundImage} />; if (route === '/learning') return <LearningPage onOpenProject={openProject} />; if (route === '/projects') return <ProjectsPage onOpenProject={openProject} />; if (route.startsWith('/projects/')) { const slug = route.split('/')[2]; return <ProjectDetailPage project={projects.find((item) => item.slug === slug) ?? projects[0]} onNavigate={navigate} /> }; if (route === '/events') return <EventsPage />; if (route === '/resources') return <ResourcesPage onNavigate={navigate} />; if (route === '/resources/prompts') return <PromptsPage />; if (route === '/interviews') return <InterviewsPage />; if (route === '/members/archive') return <DynamicPhotoArchivePage />; if (route === '/members') return <DynamicMembersPage />; if (route.startsWith('/members/')) { const team = route.split('/')[2]; return <DynamicMembersPage initialTeam={team} /> }; if (route === '/ai') return <AiPage messages={messages} onSend={(text) => sendMessage(text, { openDrawer: false })} onNewChat={() => setMessages([])} />; return <LandingPage onNavigate={navigate} /> }
+  const sendMessage = (text: string) => { const userMessage: AIMessage = { id: `u-${Date.now()}`, role: 'user', content: text }; const assistant: AIMessage = { id: `a-${Date.now()}`, role: 'assistant', content: text.includes('项目') ? '结合你选择的方向，可以先从校园 AI 智能助手的前端协作任务开始，再逐步参与接口联调。' : text.includes('FastAPI') ? '建议先用一周完成 Python 工程基础和 FastAPI 路由，再把知识放进一个小项目。路线里已经为你标记了项目入口。' : '我已经把这个问题拆进学习路线、项目和资源中。先选择一个方向，我们一起找到可执行的下一步。', citations }; setMessages((current) => [...current, userMessage, assistant]); setAiOpen(true) }
+  const renderPage = () => { if (route === '/home') return <ExpandedHomePage onNavigate={navigate} />; if (route === '/tools') return <HomePage onNavigate={navigate} onOnboarding={() => setOnboardingOpen(true)} onOpenProject={openProject} />; if (route === '/learning') return <LearningPage onOpenProject={openProject} />; if (route === '/projects') return <ProjectsPage onOpenProject={openProject} />; if (route.startsWith('/projects/')) { const slug = route.split('/')[2]; return <ProjectDetailPage project={projects.find((item) => item.slug === slug) ?? projects[0]} onNavigate={navigate} /> }; if (route === '/events') return <EventsPage />; if (route === '/resources') return <ResourcesPage onNavigate={navigate} />; if (route === '/resources/prompts') return <PromptsPage />; if (route === '/interviews') return <InterviewsPage />; if (route === '/members') return <MembersPage />; if (route === '/ai') return <AiPage messages={messages} onSend={sendMessage} />; return <ExpandedHomePage onNavigate={navigate} /> }
   const isLanding = route === '/home'
   const isTools = route === '/tools'
   const isAdminRoute = route === '/admin'
   const isFullBleed = isLanding
-  const siteBackground = theme === 'dark' && backgroundPreference !== 'custom' ? 'starfield' : (backgroundPreference === 'follow' ? 'campus' : backgroundPreference)
-  return <div className={`app-shell ${isLanding ? 'landing-shell' : ''} ${isTools ? 'tools-shell' : ''} ${isAdminRoute ? 'admin-shell' : ''} ${!isLanding ? 'site-background-shell' : ''} site-bg-${siteBackground}`} style={{ '--site-background-image': backgroundImage ? `url(${backgroundImage})` : 'none' } as React.CSSProperties}>{!isFullBleed && <Navbar route={route} theme={theme} onTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')} onSearch={() => setCommandOpen(true)} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />}<main className={`${isFullBleed ? 'full-bleed-main' : ''} ${isTools ? 'tools-main' : ''}`}><AnimatePresence mode="wait"><motion.div key={route} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.18 }}>{renderPage()}</motion.div></AnimatePresence></main>{!isFullBleed && !isAdminRoute && <footer className="site-footer"><div><a href="#/home" className="brand footer-brand"><img className="brand-logo" src="./assets/college-logo-cropped.png" alt="南昌航空大学科技学院校徽" /><span className="brand-copy"><strong>南昌航空大学科技学院</strong><small>计算机科技小组 · Computer Science Club</small></span></a><p>学习 → 实践 → 传承。让每一届的知识都留下来。</p></div><div className="footer-links"><a href="#/members">关于我们</a><a href="#/members">加入我们</a><a href="#/resources">贡献指南</a><a href="#/home">隐私政策</a></div><span className="copyright">© 2026 南昌航空大学科技学院计算机科技小组</span></footer>}{!isFullBleed && !isAdminRoute && <button className="floating-ai" onClick={() => setAiOpen(true)} aria-label="打开 AI 助手"><Bot size={21} /></button>}<AiDrawer open={aiOpen && !isLanding} onClose={() => setAiOpen(false)} messages={messages} onSend={sendMessage} /><CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={navigate} /><OnboardingModal open={onboardingOpen} onClose={() => setOnboardingOpen(false)} onNavigate={navigate} /></div>
+  return <div className={`app-shell ${isLanding ? 'landing-shell' : ''} ${isTools ? 'tools-shell' : ''}`}>{!isFullBleed && <Navbar route={route} theme={theme} onTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')} onSearch={() => setCommandOpen(true)} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />}<main className={`${isFullBleed ? 'full-bleed-main' : ''} ${isTools ? 'tools-main' : ''}`}><AnimatePresence mode="wait"><motion.div key={route} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}>{renderPage()}</motion.div></AnimatePresence></main>{!isFullBleed && <footer className="site-footer"><div><a href="#/home" className="brand footer-brand"><img className="brand-logo" src="./assets/college-logo-cropped.png" alt="南昌航空大学科技学院校徽" /><span className="brand-copy"><strong>南昌航空大学科技学院</strong><small>计算机科技小组 · Computer Science Club</small></span></a><p>学习 → 实践 → 传承。让每一届的知识都留下来。</p></div><div className="footer-links"><a href="#/members">关于我们</a><a href="#/members">加入我们</a><a href="#/resources">贡献指南</a><a href="#/home">隐私政策</a></div><span className="copyright">© 2026 南昌航空大学科技学院计算机科技小组</span></footer>}{!isFullBleed && <button className="floating-ai" onClick={() => setAiOpen(true)} aria-label="打开 AI 助手"><Bot size={21} /></button>}<AiDrawer open={aiOpen && !isLanding} onClose={() => setAiOpen(false)} messages={messages} onSend={sendMessage} /><CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={navigate} /><OnboardingModal open={onboardingOpen} onClose={() => setOnboardingOpen(false)} onNavigate={navigate} /></div>
 }
 
 export default App

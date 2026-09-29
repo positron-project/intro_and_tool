@@ -2,4 +2,6 @@ node_modules/
 dist/
 .npm-cache/
 *.tsbuildinfo
-.env.local
+
+# CodeGraph 本地数据库与临时文件
+.codegraph/

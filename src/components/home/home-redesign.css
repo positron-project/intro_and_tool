@@ -1,0 +1,801 @@
+/* ============================================================
+   高校计算机小组 · 品牌首页重构视觉样式表
+   Visual Language: Bright / Academic / Campus / Minimalist / Poster
+   ============================================================ */
+
+:root {
+  --home-bg-warm: #FAF8F2;
+  --home-bg-alt: #F9F6EE;
+  --home-navy: #073F73;
+  --home-navy-deep: #063E70;
+  --home-navy-soft: #0A477B;
+  --home-navy-muted: rgba(7, 63, 115, 0.65);
+  --home-accent-cyan: #9FD1DE;
+  --home-accent-blue: #82BED3;
+  --home-accent-pale: #B7DDE5;
+  --home-accent-line: #8FC7D9;
+}
+
+/* ============================================================
+   首屏视口容器 (Desktop First: 100vh, min 720px, overflow hidden)
+   ============================================================ */
+.home-hero-viewport {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 720px;
+  overflow: hidden;
+  background-color: var(--home-bg-warm);
+  background-image: 
+    radial-gradient(ellipse 60% 50% at 85% 20%, rgba(183, 221, 229, 0.22) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 10% 90%, rgba(159, 209, 222, 0.18) 0%, transparent 60%);
+  color: var(--home-navy);
+  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   Layer 7: 顶部导航 (SiteHeader)
+   ============================================================ */
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: clamp(76px, 8.5vh, 92px);
+  z-index: 100;
+  background: transparent;
+  box-shadow: none;
+  border-bottom: 1px solid transparent;
+  padding: 0 clamp(24px, 5vw, 76px);
+  box-sizing: border-box;
+  transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              backdrop-filter 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.site-header.is-scrolled {
+  background: rgba(250, 248, 242, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(7, 63, 115, 0.08);
+  box-shadow: 0 4px 24px rgba(7, 63, 115, 0.04);
+  height: clamp(66px, 7.5vh, 78px);
+}
+
+.site-header-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+/* 左侧 Logo 与名称 */
+.site-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+  user-select: none;
+}
+
+.site-brand:hover {
+  opacity: 0.86;
+}
+
+.site-brand-symbol {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: clamp(20px, 1.8vw, 24px);
+  font-weight: 800;
+  color: var(--home-navy);
+  letter-spacing: -0.04em;
+}
+
+.site-brand-name {
+  font-size: clamp(16px, 1.25vw, 18px);
+  font-weight: 700;
+  color: var(--home-navy);
+  letter-spacing: -0.01em;
+}
+
+/* 中间主要导航项 */
+.site-nav {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: clamp(32px, 3.2vw, 54px);
+  height: 100%;
+}
+
+.site-nav-item {
+  background: none;
+  border: none;
+  padding: 8px 4px;
+  font-size: clamp(15px, 1.05vw, 16.5px);
+  font-weight: 600;
+  color: var(--home-navy);
+  opacity: 0.78;
+  cursor: pointer;
+  transition: opacity 0.25s ease, color 0.25s ease;
+  position: relative;
+  font-family: inherit;
+}
+
+.site-nav-item:hover,
+.site-nav-item.is-active {
+  opacity: 1;
+  color: var(--home-navy-deep);
+}
+
+/* 导航项下方深蓝色短横线 (位于文字下方约 12px) */
+.site-nav-underline {
+  position: absolute;
+  bottom: clamp(18px, 2.2vh, 26px);
+  left: 0;
+  height: 2.5px;
+  background-color: var(--home-navy);
+  border-radius: 2px;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 右侧标语 */
+.site-slogan {
+  display: flex;
+  align-items: center;
+}
+
+.site-slogan-text {
+  font-size: clamp(12px, 0.9vw, 13.5px);
+  font-weight: 500;
+  color: var(--home-navy-muted);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* 移动端汉堡切换 */
+.site-mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--home-navy);
+  cursor: pointer;
+  padding: 8px;
+}
+
+.site-mobile-drawer {
+  display: none;
+}
+
+/* ============================================================
+   Layer 6: Hero Typography (主标题与副标题)
+   ============================================================ */
+.hero-content-stage {
+  position: absolute;
+  left: clamp(24px, 6vw, 92px);
+  top: clamp(120px, 20vh, 190px);
+  z-index: 60;
+  max-width: 48vw;
+  pointer-events: auto;
+}
+
+.hero-typography-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero-heading-group {
+  margin: 0;
+  padding: 0;
+}
+
+.hero-main-title {
+  margin: 0;
+  padding: 0;
+  font-size: clamp(76px, 8vw, 132px);
+  font-weight: 900;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  color: var(--home-navy);
+  font-family: "MiSans", "Noto Sans SC", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-title-line {
+  display: block;
+}
+
+/* 副标题 */
+.hero-subtitle-group {
+  margin-top: clamp(24px, 3.2vh, 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero-sub-title {
+  font-size: clamp(26px, 2.3vw, 36px);
+  font-weight: 700;
+  color: var(--home-navy);
+  letter-spacing: -0.015em;
+}
+
+/* 收尾短横线 (宽约 54px，高 2px) */
+.hero-sub-rule {
+  width: 56px;
+  height: 2px;
+  background-color: var(--home-navy);
+  margin-top: 14px;
+}
+
+/* ============================================================
+   Layer 2 & Layer 5: CampusVisual (建筑线稿与校园实景)
+   ============================================================ */
+.campus-visual-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* 建筑与校训石手绘蓝调线稿容器 (Layer 2 & 5) */
+.campus-sketch-container {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: clamp(540px, 62vw, 1080px);
+  height: clamp(460px, 76vh, 860px);
+  z-index: 45;
+  overflow: hidden;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.campus-sketch-img {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: right bottom;
+  opacity: 0.92;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 20px rgba(7, 63, 115, 0.06));
+}
+
+/* 校园实景主体 (Layer 5) */
+.campus-photo-container {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: clamp(540px, 58vw, 980px);
+  height: clamp(480px, 68vh, 780px);
+  z-index: 50;
+  overflow: visible;
+  /* 利用精密遮罩让实景在顶部与左侧柔顺羽化融入米白底色与浅蓝几何 */
+  mask-image: radial-gradient(ellipse 90% 86% at 82% 82%, #000 48%, rgba(0,0,0,0.85) 68%, transparent 95%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 86% at 82% 82%, #000 48%, rgba(0,0,0,0.85) 68%, transparent 95%);
+}
+
+.campus-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: right bottom;
+  display: block;
+  transform: translate(2%, 2%) scale(1.02);
+  filter: saturate(1.04) contrast(1.02);
+}
+
+.campus-photo-fade-mask {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(250, 248, 242, 0.35) 0%, transparent 45%);
+}
+
+/* ============================================================
+   Layer 3: 浅蓝几何装饰色块 (GeometricAccents)
+   ============================================================ */
+.geometric-accents-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 30;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* 右上方超大倾斜色块 (Parallelogram ribbon) */
+.geo-ribbon-top-right {
+  position: absolute;
+  top: -24vh;
+  right: 12vw;
+  width: clamp(200px, 20vw, 360px);
+  height: 98vh;
+  background: linear-gradient(135deg, rgba(159, 209, 222, 0.42) 0%, rgba(183, 221, 229, 0.18) 100%);
+  transform: rotate(-28deg) skewX(-14deg);
+  border-radius: 4px;
+}
+
+/* 右下方超大倾斜色块 (Parallelogram ribbon) */
+.geo-ribbon-bottom-right {
+  position: absolute;
+  bottom: -28vh;
+  right: -4vw;
+  width: clamp(240px, 24vw, 420px);
+  height: 86vh;
+  background: linear-gradient(135deg, rgba(130, 190, 211, 0.36) 0%, rgba(159, 209, 222, 0.12) 100%);
+  transform: rotate(-28deg) skewX(-14deg);
+  border-radius: 4px;
+}
+
+/* 左下方大型浅蓝圆弧 (露出一部分) */
+.geo-circle-arc {
+  position: absolute;
+  left: -14vw;
+  bottom: -22vh;
+  width: clamp(420px, 46vw, 720px);
+  height: clamp(420px, 46vw, 720px);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(183, 221, 229, 0.34) 0%, rgba(159, 209, 222, 0.12) 65%, transparent 100%);
+}
+
+/* 左下方倾斜浅蓝梯形 */
+.geo-trapezoid {
+  position: absolute;
+  left: 15vw;
+  bottom: -4vh;
+  width: clamp(120px, 14vw, 220px);
+  height: clamp(90px, 10vh, 150px);
+  background: rgba(159, 209, 222, 0.22);
+  transform: skewX(-26deg);
+  border-radius: 2px;
+}
+
+/* ============================================================
+   Layer 4: 动态蓝色线条与知识节点 (FlowLines)
+   ============================================================ */
+.flow-lines-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.flow-lines-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ============================================================
+   Layer 4.5: Dot Matrix Hero Visual (明日方舟 World 点阵风格互动徽标)
+   ============================================================ */
+.dot-matrix-hero-visual {
+  position: absolute;
+  right: clamp(240px, 16vw, 560px);
+  top: 38%;
+  transform: translateY(-50%);
+  width: clamp(380px, 38vw, 540px);
+  height: clamp(380px, 38vw, 540px);
+  z-index: 55;
+  pointer-events: auto;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 18px;
+  box-sizing: border-box;
+  background: radial-gradient(circle at center, rgba(250, 248, 242, 0.28) 0%, rgba(250, 248, 242, 0.08) 50%, transparent 75%);
+  backdrop-filter: none;
+}
+
+.dot-matrix-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  z-index: 1;
+}
+
+/* 顶部 HUD 标签 */
+.dot-matrix-hud-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: rgba(7, 63, 115, 0.55);
+}
+
+.dot-matrix-hud-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot-matrix-live-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #82BED3;
+  box-shadow: 0 0 8px #82BED3;
+  animation: hudPulse 2s ease-in-out infinite;
+}
+
+@keyframes hudPulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+.dot-matrix-tag-text {
+  font-weight: 700;
+  color: var(--home-navy);
+}
+
+.dot-matrix-hud-coords {
+  opacity: 0.6;
+}
+
+/* 底部 HUD 标尺与状态 */
+.dot-matrix-hud-footer {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: rgba(7, 63, 115, 0.45);
+  border-top: 1px dashed rgba(143, 199, 217, 0.35);
+  padding-top: 8px;
+}
+
+.hud-line-accent {
+  width: 18px;
+  height: 2px;
+  background-color: #82BED3;
+}
+
+.hud-status-hint {
+  font-size: 9.5px;
+  font-weight: 600;
+}
+
+.hud-corner-bracket {
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid rgba(7, 63, 115, 0.4);
+  border-bottom: 1.5px solid rgba(7, 63, 115, 0.4);
+}
+
+/* ============================================================
+   Scroll Down 指示器 (ScrollIndicator)
+   ============================================================ */
+.scroll-indicator {
+  position: absolute;
+  left: clamp(24px, 6vw, 92px);
+  bottom: clamp(24px, 4.2vh, 44px);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--home-navy);
+  transition: opacity 0.25s ease;
+  user-select: none;
+}
+
+.scroll-indicator:hover {
+  opacity: 0.78;
+}
+
+/* 鼠标图形 */
+.scroll-mouse-icon {
+  width: 18px;
+  height: 28px;
+  border: 1.8px solid var(--home-navy);
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+  box-sizing: border-box;
+}
+
+.scroll-mouse-wheel {
+  width: 2.2px;
+  height: 5px;
+  background-color: var(--home-navy);
+  border-radius: 2px;
+}
+
+/* 细竖线与脉冲 */
+.scroll-stem-line {
+  width: 1px;
+  height: 32px;
+  background-color: rgba(7, 63, 115, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.scroll-stem-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 12px;
+  background-color: var(--home-navy);
+}
+
+/* 文本标签 */
+.scroll-text {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--home-navy);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   响应式断点 (Tablet & Mobile)
+   ============================================================ */
+@media (max-width: 1200px) {
+  .site-slogan {
+    display: none;
+  }
+  .hero-main-title {
+    font-size: clamp(56px, 7.2vw, 92px);
+  }
+  .campus-sketch-container,
+  .campus-photo-container {
+    width: 64vw;
+    height: 65vh;
+  }
+}
+
+@media (max-width: 900px) {
+  .site-nav {
+    display: none;
+  }
+  .site-mobile-toggle {
+    display: block;
+  }
+
+  /* 移动端汉堡抽屉 */
+  .site-mobile-drawer {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #FAF8F2;
+    padding: 24px clamp(24px, 5vw, 40px);
+    box-shadow: 0 12px 28px rgba(7, 63, 115, 0.08);
+    border-bottom: 1px solid rgba(7, 63, 115, 0.1);
+    box-sizing: border-box;
+    z-index: 100;
+  }
+
+  .site-mobile-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .site-mobile-item {
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--home-navy);
+    padding: 8px 0;
+    cursor: pointer;
+  }
+
+  .site-mobile-item.is-active {
+    color: var(--home-navy-deep);
+  }
+
+  .site-mobile-slogan {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(7, 63, 115, 0.08);
+    font-size: 12px;
+    color: var(--home-navy-muted);
+  }
+
+  .hero-content-stage {
+    max-width: 80vw;
+    top: 140px;
+  }
+
+  .campus-sketch-container,
+  .campus-photo-container {
+    width: 76vw;
+    height: 52vh;
+    opacity: 0.88;
+  }
+
+  .dot-matrix-hero-visual {
+    width: clamp(280px, 40vw, 420px);
+    height: clamp(280px, 40vw, 420px);
+    right: 24px;
+    top: 55%;
+    opacity: 0.88;
+  }
+}
+
+@media (max-width: 600px) {
+  .home-hero-viewport {
+    height: 100svh;
+    min-height: 600px;
+  }
+
+  .hero-content-stage {
+    left: 24px;
+    top: 110px;
+    max-width: 90vw;
+  }
+
+  .hero-main-title {
+    font-size: clamp(48px, 12vw, 68px);
+    line-height: 1.05;
+  }
+
+  .hero-sub-title {
+    font-size: 22px;
+  }
+
+  .campus-sketch-container,
+  .campus-photo-container {
+    width: 92vw;
+    height: 44vh;
+    right: -4vw;
+    bottom: 20px;
+    opacity: 0.84;
+  }
+
+  .dot-matrix-hero-visual {
+    width: clamp(230px, 70vw, 290px);
+    height: clamp(230px, 70vw, 290px);
+    left: 52%;
+    top: 55%;
+    right: auto;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    opacity: 0.9;
+    padding: 0;
+  }
+
+  .scroll-indicator {
+    left: 24px;
+    bottom: 20px;
+    transform: scale(0.9);
+    transform-origin: bottom left;
+  }
+}
+
+/* ============================================================
+   无障碍 (prefers-reduced-motion)
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .site-nav-underline,
+  .scroll-stem-pulse,
+  .campus-sketch-container,
+  .campus-photo-container,
+  .geo-ribbon,
+  .geo-circle-arc,
+  .geo-trapezoid {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+, 78vw, 320px);
+    right: 50%;
+    transform: translateX(50%);
+    top: auto;
+    bottom: 85px;
+    opacity: 0.88;
+    padding: 8px 10px;
+  }
+
+  .dot-matrix-hud-header {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+
+  .dot-matrix-hud-footer {
+    font-size: 8.5px;
+    letter-spacing: 0.03em;
+  }
+
+  .hud-status-hint {
+    font-size: 8px;
+  }
+
+  .scroll-indicator {
+    left: 24px;
+    bottom: 20px;
+    transform: scale(0.9);
+    transform-origin: bottom left;
+  }
+}
+
+/* ============================================================
+   无障碍 (prefers-reduced-motion)
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .site-nav-underline,
+  .scroll-stem-pulse,
+  .campus-sketch-container,
+  .campus-photo-container,
+  .geo-ribbon,
+  .geo-circle-arc,
+  .geo-trapezoid {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+x-hud-footer {
+    font-size: 8.5px;
+    letter-spacing: 0.03em;
+  }
+
+  .hud-status-hint {
+    font-size: 8px;
+  }
+
+  .scroll-indicator {
+    left: 24px;
+    bottom: 20px;
+    transform: scale(0.9);
+    transform-origin: bottom left;
+  }
+}
+
+/* ============================================================
+   无障碍 (prefers-reduced-motion)
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .site-nav-underline,
+  .scroll-stem-pulse,
+  .campus-sketch-container,
+  .campus-photo-container,
+  .geo-ribbon,
+  .geo-circle-arc,
+  .geo-trapezoid {
+    transition: none !important;
+    animation: none !important;
+  }
+}

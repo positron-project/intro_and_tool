@@ -99,15 +99,146 @@ export const growthStats = [
   { label: '届数', value: '6', note: '传承不息', icon: 'history', accent: 'blue' },
 ]
 
-export const quickActions = [
-  { label: '学习路线', description: '系统化学习路径\n从入门到精通', icon: 'route', path: '#/learning', accent: 'blue' },
-  { label: '项目库', description: '历届优秀项目\n学习最佳实践', icon: 'rocket', path: '#/projects', accent: 'violet' },
-  { label: '比赛中心', description: '竞赛信息 & 报名\n提升实战能力', icon: 'trophy', path: '#/events', accent: 'orange' },
-  { label: '资源库', description: '学习资料 & 文档\n一站式资源集合', icon: 'folder', path: '#/resources', accent: 'mint' },
-]
 
 export const competitionEvents: CompetitionEvent[] = [
   { id: 'e1', title: '2026 蓝桥杯', type: '省级竞赛', date: '06.18', deadline: '报名截止 06.10', description: '用算法和工程能力，把一个下午变成一次真正的实战。', status: '报名中', accent: 'blue' },
   { id: 'e2', title: '校内 ACM 程序设计竞赛', type: '校内赛', date: '06.01', deadline: '报名截止 05.28', description: '三人一队，和熟悉的队友一起练习思考与协作。', status: '报名中', accent: 'orange' },
   { id: 'e3', title: 'Agent 创意挑战赛', type: '项目赛', date: '07.12', deadline: '开放组队 06.20', description: '把一个校园问题交给 Agent，做出可以被使用的答案。', status: '即将开始', accent: 'violet', visibility: 'members' },
 ]
+
+
+export const blogPosts: import('../types').BlogPost[] = [
+  {
+    id: 'post-1',
+    category: '技术文章',
+    title: '从零构建企业级 Agent：LangGraph 状态图与多工具调度的踩坑实录',
+    excerpt: '在构建校园 AI 助手的过程中，我们经历了从基础 Prompt 链到 RAG 检索，再到图状态机的架构演进。本文全面复盘状态路由、工具容错与评测集设计。',
+    date: '2026.05.20',
+    readTime: '8 分钟阅读',
+    author: 'AI 方向负责人 · 何宇辰',
+    tags: ['Agent', 'LangGraph', 'FastAPI', 'RAG'],
+    content: `## 为什么放弃简单的线性 Prompt Chain？
+
+在最初开发“校园 AI 智能助手”时，我们尝试使用普通的 Prompt 串联（LangChain Sequence）。但在真实复杂的校园场景下，这种线性流程很快暴露出致命短板：
+1. **多分支判断脆弱**：当用户同时询问“请帮我查一下教务通知，并且推荐一条对应的学习路线”时，线性逻辑无法准确分支判断。
+2. **工具调用失败无法自愈**：一旦某个网络检索 API 超时，整个 Chain 即刻崩溃抛错。
+
+## 转向 LangGraph：把 Agent 建模为状态图
+
+LangGraph 将大模型的思考决策抽象为一个有向图（StateGraph）。我们定义了一个包含用户输入、中间上下文、工具调用计数与错误重试标记的全局状态结构：
+
+\`\`\`python
+class AgentState(TypedDict):
+    query: str
+    chat_history: List[BaseMessage]
+    citations: List[Citation]
+    tool_retries: int
+    final_response: str
+\`\`\`
+
+每个节点（Node）分别负责不同的职能：
+- **Router Node**：分析用户意图，决定走“直接生成”、“向量库召回”还是“外部 API 执行”。
+- **Retrieval Node**：调用 pgvector 混合检索教务知识库。
+- **Tool Executor**：安全沙箱执行机房预约查询、课程表检索等工具。
+- **Verification Node**：校验生成内容的事实性与引用准确率。
+
+## 生产环境踩坑与优化建议
+
+- **严格限制工具执行深度**：防止模型进入死循环，设置最大步数为 5 步；
+- **Prompt 强制结构化输出**：使用 Pydantic 严格校验模型返回的 JSON；
+- **加入断路器（Circuit Breaker）**：当下游接口波动时，平滑降级为知识库静态离线检索。`,
+  },
+  {
+    id: 'post-2',
+    category: '活动记录',
+    title: '【极客破冰】2026 春季开源马拉松回顾：24 小时从想法到生产交付',
+    excerpt: '连续 24 小时的代码狂欢，32 位成员、8 支战队在实训机房通宵攻坚。从清晨的需求头脑风暴，到深夜的代码联调，带你重温那些发光的极客时刻。',
+    date: '2026.04.16',
+    readTime: '5 分钟阅读',
+    author: '项目组长 · 周一帆',
+    tags: ['活动复盘', '黑客松', '开源协作', '极客文化'],
+    content: `## 24 小时，我们能做出什么？
+
+4 月 15 日上午 09:00，科技小组专属机房 402 准时拉开本学期“24H 原型黑客松”的序幕。
+本次黑客松不设命题门槛，唯一硬性要求是：**24 小时后必须展示一个真实可交互、部署在测试服上的系统 Demo，拒绝纯 PPT 演讲！**
+
+## 战况直击：从讨论白板到键盘声浪
+
+- **09:00 - 12:00 头脑风暴与需求拆解**：白板上画满了架构拓扑、API 路由契约与 Figma 低保真线框。
+- **14:00 - 20:00 模块攻坚与接口联调**：前端组件迅速成型，后端 Docker 服务持续部署，机房弥漫着机械键盘的敲击声。
+- **02:00 - 05:00 凌晨攻坚与联调调试**：解决跨域 CORS、修补沙箱边界、通宵咖啡与能量饮料补给。
+- **09:00 最终 Demo 评审与成果验收**：8 支队伍全部完成了系统上线！
+
+## 最终交付亮点
+
+1. **Campus Fast-Drop**：基于 WebRTC 的局域网免流量大文件直传工具；
+2. **Git Commit Linter CLI**：面向新生的标准化 Git 提交检查终端工具；
+3. **Course Radar**：轻量化选课评价分析器。
+
+所有代码现已全部开源在科技小组 GitHub 组织中，欢迎认领后续 Issue！`,
+  },
+  {
+    id: 'post-3',
+    category: '获奖快讯',
+    title: '热烈祝贺！项目组在第十五届“中国软件杯”全国总决赛斩获二等奖',
+    excerpt: '历经四个月的高强度备战、初赛选拔与现场封闭答辩，我院计算机科技小组项目组团队从全国数千支高校队伍中脱颖而出，喜获全国二等奖！',
+    date: '2025.10.28',
+    readTime: '3 分钟阅读',
+    author: '官方新闻中心',
+    tags: ['荣誉快讯', '中国软件杯', '国赛获奖', '成果喜报'],
+    content: `## 赛事实录与捷报
+
+在刚刚落幕的第十五届“中国软件杯”大学生软件设计大赛全国总决赛中，由我院计算机科技小组项目组组队研发的参赛作品——《基于混合检索与多智能体协同的校园知识中枢系统》，凭借创新的系统架构、高稳定性的工程交付与现场优异的答辩表现，荣获**全国二等奖**！
+
+## 参赛团队构成
+
+- **指导老师**：张教授
+- **团队成员**：何宇辰（2025届）、周一帆（2026届）、苏晴（2026届）、陈默（2024届）
+- **参赛赛题**：面向复杂业务场景的智能体软件系统开发与工程化实践
+
+## 专家评审评语
+
+“该团队不仅在算法层面深入实现了 RAG 与状态图 Agent 编排，更可贵的是在底层构建了完善的沙箱隔离与监控告警。这是一套具备真正产业级交付水准的优秀学生作品。”
+
+荣誉属于每一位在机房奋斗至深夜的成员，期待项目组再接再厉，在后续赛事中续写辉煌！`,
+  },
+  {
+    id: 'post-4',
+    category: '周报',
+    title: '项目组研发周报 (2026 第 20 周)：Club OS 官网重构与 OJ 性能压测',
+    excerpt: '本周重点推进 Club OS 官网全新信息架构设计与动效重构，OJ 判题内核完成 1000 并发压力测试，实验室预约系统新增人脸/刷卡联动模块。',
+    date: '2026.05.18',
+    readTime: '4 分钟阅读',
+    author: '项目组技术委员会',
+    tags: ['研发周报', '架构演进', '交付进展', '项目进度'],
+    content: `## 本周主要进展
+
+### 1. Club OS 官网与数字化社区重构
+- 确定了全新的 5 大核心板块（关于我们、项目作品、技术与成果、动态博客、加入我们）；
+- 首屏引入 Sticky 视差淡出动效，25% 滚动节点触发关于我们入场字动画；
+- 移除“进行中”半成品项目，全面提升已上线作品的展示水准；
+- “动态与博客”新增侧滑沉浸式抽屉阅读交互。
+
+### 2. 在线判题系统 (OJ) v3.0
+- 使用 k6 完成 1,000 QPS 模拟高并发提交压测，判题延迟稳定在 18ms 以内；
+- 修复了极端情况下 C++ 内存超限检测偶发不准的问题；
+- 优化了排行榜 WebSocket 广播机制。
+
+### 3. 下周规划
+- 开启 2026 年夏季招新宣传物料准备；
+- 组织算法组与项目组联合开展蓝桥杯考前最后一次模拟赛复盘；
+- 启动校园 AI 智能助手 v2.6 的工具插件开放生态规划。`,
+  },
+]
+
+
+export const contactInfo = {
+  email: 'contact@stcnchu-cs.club',
+  adminEmail: 'admin@stcnchu-cs.club',
+  github: 'https://github.com/nchu-cs-club',
+  wechatMp: '南航科院计算机科技小组',
+  qqGroup: '869342150',
+  qqAdmin: '2893821042',
+  location: '南昌航空大学科技学院 实验实训大楼 · 机房 402（科技小组专属基地）',
+  openTime: '周一至周日 08:30 - 22:30 (全天候极客研讨空间)',
+}

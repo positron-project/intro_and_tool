@@ -289,3 +289,17 @@ export interface CompetitionEvent extends ContentMeta {
   accent: string
   projects?: CompetitionProject[]
 }
+
+
+export interface BlogPost {
+  id: string
+  category: '活动记录' | '技术文章' | '周报' | '获奖快讯'
+  title: string
+  excerpt: string
+  date: string
+  readTime: string
+  author: string
+  tags: string[]
+  content: string
+}
+

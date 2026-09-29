@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>方向二：精工手作工坊杂志风 (Artisan Caramel Atelier)</title>
+  <style>
+    :root {
+      --bg-dark-choco: #180E09;
+      --bg-card-choco: #23150E;
+      --bg-card-hover: #2C1B12;
+      --text-cream: #FAF6F0;
+      --text-muted: #B89F8F;
+      --gold-foil: #E5B869;
+      --caramel-rich: #D9822B;
+      --border-craft: rgba(229, 184, 105, 0.22);
+      --border-glow: rgba(229, 184, 105, 0.4);
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: var(--bg-dark-choco);
+      color: var(--text-cream);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Songti SC", "Noto Serif SC", serif;
+      line-height: 1.65;
+      background-image: radial-gradient(rgba(229, 184, 105, 0.05) 1px, transparent 1px);
+      background-size: 32px 32px;
+      padding-bottom: 90px;
+    }
+    .hero-preserve-banner {
+      background: #0F0906;
+      color: var(--gold-foil);
+      padding: 12px 24px;
+      font-size: 13px;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-craft);
+    }
+    .hero-preserve-banner .tag {
+      border: 1px solid var(--gold-foil);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+    .demo-wrapper {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 50px 24px;
+    }
+    .section-block {
+      margin-bottom: 80px;
+      background: var(--bg-card-choco);
+      border: 1px solid var(--border-craft);
+      border-radius: 14px;
+      padding: 44px;
+      position: relative;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.4);
+    }
+    .section-block::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-foil), transparent);
+      opacity: 0.6;
+    }
+    .craft-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(229, 184, 105, 0.08);
+      border: 1px solid var(--border-craft);
+      padding: 5px 16px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--gold-foil);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      font-family: sans-serif;
+    }
+    .craft-pill .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold-foil);
+      box-shadow: 0 0 8px var(--gold-foil);
+    }
+    h2.section-title {
+      font-size: 34px;
+      font-weight: 500;
+      line-height: 1.3;
+      color: var(--text-cream);
+      margin-bottom: 14px;
+      letter-spacing: 0.5px;
+    }
+    h2.section-title em {
+      color: var(--gold-foil);
+      font-style: normal;
+    }
+    p.section-subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      margin-bottom: 36px;
+      max-width: 740px;
+      font-weight: 300;
+      line-height: 1.7;
+    }
+
+    /* Manifesto Quote */
+    .manifesto-quote {
+      border-left: 2px solid var(--gold-foil);
+      padding: 20px 28px;
+      background: rgba(229, 184, 105, 0.04);
+      margin-bottom: 36px;
+      border-radius: 0 8px 8px 0;
+    }
+    .manifesto-quote p {
+      font-size: 19px;
+      color: var(--gold-foil);
+      line-height: 1.5;
+    }
+    .manifesto-quote span {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-family: sans-serif;
+    }
+
+    /* Value Cards */
+    .values-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .artisan-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-craft);
+      border-radius: 10px;
+      padding: 28px;
+      transition: all 0.2s ease;
+    }
+    .artisan-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--gold-foil);
+      transform: translateY(-3px);
+    }
+    .artisan-card .roman-num {
+      font-size: 13px;
+      color: var(--gold-foil);
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      font-family: sans-serif;
+      font-weight: 700;
+    }
+    .artisan-card h3 {
+      font-size: 19px;
+      margin-bottom: 10px;
+      color: var(--text-cream);
+      font-weight: 600;
+    }
+    .artisan-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Loop Steps */
+    .timeline-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    .timeline-node {
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid var(--border-craft);
+      border-radius: 8px;
+      padding: 24px;
+      position: relative;
+    }
+    .timeline-node .step-tag {
+      color: var(--gold-foil);
+      font-size: 11px;
+      font-family: sans-serif;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .timeline-node h3 {
+      font-size: 17px;
+      margin-bottom: 8px;
+      color: var(--text-cream);
+    }
+    .timeline-node p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* Flagship Layout */
+    .flagship-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 36px;
+      align-items: center;
+    }
+    .craft-stats {
+      display: flex;
+      gap: 28px;
+      border-top: 1px solid var(--border-craft);
+      border-bottom: 1px solid var(--border-craft);
+      padding: 16px 0;
+      margin: 24px 0;
+    }
+    .craft-stat strong {
+      display: block;
+      font-size: 24px;
+      color: var(--gold-foil);
+      font-weight: 400;
+    }
+    .craft-stat span {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: sans-serif;
+    }
+    .stack-tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 18px 0 24px;
+    }
+    .stack-gold-pill {
+      background: rgba(229, 184, 105, 0.08);
+      border: 1px solid var(--border-craft);
+      color: var(--gold-foil);
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+    .btn-gold {
+      background: var(--gold-foil);
+      color: var(--bg-dark-choco);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.2s;
+    }
+    .btn-gold:hover {
+      opacity: 0.9;
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--gold-foil);
+      border: 1px solid var(--border-craft);
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: sans-serif;
+      margin-left: 14px;
+    }
+
+    /* Right terminal preview */
+    .preview-canvas {
+      background: #110A07;
+      border: 1px solid var(--border-craft);
+      border-radius: 10px;
+      padding: 24px;
+    }
+    .canvas-title {
+      font-size: 13px;
+      color: var(--gold-foil);
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: space-between;
+    }
+    .layer-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(229, 184, 105, 0.15);
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+    }
+    .layer-card .label {
+      font-size: 11px;
+      color: var(--gold-foil);
+      font-family: sans-serif;
+      text-transform: uppercase;
+    }
+    .layer-card h4 {
+      font-size: 15px;
+      color: var(--text-cream);
+      margin: 4px 0;
+    }
+    .layer-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Relay */
+    .relay-shelf {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .relay-vintage-box {
+      border: 1px solid var(--border-craft);
+      border-radius: 8px;
+      padding: 26px;
+      background: rgba(255, 255, 255, 0.02);
+      position: relative;
+    }
+    .relay-vintage-box.featured {
+      border-color: var(--gold-foil);
+      background: rgba(229, 184, 105, 0.05);
+    }
+    .vintage-seal {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 11px;
+      border: 1px solid var(--gold-foil);
+      color: var(--gold-foil);
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-family: sans-serif;
+    }
+    .vintage-year {
+      font-size: 26px;
+      color: var(--gold-foil);
+      font-weight: 300;
+      margin-bottom: 4px;
+    }
+    .vintage-title {
+      font-size: 18px;
+      color: var(--text-cream);
+      margin-bottom: 10px;
+    }
+    .vintage-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .vintage-asset {
+      font-size: 12px;
+      color: var(--gold-foil);
+      border-top: 1px dashed var(--border-craft);
+      padding-top: 12px;
+      font-family: sans-serif;
+    }
+
+    /* Join Atelier */
+    .join-columns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .join-gate {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-craft);
+      border-radius: 10px;
+      padding: 30px;
+      transition: border-color 0.2s;
+    }
+    .join-gate:hover {
+      border-color: var(--gold-foil);
+    }
+    .gate-number {
+      font-size: 12px;
+      color: var(--gold-foil);
+      letter-spacing: 2px;
+      font-family: sans-serif;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .join-gate h3 {
+      font-size: 20px;
+      color: var(--text-cream);
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+    .join-gate p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .gate-link {
+      font-size: 13px;
+      color: var(--gold-foil);
+      text-decoration: none;
+      font-family: sans-serif;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen 0 Hero Preserved Notification -->
+  <div class="hero-preserve-banner">
+    <div><strong>[SCREEN 01 · HERO 保留屏]</strong> 此处完全继承原有粒子网格与校园大门主图。以下呈现精工手作工坊杂志风的项目组篇章：</div>
+    <span class="tag">HERO KEPT</span>
+  </div>
+
+  <div class="demo-wrapper">
+
+    <!-- Screen 02: The Atelier Manifesto -->
+    <section class="section-block" id="story-club">
+      <div class="craft-pill"><span class="dot"></span> CHAPTER 02 · 项目组工坊宣言</div>
+      <h2 class="section-title">以手作巧匠之志，<em>铸造永续传承的校园数字基石。</em></h2>
+      <p class="section-subtitle">在南昌航空大学科技学院计算机科技小组，项目组代表着最高标准的工程纪律与极客手艺。每一款作品，都是几届成员在真实战场中熬出的温润经典。</p>
+
+      <div class="manifesto-quote">
+        <p>“我们不为应付考核而写浮躁的代码，每一行提交，都是留给下一代学弟学妹的礼物。”</p>
+        <span>— 计算机科技小组 · 项目组手记</span>
+      </div>
+
+      <div class="values-grid">
+        <div class="artisan-card">
+          <div class="roman-num">PILLAR I</div>
+          <h3>全链路工业级工程</h3>
+          <p>从敏捷需求分析到 Docker 容器编排，从向量数据库架构到微服务网关，我们坚持用业界一线生产环境的严苛标准打磨校园工程。</p>
+        </div>
+        <div class="artisan-card">
+          <div class="roman-num">PILLAR II</div>
+          <h3>同侪协作与结对研讨</h3>
+          <p>工坊式的学徒传承制度。每一位新成员都会与资深组长配对，在逐行 Code Review 中领会架构权衡与代码整洁之道。</p>
+        </div>
+        <div class="artisan-card">
+          <div class="roman-num">PILLAR III</div>
+          <h3>跨越技术周期的沉淀</h3>
+          <p>历经六届更迭，我们留存完整的技术雷达、决策日志与架构演进树。在这里，知识不随毕业流失，而是不断厚植生长。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 03: The Sprint Loop -->
+    <section class="section-block" id="story-loop">
+      <div class="craft-pill"><span class="dot"></span> CHAPTER 03 · 研制全周期闭环</div>
+      <h2 class="section-title">如打磨顶级黑巧般的<em>四步淬炼法则</em></h2>
+      <p class="section-subtitle">每一款软件的诞生，都是从严选原料、共熬研讨、精密浇模到最终交付的匠心闭环。</p>
+
+      <div class="timeline-steps">
+        <div class="timeline-node">
+          <span class="step-tag">STAGE 01 / SOURCING</span>
+          <h3>原料甄选与基石对齐</h3>
+          <p>精通 Python、FastAPI、Git 团队工作流，统一架构规范与编码公约，为项目打下坚实地基。</p>
+        </div>
+        <div class="timeline-node">
+          <span class="step-tag">STAGE 02 / CONCHING</span>
+          <h3>架构研讨与痛点拆解</h3>
+          <p>拒绝假大空，深挖校园真实痛点，在白板前反复推敲数据实体模型与智能体决策流程。</p>
+        </div>
+        <div class="timeline-node">
+          <span class="step-tag">STAGE 03 / TEMPERING</span>
+          <h3>结对冲刺与严苛评审</h3>
+          <p>编写自动化测试与评测集，经过三轮严格 PR 审查，确保每个接口兼具高性能与健壮性。</p>
+        </div>
+        <div class="timeline-node">
+          <span class="step-tag">STAGE 04 / PACKAGING</span>
+          <h3>全校上线与资产封存</h3>
+          <p>服务在校园生产机房平稳上线，撰写详尽架构传承手册，为下届成员留下开箱即用的工作位。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 04: Flagship Project -->
+    <section class="section-block" id="story-build">
+      <div class="craft-pill"><span class="dot"></span> CHAPTER 04 · 年度攻坚旗舰</div>
+      
+      <div class="flagship-grid">
+        <div>
+          <h2 class="section-title" style="font-size:30px;">校园 AI 智能助手 <em>v3</em></h2>
+          <p style="color:var(--text-muted); font-size:15px; margin-bottom:18px;">
+            项目组 2026 年度标杆工程。基于 LangGraph 与多智能体协同技术，将全校历届沉淀的知识、选课经验与项目文档构建成具备可溯源推理能力的校园数字智囊。
+          </p>
+
+          <div class="craft-stats">
+            <div class="craft-stat">
+              <strong>12 位</strong>
+              <span>工坊主力开发</span>
+            </div>
+            <div class="craft-stat">
+              <strong>380+</strong>
+              <span>Commit 精密迭代</span>
+            </div>
+            <div class="craft-stat">
+              <strong>100%</strong>
+              <span>源码与架构全公开</span>
+            </div>
+          </div>
+
+          <div class="stack-tags-row">
+            <span class="stack-gold-pill">Python 3.12</span>
+            <span class="stack-gold-pill">FastAPI</span>
+            <span class="stack-gold-pill">LangGraph</span>
+            <span class="stack-gold-pill">Vue 3</span>
+            <span class="stack-gold-pill">PostgreSQL / pgvector</span>
+            <span class="stack-gold-pill">Docker</span>
+          </div>
+
+          <div>
+            <button class="btn-gold">查阅项目架构手册 ➔</button>
+            <button class="btn-outline">体验对话系统</button>
+          </div>
+        </div>
+
+        <div class="preview-canvas">
+          <div class="canvas-title">
+            <span>PIPELINE ARCHITECTURE</span>
+            <span>STCNCHU / AI-LAB</span>
+          </div>
+
+          <div class="layer-card">
+            <span class="label">01 / KNOWLEDGE INGESTION</span>
+            <h4>多源知识切片与向量索引层</h4>
+            <p>融合教务规章、历届项目文档、竞赛题库，实现毫秒级混合召回。</p>
+          </div>
+
+          <div class="layer-card" style="border-color:var(--gold-foil); background:rgba(229, 184, 105, 0.08);">
+            <span class="label">02 / CORE COGNITIVE ENGINE</span>
+            <h4>LangGraph 动态状态机与意图路由</h4>
+            <p>支持多跳思考、工具调用（校园地图/空课表/选课推荐）及严格幻觉约束。</p>
+          </div>
+
+          <div class="layer-card">
+            <span class="label">03 / TRACEABLE INTERACTION</span>
+            <h4>透明溯源输出与知识卡片直达</h4>
+            <p>回答附带精确引用源，点击即可跳转至对应学习路线与项目代码。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 05: Vintage Relay -->
+    <section class="section-block" id="story-relay">
+      <div class="craft-pill"><span class="dot"></span> CHAPTER 05 · 年代传承纪略</div>
+      <h2 class="section-title">历届工程在时光中的<em>厚重沉淀</em></h2>
+      <p class="section-subtitle">每一代项目组都接过上一代的火种，在真实的项目代码中完成技术的代际飞跃。</p>
+
+      <div class="relay-shelf">
+        <div class="relay-vintage-box">
+          <span class="vintage-seal">EPOCH I</span>
+          <div class="vintage-year">2024</div>
+          <h3 class="vintage-title">校园问答系统 v1</h3>
+          <p class="vintage-desc">突破从 0 到 1 的荒原。首创校园信息问答对标准，以静态倒排索引与精炼规则解决新生查资料痛点。</p>
+          <div class="vintage-asset">传承馈赠：1200+ 精校校园语料库与初始爬虫套件</div>
+        </div>
+
+        <div class="relay-vintage-box">
+          <span class="vintage-seal">EPOCH II</span>
+          <div class="vintage-year">2025</div>
+          <h3 class="vintage-title">RAG 知识向量中枢 v2</h3>
+          <p class="vintage-desc">引入嵌入模型与向量数据库，打通校园微服务集群，实现首个语义检索驱动的问答引擎。</p>
+          <div class="vintage-asset">传承馈赠：PostgreSQL 向量存储规范与高可用 API 标准</div>
+        </div>
+
+        <div class="relay-vintage-box featured">
+          <span class="vintage-seal" style="background:var(--gold-foil); color:var(--bg-dark-choco);">CURRENT</span>
+          <div class="vintage-year">2026</div>
+          <h3 class="vintage-title">Agent 智能协同体 v3</h3>
+          <p class="vintage-desc">跨越被动检索，升级为具备自主工具调用、多智能体交互与完整评测基准的综合平台。</p>
+          <div class="vintage-asset">当前状态：主力研发阶段，开放算法与全栈席位</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 06: Join Us -->
+    <section class="section-block" id="story-join">
+      <div class="craft-pill"><span class="dot"></span> CHAPTER 06 · 成为工坊新匠</div>
+      <h2 class="section-title">加入项目组，<em>书写属于你的大学工程篇章。</em></h2>
+      <p class="section-subtitle">无论你的起点在何处，只要对代码怀抱敬畏与热情，项目组的大门始终为你敞开。</p>
+
+      <div class="join-columns">
+        <div class="join-gate">
+          <span class="gate-number">ENTRANCE 01</span>
+          <h3>认领新生 Issue</h3>
+          <p>精选针对大一、大二量身定制的工程任务，由资深学长指导完成你的第一次开源合入。</p>
+          <a href="#" class="gate-link">探索友好 Issue 列表 ➔</a>
+        </div>
+
+        <div class="join-gate">
+          <span class="gate-number">ENTRANCE 02</span>
+          <h3>发起项目提案</h3>
+          <p>你有改变校园日常的创新想法？向项目组提交提案，我们将调配资源全力助你将构想落地。</p>
+          <a href="#" class="gate-link">提交项目孵化申请 ➔</a>
+        </div>
+
+        <div class="join-gate">
+          <span class="gate-number">ENTRANCE 03</span>
+          <h3>查阅 68 个历届项目</h3>
+          <p>探索项目组六年来开源积累的全部代码仓库、设计文档与技术选型手记，随时汲取灵感。</p>
+          <a href="#" class="gate-link">进入历届项目控制台 ➔</a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

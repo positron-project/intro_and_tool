@@ -1,0 +1,671 @@
+/* ============================================================
+   02 / ABOUT US (项目组介绍) · 视觉样式表
+   Design Language: Minimalist / Architectural Blueprint / Editorial Poster
+   Palette: Warm Ivory (--home-bg-warm) + Deep Navy (--home-navy) + Pale Cyan
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   关键词悬停覆盖框的配色（作用域限本版块，不外溢）
+
+   · --about-kw-complement : 覆盖框底色 = 文字色 #073F73 的互补色
+        #073F73 → HSL(207°, 88%, 24%) → 色相 +180° = 27° → #734007（暖琥珀/焦糖）
+   · --about-kw-on-complement : 覆盖框内的字体色 = 页面背景色
+   ------------------------------------------------------------ */
+.about-section-viewport {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  background-color: var(--home-bg-warm, #FAF8F2);
+  background-image:
+    radial-gradient(ellipse 65% 55% at 90% 15%, rgba(183, 221, 229, 0.2) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 65% at 5% 85%, rgba(159, 209, 222, 0.16) 0%, transparent 60%);
+  color: var(--home-navy, #073F73);
+  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: clamp(96px, 12vh, 136px) 0 clamp(48px, 6vh, 72px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  --about-kw-complement: #734007;
+  --about-kw-on-complement: var(--home-bg-warm, #FAF8F2);
+}
+
+/* ============================================================
+   Layer 1 & 2: 背景装饰系统 (网格、建筑线稿、轨迹延伸、大文字)
+   ============================================================ */
+.about-bg-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* 极浅坐标标尺网格 */
+.about-bg-grid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-size: 72px 72px;
+  background-image:
+    linear-gradient(to right, rgba(7, 63, 115, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(7, 63, 115, 0.03) 1px, transparent 1px);
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
+}
+
+/* 浅青蓝几何色块：延续首屏的现代主义倾斜色带 */
+.about-geo-ribbon {
+  position: absolute;
+  top: -12vh;
+  right: 18vw;
+  width: clamp(180px, 18vw, 320px);
+  height: 110vh;
+  background: linear-gradient(145deg, rgba(159, 209, 222, 0.22) 0%, rgba(183, 221, 229, 0.08) 100%);
+  transform: rotate(-24deg) skewX(-12deg);
+  border-radius: 4px;
+}
+
+.about-geo-circle {
+  position: absolute;
+  right: -8vw;
+  bottom: -15vh;
+  width: clamp(360px, 42vw, 680px);
+  height: clamp(360px, 42vw, 680px);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(183, 221, 229, 0.24) 0%, rgba(159, 209, 222, 0.08) 60%, transparent 100%);
+}
+
+/* 右侧超大背景轮廓文字 ABOUT (建筑图纸水印风格) */
+.about-bg-watermark {
+  position: absolute;
+  right: -2vw;
+  top: 14vh;
+  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-size: clamp(160px, 20vw, 340px);
+  font-weight: 900;
+  line-height: 0.82;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(7, 63, 115, 0.045);
+  user-select: none;
+  pointer-events: none;
+  z-index: 2;
+  transform: translateY(-8%);
+}
+
+/* 抽象知识轨迹 SVG (承接首屏，向右下与右上方穿行) */
+.about-flow-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 极淡建筑线稿图纸 */
+.about-sketch-svg {
+  position: absolute;
+  right: 2vw;
+  bottom: 6vh;
+  width: clamp(480px, 52vw, 880px);
+  height: clamp(320px, 38vh, 560px);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+/* ============================================================
+   主体内容排版层 (不对称三栏架构：左章节标 + 中部核心叙事 + 下方直出关键词)
+   ============================================================ */
+.about-content-stage {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 0 clamp(24px, 6vw, 92px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(40px, 6vh, 64px);
+}
+
+/* ------------------------------------------------------------
+   上半段：不对称排版 (左章节标 + 中部叙事)
+   ------------------------------------------------------------ */
+.about-top-grid {
+  display: grid;
+  grid-template-columns: clamp(90px, 9vw, 150px) 1fr;
+  gap: clamp(32px, 4.5vw, 84px);
+  align-items: flex-start;
+}
+
+/* 左侧章节系统：02 / 蓝线 / ABOUT US (未来 03/04/05/06 统一规范) */
+.about-chapter-column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: 6px;
+  user-select: none;
+}
+
+.about-chapter-num {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: clamp(40px, 4.2vw, 64px);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: var(--home-navy, #073F73);
+}
+
+.about-chapter-rule {
+  width: clamp(28px, 2.5vw, 42px);
+  height: 2px;
+  background-color: var(--home-navy, #073F73);
+  margin: clamp(14px, 1.8vh, 20px) 0;
+  opacity: 0.85;
+}
+
+.about-chapter-label {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: clamp(11px, 0.85vw, 12.5px);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--home-navy-muted, rgba(7, 63, 115, 0.65));
+  white-space: nowrap;
+}
+
+/* 中部核心介绍区 */
+.about-main-column {
+  max-width: 920px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(24px, 3.2vh, 38px);
+}
+
+/* 主标题行：“我们是谁？” + 侧边英文 WHO WE ARE */
+.about-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(20px, 2.4vw, 36px);
+}
+
+.about-main-title {
+  margin: 0;
+  padding: 0;
+  font-family: "MiSans", "Noto Sans SC", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: clamp(44px, 5.2vw, 84px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--home-navy, #073F73);
+}
+
+.about-title-aside {
+  display: flex;
+  flex-direction: column;
+  padding-top: clamp(8px, 1.2vh, 16px);
+  user-select: none;
+}
+
+.about-title-aside-en {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: clamp(11px, 0.85vw, 13px);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1.25;
+  color: var(--home-navy, #073F73);
+  opacity: 0.45;
+}
+
+.about-title-aside-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--home-navy, #073F73);
+  margin-top: 8px;
+  opacity: 0.45;
+}
+
+/* 第二视觉焦点：醒目短句 */
+.about-focal-quote {
+  margin: 0;
+  padding: 0;
+  font-size: clamp(20px, 1.9vw, 30px);
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.015em;
+  color: var(--home-navy, #073F73);
+  display: flex;
+  flex-direction: column;
+}
+
+.about-quote-line {
+  display: block;
+}
+
+/* 正文段落：编辑式排版、深灰蓝、大行距、约100字 */
+.about-body-narrative {
+  margin: 0;
+  padding: 0;
+  max-width: 620px;
+  font-size: clamp(15px, 1.1vw, 17px);
+  font-weight: 450;
+  line-height: 1.95;
+  letter-spacing: 0.01em;
+  color: rgba(7, 63, 115, 0.76);
+  font-family: "MiSans", "PingFang SC", "Source Han Sans SC", "Noto Sans SC", sans-serif;
+}
+
+.about-body-narrative p {
+  margin: 0 0 12px 0;
+}
+
+.about-body-narrative p:last-child {
+  margin-bottom: 0;
+}
+
+/* ------------------------------------------------------------
+   下半段：四大关键词 (杂志 / 建筑图纸排版，直接存在于画布中，绝非卡片)
+   ------------------------------------------------------------ */
+.about-keywords-stage {
+  margin-top: clamp(16px, 2.5vh, 32px);
+  padding-top: clamp(24px, 3vh, 36px);
+  border-top: 1px solid rgba(7, 63, 115, 0.1);
+  position: relative;
+}
+
+/* 顶部结构标尺微线与坐标十字 */
+.about-keywords-ruler {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.about-ruler-mark {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 10px;
+  color: rgba(7, 63, 115, 0.3);
+  transform: translateY(-50%);
+  background: var(--home-bg-warm, #FAF8F2);
+  padding: 0 4px;
+}
+
+.about-keywords-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(14px, 1.4vw, 22px);
+  position: relative;
+  /* stretch：四列等高，框体尺寸完全统一（原先 flex-end 会让框高随内容浮动） */
+  align-items: stretch;
+}
+
+/* 单个关键词项目 (完全无边框白卡片，纯粹的版面字体排印)
+   ⚠️ width:100% —— 让每个框占满自己那一列，四个框等宽，
+   覆盖框才有足够的“面积感”（此前框宽由内容撑开，只有列宽的 34~49%） */
+.about-kw-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+  width: 100%;
+  transition: transform 0.3s ease;
+  cursor: default;
+}
+
+.about-kw-item:hover {
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+   悬停交互层：承载英文大词 + 中文释义 + 左→右扫入的覆盖框
+   四个框的结构完全一致，仅内部文案不同
+
+   尺寸策略：框占满整列（width:100%），靠内边距撑出饱满的框体。
+   英文大词用中文释义的长度决定框宽不受文字影响 —— 四个框尺寸统一。
+   ============================================================ */
+.about-kw-body {
+  position: relative;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  /* 覆盖框的框体范围：充分的纵向留白，让色块有面积感而非紧贴文字 */
+  padding: clamp(18px, 2.2vh, 26px) clamp(18px, 1.6vw, 26px);
+  /* 让覆盖框向外溢出一点，避免被网格裁切 */
+  isolation: isolate;
+}
+
+/* 英文大词：DM Mono / 纯净无衬线
+   z-index:1 —— 位于覆盖框【下层】；扫过时靠下面的混合模式露出反相字面 */
+.about-kw-en {
+  position: relative;
+  z-index: 1;
+  display: block;
+  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-size: clamp(26px, 2.4vw, 40px);
+  font-weight: 850;
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  color: var(--home-navy, #073F73);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+/* 中文释义：小字号、高透气度。同样在覆盖框下层 */
+.about-kw-zh {
+  position: relative;
+  z-index: 1;
+  display: block;
+  font-size: clamp(13px, 0.95vw, 15px);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--home-navy-muted, rgba(7, 63, 115, 0.65));
+  transition: opacity 0.2s ease;
+}
+
+/* ------------------------------------------------------------
+   覆盖框（sweep）——从左往右扫入
+   · 底色 = 该框文字色 #073F73 的 HSL 色相补色 → hue 207° + 180° = 27° → #734007
+   · 字体色 = 页面背景色 #FAF8F2
+   · 用 scaleX 从 0 → 1 扫入，transform-origin 定在 left 保证方向为「左→右」
+   ------------------------------------------------------------ */
+.about-kw-sweep {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  /* 新文案贴底部对齐，给上方的英文大词留出空间（标题字要一直存在）。
+     内边距与 .about-kw-body 一致，保证文案落在框内的正确位置。 */
+  align-items: flex-end;
+  padding: clamp(18px, 2.2vh, 26px) clamp(18px, 1.6vw, 26px);
+  box-sizing: border-box;
+  /* 扫入框的底色：深海军蓝的互补色（暖琥珀 / 焦糖） */
+  background-color: var(--about-kw-complement, #734007);
+  border-radius: 3px;
+  /* 初始：完全收起（从左端起） */
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* 覆盖框内的文案：字体为背景色，初始略滞后淡入避免扫入途中就被读到 */
+.about-kw-sweep-text {
+  display: block;
+  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+  font-size: clamp(15px, 1.15vw, 18px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  /* 字体色 = 页面背景色 */
+  color: var(--about-kw-on-complement, #FAF8F2);
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 0.28s ease 0.12s, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1) 0.12s;
+}
+
+/* ---- 悬停 / 键盘聚焦：扫入完成 ---- */
+.about-kw-item:hover .about-kw-sweep,
+.about-kw-item:focus-within .about-kw-sweep {
+  transform: scaleX(1);
+}
+
+.about-kw-item:hover .about-kw-sweep-text,
+.about-kw-item:focus-within .about-kw-sweep-text {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ---- 标题字仍然存在 ----
+   英文大词在悬停时【抬到覆盖框之上】（z-index 3），并用
+   mix-blend-mode: difference 与琥珀底色做差：
+   深蓝字面压在 #734007 上 → 反相成明亮的浅色字，标题依然清晰可读，
+   同时不与覆盖框内的新文案抢位（两者在竖直方向错开）。
+   ⚠️ 必须在文字自身上做混合，且父级要有 isolation 形成隔离的混合容器，
+   否则会一路混到页面背景上、颜色不可控。 */
+.about-kw-item:hover .about-kw-en,
+.about-kw-item:focus-within .about-kw-en {
+  z-index: 3;
+  mix-blend-mode: difference;
+  color: #FFFFFF;
+}
+
+/* 原中文释义（学习 / 创造…）被新文案取代，淡出即可 */
+.about-kw-item:hover .about-kw-zh,
+.about-kw-item:focus-within .about-kw-zh {
+  opacity: 0;
+}
+
+/* 辅助引出细线与坐标点 */
+.about-kw-guide {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: clamp(10px, 1.4vh, 16px);
+}
+
+.about-kw-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--home-navy, #073F73);
+  opacity: 0.5;
+}
+
+.about-kw-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(7, 63, 115, 0.25), rgba(7, 63, 115, 0.04));
+}
+
+.about-kw-num {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: clamp(11px, 0.85vw, 13px);
+  font-weight: 700;
+  color: var(--home-navy, #073F73);
+  opacity: 0.45;
+  letter-spacing: 0.05em;
+}
+
+/* 四个关键词字号完全一致（此前 BUILD 由 .is-featured 单独放大，已按要求取消） */
+
+/* ============================================================
+   底部衔接微引导 (引向下一屏 03 / WHAT WE OFFER)
+   ============================================================ */
+.about-footer-nav {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: clamp(24px, 3vh, 40px) clamp(24px, 6vw, 92px) 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.about-footer-path {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  max-width: 480px;
+}
+
+.about-footer-line {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(to right, rgba(7, 63, 115, 0.25), transparent);
+}
+
+.about-footer-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--home-navy, #073F73);
+  opacity: 0.6;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  user-select: none;
+}
+
+.about-footer-preview:hover {
+  opacity: 1;
+  transform: translateY(2px);
+}
+
+.about-footer-preview-num {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.about-footer-preview-label {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.about-footer-arrow {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   响应式媒体查询 (Responsive)
+   ============================================================ */
+@media (max-width: 1024px) {
+  .about-keywords-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px 36px;
+  }
+}
+
+@media (max-width: 768px) {
+  .about-section-viewport {
+    padding: 88px 0 40px;
+    min-height: auto;
+  }
+
+  .about-content-stage {
+    gap: 36px;
+  }
+
+  .about-top-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .about-chapter-column {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding-top: 0;
+  }
+
+  .about-chapter-rule {
+    width: 24px;
+    height: 1.5px;
+    margin: 0;
+  }
+
+  .about-bg-watermark {
+    display: none; /* 移动端隐藏巨大 ABOUT 背景字，保证清爽 */
+  }
+
+  .about-sketch-svg {
+    width: 90vw;
+    height: 260px;
+    right: -10vw;
+    bottom: 2vh;
+    opacity: 0.5;
+  }
+
+  .about-title-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .about-title-aside {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding-top: 0;
+  }
+
+  .about-title-aside-dot {
+    margin-top: 0;
+  }
+
+  .about-keywords-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .about-footer-nav {
+    margin-top: 24px;
+  }
+}
+
+/* ============================================================
+   前置居中悬念大字：在 02 入场区域（红箭头所指高度与居中位置）
+   ============================================================ */
+.about-teaser-centered {
+  position: absolute;
+  top: clamp(80px, 11vh, 120px);
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.about-teaser-title {
+  font-family: 'MiSans', -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+  font-size: clamp(44px, 5.2vw, 84px);
+  font-weight: 900;
+  color: var(--home-navy, #073F73);
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  text-shadow: 0 4px 28px rgba(7, 63, 115, 0.08);
+}
+
+.about-teaser-en {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: clamp(12px, 0.9vw, 14px);
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  color: var(--home-navy, #073F73);
+  opacity: 0.45;
+  margin-top: 14px;
+  text-transform: uppercase;
+}
+
+
+

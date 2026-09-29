@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="theme-light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>候选一：巨幕年代舞台与非对称沉浸展陈 (The Epoch Cinema Stage)</title>
+  <style>
+    :root {
+      --ks-gold: #C99738;
+      --ks-gold-bright: #E2B04A;
+      --ks-patina: #10B981;
+      --bg-page: #F7F4EE;
+      --bg-surface: #FFFFFF;
+      --text-main: #140B06;
+      --text-sub: #543E32;
+      --text-muted: #8E7A6E;
+      --hairline: rgba(70, 40, 25, 0.16);
+    }
+    html.theme-dark {
+      --bg-page: #0A0604;
+      --bg-surface: #140D08;
+      --text-main: #F7F4EE;
+      --text-sub: #C2B0A5;
+      --text-muted: #7E6C62;
+      --hairline: rgba(229, 184, 105, 0.18);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 120px;
+    }
+    .top-notice {
+      padding: 14px 48px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--hairline);
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .theme-btn {
+      background: transparent;
+      border: 1px solid var(--hairline);
+      color: var(--text-main);
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: monospace;
+    }
+    .stage-wrap {
+      width: 94%;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    .stage-section {
+      padding: 100px 0;
+      border-bottom: 1px solid var(--hairline);
+    }
+    .eyebrow {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--ks-gold);
+      margin-bottom: 24px;
+      display: block;
+    }
+    h2.hero-title {
+      font-size: clamp(42px, 5.2vw, 68px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 24px;
+      text-wrap: pretty;
+    }
+    h2.hero-title em {
+      font-style: normal;
+      color: var(--ks-gold);
+    }
+    p.hero-desc {
+      font-size: clamp(18px, 1.5vw, 22px);
+      color: var(--text-sub);
+      max-width: 1040px;
+      line-height: 1.7;
+      margin-bottom: 60px;
+    }
+
+    /* ==========================================================
+       SECTION 05: 彻底告别三排并列！巨幕年代舞台 (Cinema Stage)
+       ========================================================== */
+    .epoch-cinema-stage {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      border-top: 1px solid var(--hairline);
+      border-bottom: 1px solid var(--hairline);
+      min-height: 520px;
+    }
+    /* Left Rail: 垂直交互年代轴 */
+    .epoch-selector-rail {
+      border-right: 1px solid var(--hairline);
+      padding: 48px 40px 48px 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .rail-heading {
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 1.5px;
+      margin-bottom: 32px;
+    }
+    .epoch-nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .epoch-nav-item {
+      background: transparent;
+      border: none;
+      text-align: left;
+      cursor: pointer;
+      padding: 12px 0;
+      border-bottom: 1px dashed transparent;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+    .epoch-nav-item:hover, .epoch-nav-item.is-active {
+      color: var(--text-main);
+      border-bottom-color: var(--ks-gold);
+    }
+    .epoch-nav-item .year-num {
+      font-size: 48px;
+      font-weight: 900;
+      font-family: "Space Grotesk", sans-serif;
+      line-height: 1;
+      transition: transform 0.2s;
+    }
+    .epoch-nav-item.is-active .year-num {
+      color: var(--ks-gold);
+      transform: translateX(8px);
+    }
+    .epoch-nav-item .badge-status {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .epoch-nav-item.is-active .badge-status {
+      color: var(--ks-patina);
+    }
+
+    /* Right Theater: 沉浸大字展陈 */
+    .epoch-theater-view {
+      padding: 56px 0 56px 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .theater-top-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--hairline);
+      margin-bottom: 36px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .theater-top-meta span.epoch-badge {
+      color: var(--ks-gold);
+      font-weight: 800;
+      font-size: 14px;
+    }
+    .theater-headline {
+      font-size: clamp(36px, 3.6vw, 52px);
+      font-weight: 850;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      color: var(--text-main);
+      margin-bottom: 20px;
+    }
+    .theater-tech-stack {
+      font-family: monospace;
+      font-size: 14px;
+      color: var(--ks-gold);
+      margin-bottom: 24px;
+      font-weight: 700;
+    }
+    .theater-narrative {
+      font-size: 18px;
+      color: var(--text-sub);
+      line-height: 1.75;
+      max-width: 820px;
+      margin-bottom: 40px;
+    }
+    .theater-legacy-card {
+      background: rgba(201, 151, 56, 0.05);
+      border-left: 3px solid var(--ks-gold);
+      padding: 20px 28px;
+    }
+    .theater-legacy-card strong {
+      font-family: monospace;
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      color: var(--ks-gold);
+      display: block;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .theater-legacy-card p {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    /* ==========================================================
+       SECTION 02: 非对称宣言 (Asymmetric 65 / 35 Split)
+       ========================================================== */
+    .manifesto-asymmetric-split {
+      display: grid;
+      grid-template-columns: 1.3fr 0.9fr;
+      gap: 64px;
+      align-items: start;
+      border-top: 1px solid var(--hairline);
+      border-bottom: 1px solid var(--hairline);
+      padding: 60px 0;
+    }
+    .manifesto-left-huge h3 {
+      font-size: clamp(32px, 3vw, 44px);
+      font-weight: 850;
+      line-height: 1.25;
+      letter-spacing: -0.8px;
+      margin-bottom: 24px;
+    }
+    .manifesto-left-huge p {
+      font-size: 17px;
+      color: var(--text-sub);
+      line-height: 1.7;
+    }
+    .manifesto-right-stagger {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .stagger-item {
+      border-left: 2px solid var(--hairline);
+      padding-left: 24px;
+      transition: border-color 0.2s;
+    }
+    .stagger-item:hover {
+      border-left-color: var(--ks-gold);
+    }
+    .stagger-item span.num {
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--ks-gold);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .stagger-item h4 {
+      font-size: 19px;
+      font-weight: 750;
+      margin-bottom: 8px;
+    }
+    .stagger-item p {
+      font-size: 14.5px;
+      color: var(--text-sub);
+    }
+
+    /* ==========================================================
+       SECTION 04: 全景宽屏拓扑流 (Zero-Card Panoramic Stream)
+       ========================================================== */
+    .panoramic-stats-strip {
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid var(--hairline);
+      border-bottom: 1px solid var(--hairline);
+      padding: 28px 0;
+      margin: 40px 0;
+    }
+    .p-stat strong {
+      display: block;
+      font-size: clamp(48px, 5vw, 76px);
+      font-weight: 900;
+      letter-spacing: -2px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .p-stat span {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .horizontal-pipeline-rail {
+      display: flex;
+      border-top: 1px solid var(--hairline);
+      border-bottom: 1px solid var(--hairline);
+      margin-bottom: 40px;
+    }
+    .pipe-station {
+      flex: 1;
+      padding: 36px 32px;
+      border-right: 1px solid var(--hairline);
+      position: relative;
+    }
+    .pipe-station:last-child {
+      border-right: none;
+    }
+    .pipe-station .station-code {
+      font-family: monospace;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--ks-gold);
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .pipe-station h4 {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .pipe-station p {
+      font-size: 14px;
+      color: var(--text-sub);
+      line-height: 1.6;
+    }
+
+    /* ==========================================================
+       SECTION 06: 阶梯纵深大字入口 (Stepped Gateway, No Cards)
+       ========================================================== */
+    .stepped-gateway-list {
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid var(--hairline);
+    }
+    .gateway-row {
+      display: grid;
+      grid-template-columns: 100px 320px 1fr 140px;
+      align-items: center;
+      padding: 36px 0;
+      border-bottom: 1px solid var(--hairline);
+      transition: background-color 0.2s;
+      cursor: pointer;
+    }
+    .gateway-row:hover {
+      background: rgba(201, 151, 56, 0.03);
+    }
+    .gateway-num {
+      font-size: 32px;
+      font-weight: 900;
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--ks-gold);
+    }
+    .gateway-title h4 {
+      font-size: 22px;
+      font-weight: 800;
+    }
+    .gateway-desc {
+      font-size: 15px;
+      color: var(--text-sub);
+      padding-right: 40px;
+    }
+    .gateway-action {
+      text-align: right;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--ks-gold);
+    }
+
+    @media (max-width: 960px) {
+      .epoch-cinema-stage, .manifesto-asymmetric-split, .horizontal-pipeline-rail, .gateway-row {
+        grid-template-columns: 1fr;
+      }
+      .epoch-selector-rail {
+        border-right: none;
+        border-bottom: 1px solid var(--hairline);
+        padding-right: 0;
+      }
+      .epoch-theater-view {
+        padding-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-notice">
+    <div><strong>[候选一 · 巨幕年代舞台与非对称沉浸展陈]</strong> 彻底废除并列三排，采用非对称交互舞台与阶梯式信息排布：</div>
+    <button class="theme-btn" onclick="document.documentElement.classList.toggle('theme-dark')">深浅色切换</button>
+  </header>
+
+  <main class="stage-wrap">
+
+    <!-- Screen 02: Manifesto -->
+    <section class="stage-section" id="story-club">
+      <span class="eyebrow">02 / THE ATELIER · 计算机科技小组 · 项目组</span>
+      <h2 class="hero-title">
+        我们不造玩具 Demo。<br />
+        <em>只淬炼能真实跑在校园里的数字基建。</em>
+      </h2>
+      <p class="hero-desc">
+        工程的魅力在于严丝合缝的长久运行。在项目组，复杂的微服务、向量索引与 Agent 架构化为一行行清晰可信的代码。
+      </p>
+
+      <div class="manifesto-asymmetric-split">
+        <div class="manifesto-left-huge">
+          <h3>“工程的甘甜，来自与同侪共同熬过重构时的浓郁与专注。”</h3>
+          <p>从大一的第一行 Python 提交，到全校两万名师生高频访问的智能助手，我们让每一代大学生的技术热情，都有一个真实可停泊的码头。</p>
+        </div>
+        <div class="manifesto-right-stagger">
+          <div class="stagger-item">
+            <span class="num">01 / CONTEXT</span>
+            <h4>真实工业级上下文</h4>
+            <p>拒绝过家家式模拟题。新成员直接接入真实运行的机房微服务与向量集群，在真实生产碰撞中获得手感。</p>
+          </div>
+          <div class="stagger-item">
+            <span class="num">02 / REVIEW</span>
+            <h4>结对研讨与严格审校</h4>
+            <p>每一个 Pull Request 都在自动化 CI 流水线与组长逐行 Review 中反复推敲，在严谨审查中淬炼工程肌肉。</p>
+          </div>
+          <div class="stagger-item">
+            <span class="num">03 / CONTINUITY</span>
+            <h4>长效交付与代际传承</h4>
+            <p>毕业不是终点。留存完整架构决策手记与运维指标，让下届成员站在前人的肩膀上向更深处探索。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 04: Current Build -->
+    <section class="stage-section" id="story-build">
+      <span class="eyebrow">04 / CURRENT BUILD · 重点工程攻坚</span>
+      <h2 class="hero-title">校园 AI 智能助手 <em>v3</em></h2>
+      <p class="hero-desc">
+        项目组 2026 年度旗舰：融合教务规章、历届选课经验与竞赛代码文档，构建具备主动意图编排与精确溯源的数字智能体。
+      </p>
+
+      <div class="panoramic-stats-strip">
+        <div class="p-stat">
+          <strong>12 位</strong>
+          <span>跨年级主力共建者</span>
+        </div>
+        <div class="p-stat">
+          <strong>380+</strong>
+          <span>Git 提交精密演进</span>
+        </div>
+        <div class="p-stat">
+          <strong>100%</strong>
+          <span>全栈代码与架构开源</span>
+        </div>
+      </div>
+
+      <div class="horizontal-pipeline-rail">
+        <div class="pipe-station">
+          <span class="station-code">PIPELINE 01</span>
+          <h4>多模态知识向量索引</h4>
+          <p>全自动切片教务规程与历届文档，实现毫秒级混合召回（Dense Vector + BM25）。</p>
+        </div>
+        <div class="pipe-station">
+          <span class="station-code">PIPELINE 02</span>
+          <h4>LangGraph 认知中枢</h4>
+          <p>动态状态机意图路由、多步思考闭环，集成地图导航与空房查询工具，强幻觉约束。</p>
+        </div>
+        <div class="pipe-station">
+          <span class="station-code">PIPELINE 03</span>
+          <h4>透明溯源直达闭环</h4>
+          <p>回答带权威文件引用出处，一键直达学习节点与项目 Issue，形成完整闭环。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 05: 巨幕年代舞台 (完全告别三排并列！) -->
+    <section class="stage-section" id="story-relay">
+      <span class="eyebrow">05 / VINTAGE RELAY · 历届传承年轮</span>
+      <h2 class="hero-title">历届项目在时光里的<em>代际演进</em></h2>
+      <p class="hero-desc">
+        项目不随毕业而解散。点击左侧年代，在右侧巨幕舞台中感受一代人的成果如何化作下一代人的工程起点：
+      </p>
+
+      <!-- 巨幕非对称舞台 -->
+      <div class="epoch-cinema-stage">
+        <!-- 左侧年份刻度 -->
+        <aside class="epoch-selector-rail">
+          <div>
+            <div class="rail-heading">SELECT EPOCH / 选择代际</div>
+            <div class="epoch-nav-list">
+              <button class="epoch-nav-item" onclick="switchEpoch(0)">
+                <span class="year-num">2024</span>
+                <span class="badge-status">经典破局</span>
+              </button>
+              <button class="epoch-nav-item" onclick="switchEpoch(1)">
+                <span class="year-num">2025</span>
+                <span class="badge-status">工程微服务</span>
+              </button>
+              <button class="epoch-nav-item is-active" onclick="switchEpoch(2)">
+                <span class="year-num">2026</span>
+                <span class="badge-status">● 当前攻坚</span>
+              </button>
+            </div>
+          </div>
+          <div style="font-family:monospace; font-size:12px; color:var(--text-muted);">
+            SIX YEARS OF CAMPUS OPEN-SOURCE
+          </div>
+        </aside>
+
+        <!-- 右侧巨幕展示 -->
+        <div class="epoch-theater-view" id="theaterDisplay">
+          <div>
+            <div class="theater-top-meta">
+              <span class="epoch-badge" id="theaterEpochTag">EPOCH 03 · 2026 ACTIVE</span>
+              <span id="theaterCodeStack">LangGraph · Multi-Agent · Eval Benchmark</span>
+            </div>
+            <h3 class="theater-headline" id="theaterTitle">Agent 智能协同体 v3</h3>
+            <div class="theater-tech-stack" id="theaterLead">从被动问答升级为主动意图调度与工具协同</div>
+            <p class="theater-narrative" id="theaterNarrative">
+              全新一代系统拥抱 LangGraph 与复杂工具链，支持多智能体分工协作与自适应规划。彻底告别传统关键词模式，当前由第四代成员全力研发推进。
+            </p>
+          </div>
+
+          <div class="theater-legacy-card">
+            <strong id="theaterLegacyKicker">当前开放席位</strong>
+            <p id="theaterLegacyContent">现已开放大一、大二新生 Issue 认领通道，提供算法调优与全栈接口协作工位。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 06: 阶梯纵深大字入口 -->
+    <section class="stage-section" id="story-join">
+      <span class="eyebrow">06 / JOIN THE ATELIER · 认领工位</span>
+      <h2 class="hero-title">无论起点在何处，<br /><em>项目组都有为你准备的位置。</em></h2>
+      <p class="hero-desc">
+        从认领第一个 Issue 开始，和跨年级伙伴把属于大学时代的代码刻进校园的记忆里。
+      </p>
+
+      <div class="stepped-gateway-list">
+        <div class="gateway-row">
+          <span class="gateway-num">01</span>
+          <div class="gateway-title">
+            <h4>认领新生 Issue</h4>
+          </div>
+          <p class="gateway-desc">专为新生设计的平缓任务：组件调优、接口参数校验。学长提供一对一 Code Review。</p>
+          <div class="gateway-action">探索任务 ➔</div>
+        </div>
+
+        <div class="gateway-row">
+          <span class="gateway-num">02</span>
+          <div class="gateway-title">
+            <h4>自荐新项目提案</h4>
+          </div>
+          <p class="gateway-desc">发现校园里的痛点？带上你的 Idea，项目组为你配置前后端与算法队友一起做出来。</p>
+          <div class="gateway-action">提交提案 ➔</div>
+        </div>
+
+        <div class="gateway-row">
+          <span class="gateway-num">03</span>
+          <div class="gateway-title">
+            <h4>探索 68 个开源项目</h4>
+          </div>
+          <p class="gateway-desc">查阅项目组六年来沉淀的全部真实代码仓库、架构演进图与设计手记，站在前人肩膀上前行。</p>
+          <div class="gateway-action">查阅仓库 ➔</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const epochData = [
+      {
+        tag: "EPOCH 01 · 2024 VINTAGE",
+        stack: "Vue 2 · Flask · SQLite",
+        title: "校园问答系统 v1",
+        lead: "突破从 0 到 1 的荒原，解决新生查资料痛点",
+        narrative: "第一代成员面对校园通知与教务信息散落的痛点，用最朴素的倒排索引与精校问答对建立了第一个校园问答网站。虽然没有大语言模型，但凭借严谨的工程思维奠定了基石。",
+        legacyKicker: "传承资产",
+        legacyContent: "奠定了首批 1200+ 校园精校问答对与自动化爬虫套件。"
+      },
+      {
+        tag: "EPOCH 02 · 2025 REVOLUTION",
+        stack: "FastAPI · pgvector · Microservices",
+        title: "RAG 知识向量中枢 v2",
+        lead: "全面升级向量检索与微服务工程化",
+        narrative: "第二代成员敏锐抓住大模型浪潮，引入向量数据库 pgvector 与嵌入流水线。首次实现基于语义切片的智能检索，并打通了校园微服务高并发访问底盘。",
+        legacyKicker: "传承资产",
+        legacyContent: "确立了后端微服务开发规范、向量切分流水线与自动化容器部署集群。"
+      },
+      {
+        tag: "EPOCH 03 · 2026 ACTIVE",
+        stack: "LangGraph · Multi-Agent · Eval Benchmark",
+        title: "Agent 智能协同体 v3",
+        lead: "从被动问答升级为主动意图调度与工具协同",
+        narrative: "全新一代系统拥抱 LangGraph 与复杂工具链，支持多智能体分工协作与自适应规划。彻底告别传统检索模式，由第四代成员主力攻坚中。",
+        legacyKicker: "当前开放席位",
+        legacyContent: "现已开放大一、大二新生 Issue 认领通道，提供算法调优与全栈接口协作工位。"
+      }
+    ];
+
+    function switchEpoch(index) {
+      const buttons = document.querySelectorAll('.epoch-nav-item');
+      buttons.forEach((btn, i) => btn.classList.toggle('is-active', i === index));
+      const data = epochData[index];
+      document.getElementById('theaterEpochTag').textContent = data.tag;
+      document.getElementById('theaterCodeStack').textContent = data.stack;
+      document.getElementById('theaterTitle').textContent = data.title;
+      document.getElementById('theaterLead').textContent = data.lead;
+      document.getElementById('theaterNarrative').textContent = data.narrative;
+      document.getElementById('theaterLegacyKicker').textContent = data.legacyKicker;
+      document.getElementById('theaterLegacyContent').textContent = data.legacyContent;
+    }
+  </script>
+</body>
+</html>

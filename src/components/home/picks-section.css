@@ -1,0 +1,916 @@
+/* ============================================================
+   04 / OUR PICKS (小组力荐) · 手绘大卡片视觉样式表
+   Design System: Architectural Blueprint / Hand-Drawn Sketch Cards
+   Palette: Warm Ivory (--home-bg-warm, #FAF8F2) + Deep Navy (--home-navy, #073F73) + Pale Cyan
+   ============================================================ */
+
+.picks-section-viewport {
+  position: relative;
+  width: 100%;
+  min-height: 180vh;
+  background-color: var(--home-bg-warm, #FAF8F2);
+  background-image:
+    radial-gradient(ellipse 65% 55% at 90% 15%, rgba(159, 209, 222, 0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 65% at 10% 80%, rgba(183, 221, 229, 0.16) 0%, transparent 60%);
+  color: var(--home-navy, #073F73);
+  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: clamp(100px, 12vh, 140px) 0 clamp(60px, 8vh, 90px);
+}
+
+/* ============================================================
+   Layer 1: 背景工程蓝图层 (坐标网格、超大背景字、坐标十字标)
+   ============================================================ */
+.picks-bg-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* 72px 极浅工程网格 */
+.picks-bg-grid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-size: 72px 72px;
+  background-image:
+    linear-gradient(to right, rgba(7, 63, 115, 0.032) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(7, 63, 115, 0.032) 1px, transparent 1px);
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 85%, transparent 100%);
+}
+
+/* 极浅几何斜向色带：延续 01/02/03 */
+.picks-geo-ribbon {
+  position: absolute;
+  top: -10vh;
+  right: 15vw;
+  width: clamp(180px, 16vw, 280px);
+  height: 180vh;
+  background: linear-gradient(145deg, rgba(183, 221, 229, 0.14) 0%, rgba(159, 209, 222, 0.04) 100%);
+  transform: rotate(16deg);
+  transform-origin: top right;
+  border-left: 1px solid rgba(143, 199, 217, 0.2);
+  border-right: 1px solid rgba(143, 199, 217, 0.1);
+}
+
+/* 视口局部超大超浅背景轮廓字 WORLD / TOOLS */
+.picks-watermark {
+  position: absolute;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: clamp(160px, 22vw, 340px);
+  font-weight: 900;
+  line-height: 0.8;
+  letter-spacing: -0.05em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(7, 63, 115, 0.032);
+  user-select: none;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.picks-watermark-world {
+  left: -4vw;
+  top: 18vh;
+}
+
+.picks-watermark-tools {
+  right: -5vw;
+  bottom: 22vh;
+}
+
+/* 蓝图十字标 (+) */
+.picks-bg-crosses {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ============================================================
+   主体内容舞台
+   ============================================================ */
+.picks-content-stage {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: 0 clamp(24px, 5.5vw, 84px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(40px, 5vh, 64px);
+}
+
+/* ------------------------------------------------------------
+   顶部章节引导区 (04 / OUR PICKS · 小组力荐)
+   ------------------------------------------------------------ */
+.picks-header-block {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: clamp(16px, 2.5vh, 32px);
+}
+
+.picks-chapter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  user-select: none;
+}
+
+.picks-chapter-num {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: clamp(28px, 2.8vw, 38px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--home-navy, #073F73);
+}
+
+.picks-chapter-line {
+  width: 48px;
+  height: 1.5px;
+  background-color: var(--home-navy, #073F73);
+  opacity: 0.35;
+}
+
+.picks-chapter-title {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: clamp(12px, 0.95vw, 14px);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--home-navy, #073F73);
+  opacity: 0.85;
+}
+
+.picks-heading-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.picks-main-title {
+  margin: 0;
+  font-size: clamp(34px, 3.8vw, 54px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--home-navy, #073F73);
+}
+
+.picks-sub-quote {
+  margin: 0;
+  font-size: clamp(15px, 1.15vw, 18px);
+  font-weight: 500;
+  line-height: 1.65;
+  color: var(--home-navy, #073F73);
+  opacity: 0.72;
+  border-left: 2px solid rgba(7, 63, 115, 0.2);
+  padding-left: 14px;
+}
+
+/* ============================================================
+   手绘大卡片 (Architectural Sketch Card)
+   ============================================================ */
+.sketch-card {
+  position: relative;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1.2px solid rgba(7, 63, 115, 0.32);
+  box-sizing: border-box;
+  padding: clamp(28px, 3.2vw, 44px);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sketch-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(7, 63, 115, 0.52);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 12px 32px rgba(7, 63, 115, 0.04);
+}
+
+/* 建筑手绘草图角标延长双线效果 (Cross-Extended Corners) */
+.sketch-card::before,
+.sketch-card::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-color: rgba(7, 63, 115, 0.45);
+}
+
+/* 左上角与右下角延长交叉线 */
+.sketch-card::before {
+  top: -7px;
+  left: -7px;
+  width: 14px;
+  height: 14px;
+  border-top: 1.2px solid rgba(7, 63, 115, 0.45);
+  border-left: 1.2px solid rgba(7, 63, 115, 0.45);
+}
+
+.sketch-card::after {
+  bottom: -7px;
+  right: -7px;
+  width: 14px;
+  height: 14px;
+  border-bottom: 1.2px solid rgba(7, 63, 115, 0.45);
+  border-right: 1.2px solid rgba(7, 63, 115, 0.45);
+}
+
+/* 四角工程标记符号 */
+.sketch-corner-marker {
+  position: absolute;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--home-navy, #073F73);
+  opacity: 0.42;
+  user-select: none;
+  pointer-events: none;
+}
+
+.sketch-corner-marker.top-left {
+  top: 10px;
+  left: 14px;
+}
+
+.sketch-corner-marker.top-right {
+  top: 10px;
+  right: 14px;
+}
+
+.sketch-corner-marker.bottom-left {
+  bottom: 10px;
+  left: 14px;
+}
+
+.sketch-corner-marker.bottom-right {
+  bottom: 10px;
+  right: 14px;
+}
+
+/* ------------------------------------------------------------
+   卡片内部布局：左右两栏 (左侧 Logo+文案，右侧大视窗)
+   ------------------------------------------------------------ */
+.sketch-card-inner {
+  display: grid;
+  grid-template-columns: minmax(320px, 38%) 1fr;
+  gap: clamp(32px, 4vw, 56px);
+  align-items: stretch;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+/* 左侧栏：上为 SVG Logo，下为文字标题介绍 */
+.sketch-card-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: clamp(24px, 3vh, 36px);
+  border-right: 1px dashed rgba(7, 63, 115, 0.18);
+  padding-right: clamp(24px, 3vw, 44px);
+}
+
+/* 上方：SVG Logo 容器 */
+.sketch-logo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(7, 63, 115, 0.1);
+}
+
+.sketch-logo-svg {
+  width: clamp(110px, 9vw, 140px);
+  height: auto;
+  filter: drop-shadow(0 2px 8px rgba(7, 63, 115, 0.04));
+  transition: transform 0.3s ease;
+}
+
+.sketch-card:hover .sketch-logo-svg {
+  transform: scale(1.02);
+}
+
+.sketch-logo-badge {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--home-navy, #073F73);
+  opacity: 0.55;
+  text-transform: uppercase;
+}
+
+/* 下方：标题、正文与规格 */
+.sketch-text-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sketch-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sketch-item-num {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--home-navy, #073F73);
+  letter-spacing: -0.02em;
+}
+
+.sketch-item-tag {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--home-navy, #073F73);
+  opacity: 0.6;
+}
+
+.sketch-item-title {
+  margin: 0;
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--home-navy, #073F73);
+}
+
+.sketch-item-sub {
+  margin: -4px 0 0;
+  font-size: clamp(14px, 1.05vw, 16px);
+  font-weight: 600;
+  color: var(--home-navy, #073F73);
+  opacity: 0.85;
+}
+
+.sketch-item-desc {
+  margin: 0;
+  font-size: clamp(13.5px, 0.98vw, 15px);
+  font-weight: 400;
+  line-height: 1.75;
+  color: var(--home-navy, #073F73);
+  opacity: 0.78;
+}
+
+/* 蓝图规格信息表 */
+.sketch-specs-table {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 12px 14px;
+  background: rgba(7, 63, 115, 0.03);
+  border-left: 2px solid rgba(7, 63, 115, 0.25);
+  font-family: "DM Mono", "SF Mono", monospace;
+}
+
+.sketch-spec-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11.5px;
+}
+
+.sketch-spec-label {
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--home-navy, #073F73);
+  opacity: 0.55;
+}
+
+.sketch-spec-val {
+  font-weight: 600;
+  color: var(--home-navy, #073F73);
+}
+
+.sketch-spec-copyable {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sketch-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(7, 63, 115, 0.07);
+  border: 1px solid rgba(7, 63, 115, 0.18);
+  border-radius: 2px;
+  padding: 3px 7px;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--home-navy, #073F73);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sketch-copy-btn:hover {
+  background: rgba(7, 63, 115, 0.14);
+  border-color: rgba(7, 63, 115, 0.35);
+}
+
+.copied-tip {
+  color: #0d845e;
+  font-weight: 700;
+}
+
+/* 行动纯文字链接 */
+.sketch-action-line {
+  margin-top: 8px;
+}
+
+.sketch-text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-family: "MiSans", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: clamp(13.5px, 1vw, 15px);
+  font-weight: 700;
+  color: var(--home-navy, #073F73);
+  text-decoration: none;
+  border-bottom: 1.5px solid rgba(7, 63, 115, 0.35);
+  cursor: pointer;
+  transition: border-color 0.25s ease, opacity 0.25s ease;
+}
+
+.sketch-text-link:hover {
+  border-color: var(--home-navy, #073F73);
+}
+
+.sketch-link-arrow {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sketch-text-link:hover .sketch-link-arrow {
+  transform: translateX(4px);
+}
+
+/* ============================================================
+   右侧分栏：视频 / 图片手绘工程取景框占位视窗
+   ============================================================ */
+.sketch-card-right {
+  display: flex;
+  align-items: center;
+}
+
+.sketch-media-viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9.8;
+  background: #F4F1E8;
+  border: 1.2px solid rgba(7, 63, 115, 0.28);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+  outline: none;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.sketch-media-viewport:focus-visible {
+  border-color: var(--home-navy, #073F73);
+}
+
+.sketch-card:hover .sketch-media-viewport {
+  border-color: rgba(7, 63, 115, 0.45);
+}
+
+/* 视窗顶部状态标尺栏 */
+.sketch-viewport-topbar {
+  height: 28px;
+  background: rgba(7, 63, 115, 0.05);
+  border-bottom: 1px solid rgba(7, 63, 115, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--home-navy, #073F73);
+  opacity: 0.75;
+}
+
+.viewport-status-dot {
+  width: 6px;
+  height: 6px;
+  background: #0d845e;
+  border-radius: 50%;
+  opacity: 0.8;
+}
+
+/* 视窗中央占位舞台 */
+.sketch-viewport-stage {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: 32px 32px;
+  background-image:
+    linear-gradient(to right, rgba(7, 63, 115, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(7, 63, 115, 0.035) 1px, transparent 1px);
+  overflow: hidden;
+}
+
+/* 镜头十字准星 (Crosshairs) */
+.viewport-crosshairs {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+  border-color: rgba(7, 63, 115, 0.4);
+}
+
+.viewport-crosshairs.top-left {
+  top: 12px;
+  left: 12px;
+  border-top: 1.5px solid;
+  border-left: 1.5px solid;
+}
+
+.viewport-crosshairs.top-right {
+  top: 12px;
+  right: 12px;
+  border-top: 1.5px solid;
+  border-right: 1.5px solid;
+}
+
+.viewport-crosshairs.bottom-left {
+  bottom: 12px;
+  left: 12px;
+  border-bottom: 1.5px solid;
+  border-left: 1.5px solid;
+}
+
+.viewport-crosshairs.bottom-right {
+  bottom: 12px;
+  right: 12px;
+  border-bottom: 1.5px solid;
+  border-right: 1.5px solid;
+}
+
+/* 中心视窗对焦环 */
+.viewport-center-target {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border: 1px dashed rgba(7, 63, 115, 0.22);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.viewport-center-target::after {
+  content: "+";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  color: rgba(7, 63, 115, 0.35);
+}
+
+/* 占位中心徽标与说明 */
+.viewport-placeholder-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 20px;
+}
+
+.viewport-play-indicator {
+  width: 48px;
+  height: 48px;
+  border: 1.2px solid rgba(7, 63, 115, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.65);
+  margin-bottom: 4px;
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+
+.sketch-card:hover .viewport-play-indicator {
+  transform: scale(1.06);
+  border-color: rgba(7, 63, 115, 0.6);
+}
+
+.viewport-play-icon {
+  color: var(--home-navy, #073F73);
+  margin-left: 2px;
+  opacity: 0.85;
+}
+
+.viewport-placeholder-title {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--home-navy, #073F73);
+  opacity: 0.75;
+}
+
+.viewport-placeholder-desc {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--home-navy, #073F73);
+  opacity: 0.9;
+}
+
+.viewport-placeholder-spec {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--home-navy, #073F73);
+  opacity: 0.48;
+}
+
+/* 浅青蓝微薄滤镜蒙版 */
+.viewport-color-veil {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(159, 209, 222, 0.08);
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.3s ease;
+}
+
+.sketch-card:hover .viewport-color-veil {
+  opacity: 0.5;
+}
+
+/* 视窗底部参数刻度栏 */
+.sketch-viewport-footer {
+  height: 24px;
+  background: rgba(7, 63, 115, 0.04);
+  border-top: 1px solid rgba(7, 63, 115, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--home-navy, #073F73);
+  opacity: 0.55;
+}
+
+.viewport-expand-icon {
+  opacity: 0.7;
+}
+
+/* ------------------------------------------------------------
+   Tools 专属界面线框拼贴底纹 (错位 2~3 个局部精细窗口)
+   ------------------------------------------------------------ */
+.tools-wireframe-collage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  z-index: 1;
+}
+
+.wireframe-window-back {
+  position: absolute;
+  top: 18%;
+  left: 12%;
+  width: 76%;
+  height: 64%;
+  border: 1px solid rgba(7, 63, 115, 0.2);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.wireframe-window-front {
+  position: absolute;
+  top: 28%;
+  left: 20%;
+  width: 68%;
+  height: 58%;
+  border: 1px solid rgba(7, 63, 115, 0.28);
+  background: rgba(255, 255, 255, 0.45);
+  padding: 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wireframe-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wireframe-pill {
+  width: 14px;
+  height: 6px;
+  background: rgba(7, 63, 115, 0.2);
+}
+
+.wireframe-line {
+  height: 4px;
+  background: rgba(7, 63, 115, 0.15);
+}
+
+.wireframe-line.w-40 { width: 40%; }
+.wireframe-line.w-20 { width: 20%; }
+.wireframe-line.w-60 { width: 60%; }
+.wireframe-line.w-30 { width: 30%; }
+
+/* ============================================================
+   卡片间过渡导线
+   ============================================================ */
+.sketch-inter-transition {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  user-select: none;
+  opacity: 0.5;
+  padding: 12px 0;
+}
+
+.inter-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(7, 63, 115, 0.25), transparent);
+}
+
+.inter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--home-navy, #073F73);
+}
+
+.inter-dot {
+  width: 4px;
+  height: 4px;
+  background-color: var(--home-navy, #073F73);
+  border-radius: 50%;
+  opacity: 0.6;
+}
+
+/* ============================================================
+   底部与 05 / BLOG 衔接提示
+   ============================================================ */
+.picks-footer-anchor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: clamp(24px, 4vh, 48px);
+}
+
+.picks-baseline-grid {
+  width: 120px;
+  height: 1.5px;
+  background: repeating-linear-gradient(
+    to right,
+    rgba(7, 63, 115, 0.35) 0,
+    rgba(7, 63, 115, 0.35) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}
+
+.picks-next-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--home-navy, #073F73);
+  opacity: 0.55;
+  cursor: pointer;
+  padding: 6px 12px;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.picks-next-hint:hover {
+  opacity: 1;
+  transform: translateY(2px);
+}
+
+.picks-hint-arrow {
+  transition: transform 0.2s ease;
+}
+
+.picks-next-hint:hover .picks-hint-arrow {
+  transform: translateY(3px);
+}
+
+/* ============================================================
+   响应式设计 (Tablet / Mobile)
+   ============================================================ */
+@media (max-width: 960px) {
+  .sketch-card-inner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .sketch-card-left {
+    border-right: none;
+    border-bottom: 1px dashed rgba(7, 63, 115, 0.18);
+    padding-right: 0;
+    padding-bottom: 28px;
+  }
+
+  .sketch-media-viewport {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+@media (max-width: 768px) {
+  .picks-section-viewport {
+    padding: 80px 0 40px;
+  }
+
+  .picks-watermark {
+    display: none; /* 移动端严禁横向溢出 */
+  }
+
+  .picks-heading-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .picks-sub-quote {
+    padding-left: 10px;
+    font-size: 14.5px;
+  }
+
+  .sketch-card {
+    padding: 20px 16px;
+  }
+
+  .sketch-corner-marker {
+    font-size: 9px;
+  }
+
+  .sketch-corner-marker.top-right,
+  .sketch-corner-marker.bottom-right {
+    display: none;
+  }
+}
+
+/* 动效友好性 */
+@media (prefers-reduced-motion: reduce) {
+  .sketch-card,
+  .sketch-card:hover,
+  .sketch-text-link,
+  .sketch-link-arrow,
+  .viewport-play-indicator {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
