@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import {
+  Activity,
   ArrowDown,
   ArrowRight,
   ArrowUpRight,
@@ -29,13 +30,19 @@ import {
   FileText,
   Filter,
   Folder,
+  Gauge,
   Github,
   GraduationCap,
   History,
   Home,
   ImagePlus,
+  KeyRound,
   Layers,
+  Layers3,
   LayoutDashboard,
+  LockKeyhole,
+  LogIn,
+  LogOut,
   Mail,
   Map,
   MapPin,
@@ -87,7 +94,16 @@ import {
   resources,
   starterMessages,
 } from './data/mock'
-import type { AIMessage, AnnouncementCategory, LearningNode, Project, Resource } from './types'
+import { useContent } from './services/content.context'
+import { useClubConfig } from './services/club-config.context'
+import { askAssistant } from './services/ai.service'
+import { canManageContent, canViewContent, demoCredentials, demoOwnerCredentials, isDemoAuth, listManagedAccounts, updateManagedAccountStatus } from './services/auth.service'
+import { createInviteCode, listInviteCodes, revokeInviteCode } from './services/invite.service'
+import { createContributionSubmission, listContributionSubmissions, reviewContributionSubmission } from './services/contribution.service'
+import { useAuth } from './services/auth.context'
+import type { AccountStatus, AIMessage, AnnouncementCategory, AuthUser, Citation, CompetitionEvent, CompetitionProject, ContributionSubmission, InterviewExperience, InviteCode, LearningNode, LearningRoute, Project, Resource } from './types'
+import { AdminAnnouncementModal, AdminContentManagerModal, AdminContentModal, AdminDeleteConfirm, AdminLearningRouteModal, AdminMemberModal, createLearningRouteDraft, createMemberDraft, type AdminCollectionKind, type AdminDeleteRequest, type AnnouncementDraft, type CollectionDraft, type ContentDraft, type LearningRouteDraft, type MemberDraft } from './components/admin-modals'
+import { TurnstileWidget } from './components/turnstile-widget'
 import { HomeLanding } from './components/home/HomeLanding'
 import { SiteHeader } from './components/home/SiteHeader'
 import { AboutSection } from './components/home/AboutSection'
@@ -2301,7 +2317,7 @@ function App() {
   }, [])
   const openProject = (project: Project) => navigate(`#/projects/${project.slug}`)
   const sendMessage = (text: string) => { const userMessage: AIMessage = { id: `u-${Date.now()}`, role: 'user', content: text }; const assistant: AIMessage = { id: `a-${Date.now()}`, role: 'assistant', content: text.includes('项目') ? '结合你选择的方向，可以先从校园 AI 智能助手的前端协作任务开始，再逐步参与接口联调。' : text.includes('FastAPI') ? '建议先用一周完成 Python 工程基础和 FastAPI 路由，再把知识放进一个小项目。路线里已经为你标记了项目入口。' : '我已经把这个问题拆进学习路线、项目和资源中。先选择一个方向，我们一起找到可执行的下一步。', citations }; setMessages((current) => [...current, userMessage, assistant]); setAiOpen(true) }
-  const renderPage = () => { if (route === '/home') return <ExpandedHomePage onNavigate={navigate} />; if (route === '/tools') return <HomePage onNavigate={navigate} onOnboarding={() => setOnboardingOpen(true)} onOpenProject={openProject} />; if (route === '/learning') return <LearningPage onOpenProject={openProject} />; if (route === '/projects') return <ProjectsPage onOpenProject={openProject} />; if (route.startsWith('/projects/')) { const slug = route.split('/')[2]; return <ProjectDetailPage project={projects.find((item) => item.slug === slug) ?? projects[0]} onNavigate={navigate} /> }; if (route === '/events') return <EventsPage />; if (route === '/resources') return <ResourcesPage onNavigate={navigate} />; if (route === '/resources/prompts') return <PromptsPage />; if (route === '/interviews') return <InterviewsPage />; if (route === '/members') return <MembersPage />; if (route === '/ai') return <AiPage messages={messages} onSend={sendMessage} />; return <ExpandedHomePage onNavigate={navigate} /> }
+  const renderPage = () => { if (route === '/home') return <ExpandedHomePage onNavigate={navigate} />; if (route === '/tools') return <HomePage onNavigate={navigate} onOnboarding={() => setOnboardingOpen(true)} onOpenProject={openProject} />; if (route === '/learning') return <LearningPage onOpenProject={openProject} />; if (route === '/projects') return <ProjectsPage onOpenProject={openProject} />; if (route.startsWith('/projects/')) { const slug = route.split('/')[2]; return <ProjectDetailPage project={projects.find((item) => item.slug === slug) ?? projects[0]} onNavigate={navigate} /> }; if (route === '/events') return <EventsPage />; if (route === '/resources') return <ResourcesPage onNavigate={navigate} />; if (route === '/resources/prompts') return <PromptsPage />; if (route === '/interviews') return <InterviewsPage />; if (route === '/members') return <DynamicMembersPage />; if (route === '/ai') return <AiPage messages={messages} onSend={sendMessage} onNewChat={() => setMessages([])} />; return <ExpandedHomePage onNavigate={navigate} /> }
   const isLanding = route === '/home'
   const isTools = route === '/tools'
   const isAdminRoute = route === '/admin'

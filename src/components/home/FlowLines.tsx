@@ -95,8 +95,8 @@ export function FlowLines() {
           stroke="#8FC7D9"
           strokeWidth="1.5"
           animate={{
-            cx: [200, 1400],
-            cy: [670, 220],
+            x: [200, 1400],
+            y: [670, 220],
           }}
           transition={{
             duration: 14,
@@ -137,8 +137,8 @@ export function FlowLines() {
           stroke="#073F73"
           strokeWidth="1.2"
           animate={{
-            cx: [300, 1200],
-            cy: [460, 170],
+            x: [300, 1200],
+            y: [460, 170],
           }}
           transition={{
             duration: 12,
