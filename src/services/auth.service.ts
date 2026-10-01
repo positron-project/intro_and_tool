@@ -1,4 +1,4 @@
-import { apiConfig, apiRequest, getAccessToken, setAccessToken } from './api-client'
+import { ApiError, apiConfig, apiRequest, getAccessToken, setAccessToken } from './api-client'
 import type { AccountStatus, AuthSession, AuthUser, ContentVisibility } from '../types'
 import { redeemInviteCodeValue } from './invite.service'
 
@@ -29,6 +29,14 @@ export interface RegistrationCodeResult {
   demoCode?: string
 }
 
+export type ManagedAccountRole = 'Member' | 'Contributor' | 'CohortLeader' | 'Leader'
+
+export interface ManagedAccountRoleUpdate {
+  role: ManagedAccountRole
+  cohort: string | null
+  direction: string | null
+}
+
 interface BackendUserResponse {
   id: number | string
   username: string
@@ -40,15 +48,19 @@ interface BackendUserResponse {
   bio?: string | null
   initials?: string | null
   cohort?: string | null
-  role?: AuthUser['role'] | null
+  direction?: string | null
+  role?: string | null
   directions?: string[] | null
   status?: AccountStatus | null
 }
 
 interface BackendAuthResponse {
-  accessToken: string
+  accessToken?: string
+  access_token?: string
   refreshToken?: string
+  refresh_token?: string
   expiresAt?: string
+  expires_at?: string
   user: BackendUserResponse
 }
 
@@ -58,6 +70,8 @@ const DEMO_PASSWORDS_KEY = 'club-demo-passwords'
 const DEMO_REGISTRATIONS_KEY = 'club-demo-registrations'
 const DEMO_VERIFICATION_CODES_KEY = 'club-demo-verification-codes'
 const DEMO_ACCOUNT_STATUSES_KEY = 'club-demo-account-statuses'
+const DEMO_PROFILE_OVERRIDES_KEY = 'club-demo-profile-overrides'
+const REFRESH_TOKEN_KEY = 'club-refresh-token'
 
 const demoAccounts: Record<string, AuthUser> = {
   leader: {
@@ -76,7 +90,7 @@ const demoAccounts: Record<string, AuthUser> = {
     email: 'owner2029@example.com',
     initials: '29',
     cohort: '2029',
-    role: 'Contributor',
+    role: 'CohortLeader',
     directions: ['算法组', '项目组', '网安组'],
     status: 'active',
   },
@@ -86,12 +100,40 @@ export const isDemoAuth = apiConfig.contentSource !== 'api'
 export const demoCredentials = Object.freeze({ email: 'leader@example.com', password: DEMO_PASSWORD })
 export const demoOwnerCredentials = Object.freeze({ email: 'owner2029@example.com', password: DEMO_PASSWORD })
 
+/**
+ * Local-only compatibility for an API server that has not configured
+ * Turnstile yet. The request still goes to FastAPI; this is never enabled on
+ * a deployed host or when a real public site key is configured.
+ */
+export function isLocalPasswordLoginBypass() {
+  if (isDemoAuth || !import.meta.env.DEV || typeof window === 'undefined') return false
+  const host = window.location.hostname
+  const localHost = host === 'localhost' || host === '127.0.0.1'
+  const siteKey = String(import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '').trim()
+  return localHost && !siteKey
+}
+
 function readDemoSession(): AuthSession | null {
   try {
     const raw = window.localStorage.getItem(DEMO_SESSION_KEY) ?? window.sessionStorage.getItem(DEMO_SESSION_KEY)
     if (!raw) return null
     const session = JSON.parse(raw) as AuthSession
-    return session?.user?.id && session.accessToken ? session : null
+    if (!session?.user?.id || !session.accessToken) return null
+
+    // Normalize sessions written by older frontend builds so a stale browser
+    // cannot keep using an obsolete role label after the permission model
+    // changes.
+    const normalizedRole = session.user.id === 'demo-owner-2029' && session.user.role === 'Contributor'
+      ? 'CohortLeader'
+      : normalizeRole(session.user.role)
+    if (normalizedRole !== session.user.role) {
+      const migrated = { ...session, user: { ...session.user, role: normalizedRole } }
+      const remember = Boolean(window.localStorage.getItem(DEMO_SESSION_KEY))
+      writeDemoSession(migrated, remember)
+      return migrated
+    }
+
+    return session
   } catch {
     return null
   }
@@ -107,6 +149,49 @@ function writeDemoSession(session: AuthSession | null, remember = true) {
   }
 }
 
+function normalizeRole(role?: string | null): AuthUser['role'] {
+  switch (role?.trim().toLowerCase()) {
+    case 'admin':
+      return 'Admin'
+    case 'leader':
+    case '组长':
+    case '超级管理员':
+      return 'Leader'
+    case 'cohortleader':
+    case 'cohort_leader':
+    case '届次负责人':
+    case '负责人':
+      return 'CohortLeader'
+    case 'contributor':
+    case '组员':
+      return 'Contributor'
+    case 'visitor':
+    case '访客':
+      return 'Visitor'
+    case 'member':
+    case 'user':
+    case '普通成员':
+      return 'Member'
+    default:
+      // Unknown or missing role data must fail closed instead of silently
+      // receiving ordinary-member access.
+      return 'Visitor'
+  }
+}
+
+function readDemoProfileOverrides(): Record<string, Partial<AuthUser>> {
+  try {
+    const value = JSON.parse(window.localStorage.getItem(DEMO_PROFILE_OVERRIDES_KEY) ?? '{}') as Record<string, Partial<AuthUser>>
+    return value && typeof value === 'object' ? value : {}
+  } catch {
+    return {}
+  }
+}
+
+function writeDemoProfileOverrides(value: Record<string, Partial<AuthUser>>) {
+  try { window.localStorage.setItem(DEMO_PROFILE_OVERRIDES_KEY, JSON.stringify(value)) } catch { /* Storage may be unavailable. */ }
+}
+
 function normalizeBackendUser(user: BackendUserResponse): AuthUser {
   const name = user.name?.trim() || user.nickname?.trim() || user.username
 
@@ -116,8 +201,10 @@ function normalizeBackendUser(user: BackendUserResponse): AuthUser {
     email: user.email,
     initials: user.initials?.trim() || name.slice(0, 2).toUpperCase(),
     cohort: user.cohort?.trim() || '待分配',
-    role: user.role ?? 'Member',
-    directions: Array.isArray(user.directions) ? user.directions : [],
+    role: normalizeRole(user.role),
+    directions: Array.isArray(user.directions) && user.directions.length
+        ? user.directions
+        : user.direction?.trim() ? [user.direction.trim()] : [],
     avatarUrl: user.avatarUrl ?? user.avatar_url ?? undefined,
     bio: user.bio ?? undefined,
     status: user.status ?? 'active',
@@ -125,18 +212,23 @@ function normalizeBackendUser(user: BackendUserResponse): AuthUser {
 }
 
 function normalizeBackendSession(session: BackendAuthResponse): AuthSession {
+  const accessToken = session.accessToken ?? session.access_token
+  if (!accessToken) throw new Error('登录响应缺少有效 token')
   return {
-    accessToken: session.accessToken,
-    refreshToken: session.refreshToken,
-    expiresAt: session.expiresAt,
+    accessToken,
+    refreshToken: session.refreshToken ?? session.refresh_token,
+    expiresAt: session.expiresAt ?? session.expires_at,
     user: normalizeBackendUser(session.user),
   }
 }
 
 /** Authentication boundary used by the login page and future admin console. */
 export async function login(credentials: LoginCredentials): Promise<AuthSession> {
+  const email = credentials.email.trim().toLowerCase()
+  if (!isValidEmail(email)) throw new Error('请输入合法的邮箱地址')
+  if (!isDemoAuth && !isLocalPasswordLoginBypass() && !credentials.turnstileToken) throw new Error('请先完成验证码校验')
+
   if (isDemoAuth) {
-    const email = credentials.email.trim().toLowerCase()
     const accounts = readDemoAccounts()
     const username = Object.entries(accounts).find(([, account]) => account.email?.toLowerCase() === email)?.[0]
     const user = username ? accounts[username] : undefined
@@ -164,13 +256,41 @@ function createSession(user: AuthUser): AuthSession {
 function persistSessionToken(session: AuthSession, remember: boolean) {
   if (!session.accessToken || typeof session.accessToken !== 'string') throw new Error('登录响应缺少有效 token')
   setAccessToken(session.accessToken, remember)
+  try {
+    window.localStorage.removeItem(REFRESH_TOKEN_KEY)
+    window.sessionStorage.removeItem(REFRESH_TOKEN_KEY)
+    if (session.refreshToken) (remember ? window.localStorage : window.sessionStorage).setItem(REFRESH_TOKEN_KEY, session.refreshToken)
+  } catch {
+    // Storage can be unavailable for file:// previews or strict privacy modes.
+  }
+}
+
+function getStoredRefreshToken() {
+  try {
+    return window.localStorage.getItem(REFRESH_TOKEN_KEY) ?? window.sessionStorage.getItem(REFRESH_TOKEN_KEY)
+  } catch {
+    return null
+  }
+}
+
+function clearStoredRefreshToken() {
+  try {
+    window.localStorage.removeItem(REFRESH_TOKEN_KEY)
+    window.sessionStorage.removeItem(REFRESH_TOKEN_KEY)
+  } catch {
+    // Storage can be unavailable for file:// previews or strict privacy modes.
+  }
+}
+
+function shouldRememberSession() {
+  try { return Boolean(window.localStorage.getItem('club-access-token')) } catch { return true }
 }
 
 export async function loginWithCode(credentials: LoginCodeCredentials): Promise<AuthSession> {
   const email = credentials.email.trim().toLowerCase()
   if (!isValidEmail(email)) throw new Error('请输入合法的邮箱地址')
   if (!credentials.verificationCode.trim()) throw new Error('请输入邮箱验证码')
-  if (!credentials.turnstileToken) throw new Error('请先完成验证码校验')
+  if (!isDemoAuth && !credentials.turnstileToken) throw new Error('请先完成验证码校验')
 
   if (!isDemoAuth) {
     const response = await apiRequest<BackendAuthResponse>('/auth/login/code', { method: 'POST', body: { email, verificationCode: credentials.verificationCode.trim(), turnstileToken: credentials.turnstileToken, rememberMe: credentials.rememberMe }, expectedStatus: 200, withAuth: false })
@@ -179,9 +299,10 @@ export async function loginWithCode(credentials: LoginCodeCredentials): Promise<
     return session
   }
 
-  const storedCode = readDemoVerificationCode(email)
+  const storedCode = readDemoVerificationCode(email, 'login')
   const account = Object.values(readDemoAccounts()).find((item) => item.email?.toLowerCase() === email)
   if (!account || !storedCode || storedCode.code !== credentials.verificationCode.trim() || storedCode.expiresAt < Date.now()) throw new Error('邮箱或验证码不正确')
+  consumeDemoVerificationCode(email, 'login')
   const session = createSession(account)
   writeDemoSession(session, credentials.rememberMe)
   persistSessionToken(session, credentials.rememberMe)
@@ -194,31 +315,23 @@ export function isValidEmail(email: string) {
 
 export async function requestRegistrationCode(email: string, turnstileToken: string): Promise<RegistrationCodeResult> {
   if (!isValidEmail(email)) throw new Error('请输入合法的邮箱地址')
-  if (!turnstileToken) throw new Error('请先完成验证码校验')
+  if (!isDemoAuth && !turnstileToken) throw new Error('请先完成验证码校验')
   if (!isDemoAuth) return apiRequest<RegistrationCodeResult>('/auth/register/send-code', { method: 'POST', body: { email: email.trim().toLowerCase(), turnstileToken }, withAuth: false })
 
   const code = String(Math.floor(100000 + Math.random() * 900000))
-  try {
-    const stored = JSON.parse(window.localStorage.getItem(DEMO_VERIFICATION_CODES_KEY) ?? '{}') as Record<string, { code: string; expiresAt: number }>
-    stored[email.trim().toLowerCase()] = { code, expiresAt: Date.now() + 10 * 60 * 1000 }
-    window.localStorage.setItem(DEMO_VERIFICATION_CODES_KEY, JSON.stringify(stored))
-  } catch { /* Storage may be unavailable in strict file:// previews. */ }
+  writeDemoVerificationCode(email, 'register', code)
   return { expiresInSeconds: 600, demoCode: code }
 }
 
 export async function requestLoginCode(email: string, turnstileToken: string): Promise<RegistrationCodeResult> {
   if (!isValidEmail(email)) throw new Error('请输入合法的邮箱地址')
-  if (!turnstileToken) throw new Error('请先完成验证码校验')
+  if (!isDemoAuth && !turnstileToken) throw new Error('请先完成验证码校验')
   if (!isDemoAuth) return apiRequest<RegistrationCodeResult>('/auth/login/send-code', { method: 'POST', body: { email: email.trim().toLowerCase(), turnstileToken }, withAuth: false })
 
   const account = Object.values(readDemoAccounts()).find((item) => item.email?.toLowerCase() === email.trim().toLowerCase())
   if (!account) throw new Error('该邮箱尚未注册')
   const code = String(Math.floor(100000 + Math.random() * 900000))
-  try {
-    const stored = JSON.parse(window.localStorage.getItem(DEMO_VERIFICATION_CODES_KEY) ?? '{}') as Record<string, { code: string; expiresAt: number }>
-    stored[email.trim().toLowerCase()] = { code, expiresAt: Date.now() + 10 * 60 * 1000 }
-    window.localStorage.setItem(DEMO_VERIFICATION_CODES_KEY, JSON.stringify(stored))
-  } catch { /* Storage may be unavailable in strict file:// previews. */ }
+  writeDemoVerificationCode(email, 'login', code)
   return { expiresInSeconds: 600, demoCode: code }
 }
 
@@ -229,14 +342,16 @@ export async function register(credentials: RegistrationCredentials): Promise<vo
   if (username.length < 2 || username.length > 32) throw new Error('账号名长度应为 2–32 个字符')
   if (!isValidEmail(email)) throw new Error('请输入合法的邮箱地址')
   if (credentials.password.length < 8) throw new Error('密码至少需要 8 位')
-  if (!credentials.turnstileToken) throw new Error('请先完成验证码校验')
+  if (!isDemoAuth && !credentials.turnstileToken) throw new Error('请先完成验证码校验')
 
   if (!isDemoAuth) {
-    await apiRequest('/auth/register', { method: 'POST', body: { verificationCode: credentials.verificationCode.trim(), username, email, password: credentials.password, turnstileToken: credentials.turnstileToken }, expectedStatus: 201, withAuth: false })
+    // Registration follows the shared Result contract: HTTP 200 plus
+    // `code === 200` means the account was created successfully.
+    await apiRequest('/auth/register', { method: 'POST', body: { verificationCode: credentials.verificationCode.trim(), username, email, password: credentials.password, turnstileToken: credentials.turnstileToken }, expectedStatus: 200, withAuth: false })
     return
   }
 
-  const storedCode = readDemoVerificationCode(email)
+  const storedCode = readDemoVerificationCode(email, 'register')
   if (!storedCode || storedCode.code !== credentials.verificationCode.trim() || storedCode.expiresAt < Date.now()) throw new Error('邮箱验证码不正确或已过期')
   const registrations = readDemoRegistrations()
   if (readDemoAccounts()[username]) throw new Error('该账号已存在，请换一个账号')
@@ -244,11 +359,7 @@ export async function register(credentials: RegistrationCredentials): Promise<vo
   const user: AuthUser = { id: `demo-member-${email}`, name: username, email, initials: username.slice(0, 2).toUpperCase(), cohort: '待分配', role: 'Member', directions: [], status: 'active' }
   registrations[username] = { user, email, password: credentials.password }
   writeDemoRegistrations(registrations)
-  try {
-    const stored = JSON.parse(window.localStorage.getItem(DEMO_VERIFICATION_CODES_KEY) ?? '{}') as Record<string, unknown>
-    delete stored[email]
-    window.localStorage.setItem(DEMO_VERIFICATION_CODES_KEY, JSON.stringify(stored))
-  } catch { /* Storage may be unavailable in strict file:// previews. */ }
+  consumeDemoVerificationCode(email, 'register')
 }
 
 function readDemoRegistrations() {
@@ -280,8 +391,9 @@ function writeDemoAccountStatuses(value: Record<string, AccountStatus>) {
 function readDemoAccounts() {
   const registrations = readDemoRegistrations()
   const statuses = readDemoAccountStatuses()
-  const builtInAccounts = Object.fromEntries(Object.entries(demoAccounts).map(([username, account]) => [username, { ...account, status: statuses[account.id] ?? account.status ?? 'active' }]))
-  const registeredAccounts = Object.fromEntries(Object.entries(registrations).map(([username, item]) => [username, { ...item.user, status: statuses[item.user.id] ?? item.user.status ?? 'active' }]))
+  const profileOverrides = readDemoProfileOverrides()
+  const builtInAccounts = Object.fromEntries(Object.entries(demoAccounts).map(([username, account]) => [username, { ...account, ...profileOverrides[account.id], status: statuses[account.id] ?? account.status ?? 'active' }]))
+  const registeredAccounts = Object.fromEntries(Object.entries(registrations).map(([username, item]) => [username, { ...item.user, ...profileOverrides[item.user.id], status: statuses[item.user.id] ?? item.user.status ?? 'active' }]))
   return { ...builtInAccounts, ...registeredAccounts }
 }
 
@@ -294,7 +406,8 @@ function readDemoAccounts() {
 export async function listManagedAccounts() {
   if (!isDemoAuth) {
     const payload = await apiRequest<BackendUserResponse[] | { items: BackendUserResponse[] }>('/admin/users', { withAuth: true })
-    const accounts = Array.isArray(payload) ? payload : payload.items
+    const accounts = Array.isArray(payload) ? payload : payload && Array.isArray(payload.items) ? payload.items : null
+    if (!accounts) throw new Error('管理员账号接口返回格式不正确')
     return accounts.map(normalizeBackendUser)
   }
   return Object.values(readDemoAccounts())
@@ -329,10 +442,67 @@ export async function updateManagedAccountStatus(userId: string, status: Account
   return { ...account, status }
 }
 
-function readDemoVerificationCode(email: string) {
+/** Changes an account's login permission and its cohort/team assignment. */
+export async function updateManagedAccountRole(
+  userId: string,
+  roleUpdate: ManagedAccountRoleUpdate,
+) {
+  if (!isDemoAuth) {
+    const account = await apiRequest<BackendUserResponse>(
+      `/admin/users/${encodeURIComponent(userId)}/role`,
+      {
+        method: 'PATCH',
+        body: roleUpdate,
+        withAuth: true,
+      },
+    )
+    return normalizeBackendUser(account)
+  }
+
+  const account = Object.values(readDemoAccounts()).find((item) => item.id === userId)
+  if (!account) throw new Error('账号不存在或已被删除')
+
+  const updatedFields: Partial<AuthUser> = {
+    role: roleUpdate.role,
+    cohort: roleUpdate.cohort || '待分配',
+    directions: roleUpdate.direction ? [roleUpdate.direction] : [],
+  }
+  const profileOverrides = readDemoProfileOverrides()
+  profileOverrides[userId] = {
+    ...profileOverrides[userId],
+    ...updatedFields,
+  }
+  writeDemoProfileOverrides(profileOverrides)
+
+  return { ...account, ...updatedFields }
+}
+
+type DemoVerificationPurpose = 'register' | 'login'
+
+function demoVerificationStorageKey(email: string, purpose: DemoVerificationPurpose) {
+  return `${purpose}:${email.trim().toLowerCase()}`
+}
+
+function writeDemoVerificationCode(email: string, purpose: DemoVerificationPurpose, code: string) {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(DEMO_VERIFICATION_CODES_KEY) ?? '{}') as Record<string, { code: string; expiresAt: number }>
+    stored[demoVerificationStorageKey(email, purpose)] = { code, expiresAt: Date.now() + 10 * 60 * 1000 }
+    window.localStorage.setItem(DEMO_VERIFICATION_CODES_KEY, JSON.stringify(stored))
+  } catch { /* Storage may be unavailable in strict file:// previews. */ }
+}
+
+function consumeDemoVerificationCode(email: string, purpose: DemoVerificationPurpose) {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(DEMO_VERIFICATION_CODES_KEY) ?? '{}') as Record<string, unknown>
+    delete stored[demoVerificationStorageKey(email, purpose)]
+    window.localStorage.setItem(DEMO_VERIFICATION_CODES_KEY, JSON.stringify(stored))
+  } catch { /* Storage may be unavailable in strict file:// previews. */ }
+}
+
+function readDemoVerificationCode(email: string, purpose: DemoVerificationPurpose) {
   try {
     const stored = JSON.parse(window.localStorage.getItem(DEMO_VERIFICATION_CODES_KEY) ?? '{}') as Record<string, { code?: string; expiresAt?: number }>
-    const item = stored[email]
+    const item = stored[demoVerificationStorageKey(email, purpose)]
     return item?.code && item.expiresAt ? { code: item.code, expiresAt: item.expiresAt } : null
   } catch {
     return null
@@ -365,6 +535,15 @@ export async function updateProfile(patch: Partial<Pick<AuthUser, 'name' | 'init
   if (!session) throw new Error('登录状态已失效，请重新登录')
   const user = { ...session.user, ...patch }
   writeDemoSession({ ...session, user })
+  const overrides = readDemoProfileOverrides()
+  overrides[user.id] = { ...overrides[user.id], ...patch }
+  writeDemoProfileOverrides(overrides)
+  const registrations = readDemoRegistrations()
+  const account = Object.values(registrations).find((item) => item.user.id === user.id)
+  if (account) {
+    account.user = { ...account.user, ...patch }
+    writeDemoRegistrations(registrations)
+  }
   return user
 }
 
@@ -375,7 +554,9 @@ export async function changePassword(currentPassword: string, newPassword: strin
   }
   const session = readDemoSession()
   if (!session) throw new Error('登录状态已失效，请重新登录')
-  const username = session.user.id === 'demo-leader' ? 'leader' : 'owner2029'
+  const accountEntry = Object.entries(readDemoAccounts()).find(([, account]) => account.id === session.user.id)
+  const username = accountEntry?.[0] ?? (session.user.id === 'demo-leader' ? 'leader' : undefined)
+  if (!username) throw new Error('当前账号资料不完整，请重新登录')
   if (currentPassword !== readDemoPassword(username)) throw new Error('当前密码不正确')
   writeDemoPassword(username, newPassword)
 }
@@ -392,8 +573,31 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
     const user = await apiRequest<BackendUserResponse>('/auth/me')
     return normalizeBackendUser(user)
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 401 || error.code === 401)) {
+      const refreshed = await refreshSession()
+      if (refreshed) return refreshed.user
+    }
+    if (error instanceof ApiError && ([401, 403].includes(error.status) || error.code === 401 || error.code === 403)) {
+      setAccessToken(null)
+      clearStoredRefreshToken()
+    }
+    return null
+  }
+}
+
+export async function refreshSession(): Promise<AuthSession | null> {
+  if (isDemoAuth) return null
+  const refreshToken = getStoredRefreshToken()
+  if (!refreshToken) return null
+  try {
+    const response = await apiRequest<BackendAuthResponse>('/auth/refresh', { method: 'POST', body: { refreshToken }, expectedStatus: 200, withAuth: false })
+    const session = normalizeBackendSession(response)
+    persistSessionToken(session, shouldRememberSession())
+    return session
   } catch {
     setAccessToken(null)
+    clearStoredRefreshToken()
     return null
   }
 }
@@ -404,6 +608,7 @@ export async function logout() {
   }
   writeDemoSession(null)
   setAccessToken(null)
+  clearStoredRefreshToken()
 }
 
 /**
@@ -423,7 +628,15 @@ export async function redeemInviteCode(inviteCode: string): Promise<AuthUser> {
   if (session.user.role !== 'Member') throw new Error('当前账号已经拥有组员或管理员身份，无需重复兑换')
 
   const redeemed = redeemInviteCodeValue(inviteCode)
-  const updatedUser: AuthUser = { ...session.user, role: redeemed.role, status: 'active' }
+  const assignedCohort = redeemed.cohort?.trim() || session.user.cohort
+  const assignedDirection = redeemed.direction?.trim()
+  const updatedUser: AuthUser = {
+    ...session.user,
+    role: redeemed.role,
+    status: 'active',
+    cohort: assignedCohort,
+    directions: assignedDirection ? [assignedDirection] : session.user.directions,
+  }
   writeDemoSession({ ...session, user: updatedUser })
 
   // Keep registered demo accounts consistent after the user logs out and in.
@@ -441,6 +654,7 @@ export async function closeAccount(): Promise<void> {
   if (!isDemoAuth) {
     await apiRequest<void>('/auth/me', { method: 'DELETE' })
     setAccessToken(null)
+    clearStoredRefreshToken()
     return
   }
   const session = readDemoSession()
@@ -456,19 +670,48 @@ export async function closeAccount(): Promise<void> {
   }
   writeDemoSession(null)
   setAccessToken(null)
+  clearStoredRefreshToken()
+}
+
+/**
+ * Returns whether the account may open the management console.
+ * The management console is reserved for cohort leaders and the group leader.
+ * Contributors and ordinary members use the public site and message center;
+ * the backend must enforce the same boundary for every API request.
+ */
+export function canAccessAdmin(user: AuthUser | null) {
+  if (!user || user.status === 'disabled' || user.status === 'closed') return false
+  return ['CohortLeader', 'Leader', 'Admin'].includes(user.role)
+}
+
+export function isLeaderRole(user: AuthUser | null) {
+  return Boolean(user && (user.role === 'Leader' || user.role === 'Admin'))
+}
+
+/** Global settings and cross-cohort operations belong to the group leader. */
+export function canManageGlobalContent(user: AuthUser | null) {
+  return isLeaderRole(user)
+}
+
+/** Invite creation/deletion is a global account operation reserved for the group leader. */
+export function canManageInvites(user: AuthUser | null) {
+  return isLeaderRole(user)
 }
 
 /** Frontend convenience check; the backend must enforce the same rules. */
 export function canManageContent(user: AuthUser | null, contentCohort?: string) {
-  if (!user) return false
+  if (!user || user.status === 'disabled' || user.status === 'closed') return false
   if (user.role === 'Admin' || user.role === 'Leader') return true
-  return user.role === 'Contributor' && (!contentCohort || contentCohort === user.cohort)
+  if (user.role !== 'CohortLeader') return false
+  if (!contentCohort) return true
+  return contentCohort.replace(/\D/g, '') === user.cohort.replace(/\D/g, '')
 }
 
 /** UI visibility helper. The backend must enforce the same rule on real data. */
 export function canViewContent(user: AuthUser | null, visibility: ContentVisibility = 'public') {
   if (visibility === 'public') return true
   if (!user || user.status === 'disabled' || user.status === 'closed') return false
-  if (visibility === 'contributors') return ['Contributor', 'Leader', 'Admin'].includes(user.role)
+  if (user.role === 'Visitor') return false
+  if (visibility === 'contributors') return ['Contributor', 'CohortLeader', 'Leader', 'Admin'].includes(user.role)
   return true
 }

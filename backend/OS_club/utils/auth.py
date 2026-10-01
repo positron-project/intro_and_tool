@@ -47,7 +47,38 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if user.status != "active":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="当前账号不可用",
+        )
+
     return user
+
+
+async def get_optional_current_user(
+    authorization: str | None = Header(
+        default=None,
+        alias="Authorization",
+    ),
+    db: AsyncSession = Depends(get_database),
+) -> User | None:
+    """
+    尝试读取当前用户，但没有令牌时不返回 401。
+
+    项目公开列表和详情页需要同时服务游客和登录用户：游客可以查看
+    公共项目，登录用户还会额外得到“是否已收藏”状态。
+    """
+
+    if not authorization:
+        return None
+
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        return None
+
+    user = await get_user_by_token(db, token.strip())
+    return user if user is not None and user.status == "active" else None
 
 
 
@@ -73,7 +104,42 @@ async def require_leader_or_admin(
     if current_user.role not in {"Leader", "Admin"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="只有组长或管理员可以执行此操作",
+            detail="只有组长或负责人可以执行此操作",
+        )
+
+    return current_user
+
+
+
+async def require_content_reviewer(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """
+    判断当前用户是否可以审核项目、资源和面经。
+
+    允许审核的角色：
+    CohortLeader：负责人，可以审核自己届次的内容
+    Leader：组长，可以审核全部内容
+    Admin：旧版管理员角色，按组长处理
+    """
+
+    # 账号被禁用或注销时，不能执行审核操作。
+    if current_user.status != "active":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="当前账号不可用",
+        )
+
+    # 普通成员和组员可以提交内容，
+    # 但不能审核其他人的内容。
+    if current_user.role not in {
+        "CohortLeader",
+        "Leader",
+        "Admin",
+    }:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="只有负责人或组长可以审核内容",
         )
 
     return current_user

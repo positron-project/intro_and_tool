@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { isRemoteClubConfigEnabled, fetchClubConfig, createCohort as apiCreateCohort, updateCohort as apiUpdateCohort, deleteCohort as apiDeleteCohort, createTeam as apiCreateTeam, updateTeam as apiUpdateTeam, deleteTeam as apiDeleteTeam, createPhoto as apiCreatePhoto, updatePhoto as apiUpdatePhoto, setPhotoCover as apiSetPhotoCover, deletePhoto as apiDeletePhoto, updateSiteCopy as apiUpdateSiteCopy } from './club-config.service'
 
 export type CohortStatus = 'active' | 'archived' | 'draft'
 export type CohortMemberRole = '组长' | '负责人' | '组员'
@@ -18,7 +19,7 @@ export interface CohortTeamRecord {
   description: string
   accent: string
   members: CohortMemberRecord[]
-  memberCapacity?: number
+  memberCapacity?: number | null
 }
 
 export interface CohortRecord {
@@ -47,7 +48,7 @@ export interface SiteCopyRecord {
   label: string
   title: string
   body: string
-  author?: string
+  author?: string | null
   updatedAt: string
 }
 
@@ -60,13 +61,17 @@ export interface ClubConfigState {
 interface ClubConfigContextValue extends ClubConfigState {
   sortedCohorts: CohortRecord[]
   currentCohort: CohortRecord | undefined
-  saveCohort: (input: Partial<CohortRecord> & Pick<CohortRecord, 'year'>) => CohortRecord
-  removeCohort: (id: string) => void
-  saveTeam: (cohortId: string, input: Partial<CohortTeamRecord> & Pick<CohortTeamRecord, 'name'>) => CohortTeamRecord | undefined
-  removeTeam: (cohortId: string, teamId: string) => void
-  savePhoto: (photo: CohortPhoto) => void
-  removePhoto: (id: string) => void
-  updateSiteCopy: (id: string, patch: Partial<SiteCopyRecord>) => void
+  loading: boolean
+  error: string | null
+  refresh: () => Promise<void>
+  saveCohort: (input: Partial<CohortRecord> & Pick<CohortRecord, 'year'>) => Promise<CohortRecord>
+  removeCohort: (id: string) => Promise<void>
+  saveTeam: (cohortId: string, input: Partial<CohortTeamRecord> & Pick<CohortTeamRecord, 'name'>) => Promise<CohortTeamRecord | undefined>
+  removeTeam: (cohortId: string, teamId: string) => Promise<void>
+  savePhoto: (photo: CohortPhoto) => Promise<void>
+  setPhotoCover: (id: string) => Promise<void>
+  removePhoto: (id: string) => Promise<void>
+  updateSiteCopy: (id: string, patch: Partial<SiteCopyRecord>) => Promise<void>
   resetConfig: () => void
 }
 
@@ -100,12 +105,44 @@ const defaultTeams2029: CohortTeamRecord[] = [
 
 /* Every cohort always has the three core directions. Only 2029 carries
    sample members; other cohorts start with real-member slots empty. */
-const defaultTeamTemplates: CohortTeamRecord[] = defaultTeams2029.map(({ members: _members, ...team }) => ({ ...team, members: [] }))
+// New cohorts start with the three required directions but no pre-filled
+// capacity. Capacity is an administrator-owned setting entered in the team
+// editor, not sample data copied from the current cohort.
+const defaultTeamTemplates: CohortTeamRecord[] = defaultTeams2029.map(({ members: _members, memberCapacity: _memberCapacity, ...team }) => ({ ...team, members: [] }))
 const requiredTeamIds = new Set(defaultTeamTemplates.map((team) => team.id))
+
+const normalizeTeamName = (name: string) => name.replace(/[\s·_-]/g, '').toLowerCase()
+const coreTeamIdByName = new Map(defaultTeamTemplates.map((team) => [normalizeTeamName(team.name), team.id]))
+
+/** Core teams may arrive from the backend with database IDs instead of the
+ * frontend template IDs. Treat their canonical names as the same team so a
+ * newly-created cohort is not rendered twice. */
+export function isCoreTeam(team: Pick<CohortTeamRecord, 'id' | 'name'>) {
+  return requiredTeamIds.has(team.id) || coreTeamIdByName.has(normalizeTeamName(team.name))
+}
+
+function teamIdentity(team: Pick<CohortTeamRecord, 'id' | 'name'>) {
+  return coreTeamIdByName.get(normalizeTeamName(team.name)) ?? team.id
+}
+
+function dedupeTeams(teams: CohortTeamRecord[]) {
+  const seen = new Set<string>()
+  return teams.filter((team) => {
+    const identity = teamIdentity(team)
+    if (seen.has(identity)) return false
+    seen.add(identity)
+    return true
+  })
+}
+
 const withDefaultTeams = (cohort: CohortRecord): CohortRecord => {
-  const existingTeams = Array.isArray(cohort.teams) ? cohort.teams : []
-  const missingTeams = defaultTeamTemplates.filter((template) => !existingTeams.some((team) => team.id === template.id)).map(clone)
+  const existingTeams = dedupeTeams(Array.isArray(cohort.teams) ? cohort.teams : [])
+  const missingTeams = defaultTeamTemplates.filter((template) => !existingTeams.some((team) => teamIdentity(team) === teamIdentity(template))).map(clone)
   return { ...cohort, teams: [...existingTeams, ...missingTeams] }
+}
+
+function emptyConfig(): ClubConfigState {
+  return { cohorts: [], photos: [], siteCopy: [] }
 }
 
 const createDefaults = (): ClubConfigState => {
@@ -144,33 +181,111 @@ function readConfig(): ClubConfigState {
 const ClubConfigContext = createContext<ClubConfigContextValue | null>(null)
 
 export function ClubConfigProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<ClubConfigState>(readConfig)
-  useEffect(() => { try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state)) } catch { /* file:// and private modes may disable storage */ } }, [state])
+  const [state, setState] = useState<ClubConfigState>(() => isRemoteClubConfigEnabled ? emptyConfig() : readConfig())
+  const [loading, setLoading] = useState(isRemoteClubConfigEnabled)
+  const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    if (isRemoteClubConfigEnabled) return
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state)) } catch { /* file:// and private modes may disable storage */ }
+  }, [state])
+  const refresh = useCallback(async () => {
+    if (!isRemoteClubConfigEnabled) return
+    setLoading(true)
+    setError(null)
+    try {
+      const remoteState = await fetchClubConfig()
+      setState({ ...remoteState, cohorts: remoteState.cohorts.map(withDefaultTeams) })
+    } catch (reason) {
+      setState(emptyConfig())
+      setError(`组织配置暂时无法加载：${reason instanceof Error ? reason.message : '请检查后端接口'}。当前不会显示演示数据。`)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+  useEffect(() => { void refresh() }, [refresh])
   const sortedCohorts = useMemo(() => [...state.cohorts].sort((a, b) => Number(b.year) - Number(a.year)), [state.cohorts])
   const currentCohort = sortedCohorts.find((cohort) => cohort.status === 'active') ?? sortedCohorts[0]
 
-  const saveCohort = useCallback((input: Partial<CohortRecord> & Pick<CohortRecord, 'year'>) => {
+  const saveCohort = useCallback(async (input: Partial<CohortRecord> & Pick<CohortRecord, 'year'>) => {
+    if (isRemoteClubConfigEnabled) {
+      const previous = state.cohorts.find((cohort) => cohort.id === input.id)
+      const isNew = !input.id
+      const result = input.id ? await apiUpdateCohort(input.id, input) : await apiCreateCohort(input)
+      const returnedTeams = Array.isArray(result.teams) ? result.teams : []
+      const existingTeams = dedupeTeams(returnedTeams.length ? returnedTeams : previous?.teams ?? [])
+      // Some backend deployments create the three core teams during cohort
+      // creation and apply their own sample capacities. A new cohort must
+      // start with member counts unset, so clear those server defaults once.
+      const newCohortTeams = isNew && existingTeams.some((team) => team.memberCapacity != null)
+        ? await Promise.all(existingTeams.map((team) => team.memberCapacity == null ? Promise.resolve(team) : apiUpdateTeam(result.id, team.id, { memberCapacity: null })))
+        : existingTeams
+      const missingDefaultTeams = isNew
+        ? defaultTeamTemplates.filter((team) => !newCohortTeams.some((currentTeam) => teamIdentity(currentTeam) === teamIdentity(team)))
+        : []
+      const createdDefaultTeams = missingDefaultTeams.length
+        ? await Promise.all(missingDefaultTeams.map((team) => apiCreateTeam(result.id, team)))
+        : []
+      const normalized = withDefaultTeams({ ...result, teams: [...newCohortTeams, ...createdDefaultTeams] })
+      setState((current) => ({ ...current, cohorts: current.cohorts.some((cohort) => cohort.id === normalized.id) ? current.cohorts.map((cohort) => cohort.id === normalized.id ? normalized : cohort) : [...current.cohorts, normalized] }))
+      return normalized
+    }
     const timestamp = now(); let result!: CohortRecord
     setState((current) => {
       const existing = current.cohorts.find((cohort) => cohort.id === input.id || cohort.year === input.year)
       result = withDefaultTeams({ id: existing?.id ?? input.id ?? `cohort-${input.year}`, year: input.year, generationLabel: input.generationLabel ?? existing?.generationLabel ?? `${input.year} 届`, status: input.status ?? existing?.status ?? 'draft', description: input.description ?? existing?.description ?? '', teams: input.teams ?? existing?.teams ?? [], createdAt: existing?.createdAt ?? timestamp, updatedAt: timestamp })
       return { ...current, cohorts: existing ? current.cohorts.map((cohort) => cohort.id === existing.id ? result : cohort) : [...current.cohorts, result] }
     }); return result
+  }, [state.cohorts])
+  const removeCohort = useCallback(async (id: string) => {
+    if (isRemoteClubConfigEnabled) await apiDeleteCohort(id)
+    setState((current) => ({ ...current, cohorts: current.cohorts.filter((cohort) => cohort.id !== id), photos: current.photos.filter((photo) => photo.cohortId !== id) }))
   }, [])
-  const removeCohort = useCallback((id: string) => setState((current) => ({ ...current, cohorts: current.cohorts.filter((cohort) => cohort.id !== id), photos: current.photos.filter((photo) => photo.cohortId !== id) })), [])
-  const saveTeam = useCallback((cohortId: string, input: Partial<CohortTeamRecord> & Pick<CohortTeamRecord, 'name'>) => {
+  const saveTeam = useCallback(async (cohortId: string, input: Partial<CohortTeamRecord> & Pick<CohortTeamRecord, 'name'>) => {
+    const cohort = state.cohorts.find((item) => item.id === cohortId)
+    const existing = cohort?.teams.find((team) => team.id === input.id)
+    if (isRemoteClubConfigEnabled) {
+      const result = input.id ? await apiUpdateTeam(cohortId, input.id, input) : await apiCreateTeam(cohortId, input)
+      setState((current) => ({ ...current, cohorts: current.cohorts.map((item) => item.id === cohortId ? { ...item, teams: item.teams.some((team) => team.id === result.id) ? item.teams.map((team) => team.id === result.id ? result : team) : [...item.teams, result], updatedAt: now() } : item) }))
+      return result
+    }
     let result: CohortTeamRecord | undefined
-    setState((current) => { const cohort = current.cohorts.find((item) => item.id === cohortId); if (!cohort) return current; const existing = cohort.teams.find((team) => team.id === input.id); result = { id: existing?.id ?? input.id ?? `${cohortId}-team-${Date.now()}`, name: input.name, description: input.description ?? existing?.description ?? '', accent: input.accent ?? existing?.accent ?? 'blue', members: input.members ?? existing?.members ?? [], memberCapacity: input.memberCapacity ?? existing?.memberCapacity }; return { ...current, cohorts: current.cohorts.map((item) => item.id === cohortId ? { ...item, teams: existing ? item.teams.map((team) => team.id === existing.id ? result! : team) : [...item.teams, result!], updatedAt: now() } : item) } }); return result
-  }, [])
-  const removeTeam = useCallback((cohortId: string, teamId: string) => {
-    if (requiredTeamIds.has(teamId)) return
+    setState((current) => { const currentCohort = current.cohorts.find((item) => item.id === cohortId); if (!currentCohort) return current; const hasCapacityPatch = Object.prototype.hasOwnProperty.call(input, 'memberCapacity'); result = { id: existing?.id ?? input.id ?? `${cohortId}-team-${Date.now()}`, name: input.name, description: input.description ?? existing?.description ?? '', accent: input.accent ?? existing?.accent ?? 'blue', members: input.members ?? existing?.members ?? [], memberCapacity: hasCapacityPatch ? input.memberCapacity : existing?.memberCapacity }; return { ...current, cohorts: current.cohorts.map((item) => item.id === cohortId ? { ...item, teams: existing ? item.teams.map((team) => team.id === existing.id ? result! : team) : [...item.teams, result!], updatedAt: now() } : item) } }); return result
+  }, [state.cohorts])
+  const removeTeam = useCallback(async (cohortId: string, teamId: string) => {
+    const target = state.cohorts.find((cohort) => cohort.id === cohortId)?.teams.find((team) => team.id === teamId)
+    if (target ? isCoreTeam(target) : requiredTeamIds.has(teamId)) return
+    if (isRemoteClubConfigEnabled) await apiDeleteTeam(cohortId, teamId)
     setState((current) => ({ ...current, cohorts: current.cohorts.map((cohort) => cohort.id === cohortId ? { ...cohort, teams: cohort.teams.filter((team) => team.id !== teamId), updatedAt: now() } : cohort) }))
+  }, [state.cohorts])
+  const savePhoto = useCallback(async (photo: CohortPhoto) => {
+    if (isRemoteClubConfigEnabled) {
+      const exists = state.photos.some((item) => item.id === photo.id)
+      const result = exists ? await apiUpdatePhoto(photo.id, photo) : await apiCreatePhoto(photo)
+      setState((current) => ({ ...current, photos: [...current.photos.filter((item) => item.id !== result.id), result].map((item) => item.cohortId === result.cohortId && result.isCover ? { ...item, isCover: item.id === result.id } : item) }))
+      return
+    }
+    setState((current) => ({ ...current, photos: [...current.photos.filter((item) => item.id !== photo.id), photo].map((item) => item.cohortId === photo.cohortId && photo.isCover ? { ...item, isCover: item.id === photo.id } : item) }))
+  }, [state.photos])
+  const setPhotoCover = useCallback(async (id: string) => {
+    const target = state.photos.find((photo) => photo.id === id)
+    if (!target) throw new Error('照片不存在或已被删除')
+    if (isRemoteClubConfigEnabled) await apiSetPhotoCover(id)
+    setState((current) => ({ ...current, photos: current.photos.map((photo) => photo.cohortId === target.cohortId ? { ...photo, isCover: photo.id === id } : photo) }))
+  }, [state.photos])
+  const removePhoto = useCallback(async (id: string) => {
+    if (isRemoteClubConfigEnabled) await apiDeletePhoto(id)
+    setState((current) => ({ ...current, photos: current.photos.filter((photo) => photo.id !== id) }))
   }, [])
-  const savePhoto = useCallback((photo: CohortPhoto) => setState((current) => ({ ...current, photos: [...current.photos.filter((item) => item.id !== photo.id), photo].map((item) => item.cohortId === photo.cohortId && photo.isCover ? { ...item, isCover: item.id === photo.id } : item) })), [])
-  const removePhoto = useCallback((id: string) => setState((current) => ({ ...current, photos: current.photos.filter((photo) => photo.id !== id) })), [])
-  const updateSiteCopy = useCallback((id: string, patch: Partial<SiteCopyRecord>) => setState((current) => ({ ...current, siteCopy: current.siteCopy.map((item) => item.id === id ? { ...item, ...patch, updatedAt: now() } : item) })), [])
+  const updateSiteCopy = useCallback(async (id: string, patch: Partial<SiteCopyRecord>) => {
+    if (isRemoteClubConfigEnabled) {
+      const result = await apiUpdateSiteCopy(id, patch)
+      setState((current) => ({ ...current, siteCopy: current.siteCopy.map((item) => item.id === id ? result : item) }))
+      return
+    }
+    setState((current) => ({ ...current, siteCopy: current.siteCopy.map((item) => item.id === id ? { ...item, ...patch, updatedAt: now() } : item) }))
+  }, [])
   const resetConfig = useCallback(() => setState(createDefaults()), [])
-  const value = useMemo(() => ({ ...state, sortedCohorts, currentCohort, saveCohort, removeCohort, saveTeam, removeTeam, savePhoto, removePhoto, updateSiteCopy, resetConfig }), [state, sortedCohorts, currentCohort, saveCohort, removeCohort, saveTeam, removeTeam, savePhoto, removePhoto, updateSiteCopy, resetConfig])
+  const value = useMemo(() => ({ ...state, sortedCohorts, currentCohort, loading, error, refresh, saveCohort, removeCohort, saveTeam, removeTeam, savePhoto, setPhotoCover, removePhoto, updateSiteCopy, resetConfig }), [state, sortedCohorts, currentCohort, loading, error, refresh, saveCohort, removeCohort, saveTeam, removeTeam, savePhoto, setPhotoCover, removePhoto, updateSiteCopy, resetConfig])
   return <ClubConfigContext.Provider value={value}>{children}</ClubConfigContext.Provider>
 }
 

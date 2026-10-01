@@ -7,6 +7,24 @@ const isRemoteInviteEnabled = apiConfig.contentSource === 'api'
 
 type StoredInviteCode = Omit<InviteCode, 'status'>
 
+interface BackendInviteCode {
+  id: string | number
+  code: string
+  role?: 'Contributor' | string
+  cohort?: string | null
+  direction?: string | null
+  expiresAt?: string
+  expires_at?: string
+  maxUses?: number
+  max_uses?: number
+  usedCount?: number
+  used_count?: number
+  createdAt?: string
+  created_at?: string
+  revokedAt?: string | null
+  revoked_at?: string | null
+}
+
 function readStoredInviteCodes(): StoredInviteCode[] {
   try {
     const value = JSON.parse(window.localStorage.getItem(INVITE_CODES_STORAGE_KEY) ?? '[]')
@@ -35,6 +53,24 @@ function withStatus(inviteCode: StoredInviteCode): InviteCode {
   return { ...inviteCode, status: getInviteCodeStatus(inviteCode) }
 }
 
+function normalizeInviteCode(inviteCode: BackendInviteCode): StoredInviteCode {
+  const expiresAt = inviteCode.expiresAt ?? inviteCode.expires_at
+  const createdAt = inviteCode.createdAt ?? inviteCode.created_at
+  if (!expiresAt || !createdAt) throw new Error('邀请码响应缺少有效时间字段')
+  return {
+    id: String(inviteCode.id),
+    code: inviteCode.code,
+    role: 'Contributor',
+    cohort: inviteCode.cohort?.trim() || undefined,
+    direction: inviteCode.direction?.trim() || undefined,
+    expiresAt,
+    maxUses: Number(inviteCode.maxUses ?? inviteCode.max_uses ?? 0),
+    usedCount: Number(inviteCode.usedCount ?? inviteCode.used_count ?? 0),
+    createdAt,
+    revokedAt: inviteCode.revokedAt ?? inviteCode.revoked_at ?? undefined,
+  }
+}
+
 function generateInviteCodePart(length = 4) {
   const values = new Uint32Array(length)
   try {
@@ -52,14 +88,17 @@ function generateReadableInviteCode() {
 export interface CreateInviteCodeInput {
   expiresAt: string
   maxUses: number
+  cohort?: string
+  direction?: string
 }
 
 /** Lists current local demo codes. The API version will read this from the server. */
 export async function listInviteCodes() {
   if (isRemoteInviteEnabled) {
-    const payload = await apiRequest<InviteCode[] | { items: InviteCode[] }>('/admin/invites', { withAuth: true })
-    const codes = Array.isArray(payload) ? payload : payload.items
-    return codes.map(withStatus).sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+    const payload = await apiRequest<BackendInviteCode[] | { items: BackendInviteCode[] }>('/admin/invites', { withAuth: true })
+    const codes = Array.isArray(payload) ? payload : payload && Array.isArray(payload.items) ? payload.items : null
+    if (!codes) throw new Error('邀请码接口返回格式不正确')
+    return codes.map((code) => withStatus(normalizeInviteCode(code))).sort((left, right) => right.createdAt.localeCompare(left.createdAt))
   }
   return readStoredInviteCodes().map(withStatus).sort((left, right) => right.createdAt.localeCompare(left.createdAt))
 }
@@ -69,23 +108,30 @@ export async function createInviteCode(input: CreateInviteCodeInput) {
   const expiresAtTime = Date.parse(input.expiresAt)
   if (!Number.isFinite(expiresAtTime) || expiresAtTime <= Date.now()) throw new Error('有效期必须晚于当前时间')
   if (!Number.isInteger(input.maxUses) || input.maxUses < 1 || input.maxUses > 999) throw new Error('最大使用次数应为 1 到 999')
+  if (isRemoteInviteEnabled && !input.cohort?.trim()) throw new Error('请选择邀请码对应的届次')
+  if (isRemoteInviteEnabled && !input.direction?.trim()) throw new Error('请选择邀请码对应的方向')
 
   if (isRemoteInviteEnabled) {
-    return apiRequest<InviteCode>('/admin/invites', {
+    const created = await apiRequest<BackendInviteCode>('/admin/invites', {
       method: 'POST',
       body: {
         expiresAt: new Date(expiresAtTime).toISOString(),
         maxUses: input.maxUses,
         role: 'Contributor',
+        cohort: input.cohort?.trim() || undefined,
+        direction: input.direction?.trim() || undefined,
       },
       withAuth: true,
     })
+    return withStatus(normalizeInviteCode(created))
   }
 
   const storedInviteCode: StoredInviteCode = {
     id: `invite-${Date.now()}-${generateInviteCodePart(3)}`,
     code: generateReadableInviteCode(),
     role: 'Contributor',
+    cohort: input.cohort?.trim() || undefined,
+    direction: input.direction?.trim() || undefined,
     expiresAt: new Date(expiresAtTime).toISOString(),
     maxUses: input.maxUses,
     usedCount: 0,
@@ -99,10 +145,11 @@ export async function createInviteCode(input: CreateInviteCodeInput) {
 
 export async function revokeInviteCode(id: string) {
   if (isRemoteInviteEnabled) {
-    return apiRequest<InviteCode>(`/admin/invites/${encodeURIComponent(id)}/revoke`, {
+    const revoked = await apiRequest<BackendInviteCode>(`/admin/invites/${encodeURIComponent(id)}/revoke`, {
       method: 'POST',
       withAuth: true,
     })
+    return withStatus(normalizeInviteCode(revoked))
   }
   const codes = readStoredInviteCodes()
   const target = codes.find((inviteCode) => inviteCode.id === id)
@@ -110,6 +157,21 @@ export async function revokeInviteCode(id: string) {
   if (!target.revokedAt) target.revokedAt = new Date().toISOString()
   writeStoredInviteCodes(codes)
   return withStatus(target)
+}
+
+export async function deleteInviteCode(id: string) {
+  if (isRemoteInviteEnabled) {
+    await apiRequest<void>(`/admin/invites/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      withAuth: true,
+    })
+    return
+  }
+
+  const codes = readStoredInviteCodes()
+  const nextCodes = codes.filter((inviteCode) => inviteCode.id !== id)
+  if (nextCodes.length === codes.length) throw new Error('邀请码不存在或已被删除')
+  writeStoredInviteCodes(nextCodes)
 }
 
 /**

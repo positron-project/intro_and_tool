@@ -121,6 +121,44 @@
 | 比赛中心 | `GET /competitions` | `GET /competitions/:id`（可选） | `POST /competitions` | `PATCH /competitions/:id` | `DELETE /competitions/:id` |
 | 公告 / Prompt / 成员 | `GET /announcements` 等 | `GET /{resource}/:id` | `POST /{resource}` | `PATCH /{resource}/:id` | `DELETE /{resource}/:id` |
 
+项目投稿人使用登录后的 `GET /projects/my-submissions` 查看自己所有审核状态的项目。被退回的项目通过 `POST /projects/{projectId}/resubmit` 提交修改；只有原投稿人可以操作，提交后状态恢复为待审核并通知审核人。
+
+比赛中心的赛道作为比赛对象中的 `tracks` 数组，随创建或修改比赛一起提交，不需要单独的赛道接口。往届成果使用 `GET/POST /competitions/{competitionId}/cohort-projects` 和 `PATCH/DELETE /competitions/{competitionId}/cohort-projects/{projectId}`；个人提醒使用登录后的 `GET/POST /competitions/{competitionId}/reminder`。
+
+赛道字段为 `id`、`name`、`description`、`audience`、`format`、`teamSize`、`requirements`、`registrationStart`、`registrationEnd`、`registrationUrl`、`rulesUrl` 和 `awards`。修改比赛时不传 `tracks` 表示保持原值，传空数组表示清空赛道。
+
+### 内容分类
+
+项目库、资源库和面经墙分别维护自己的筛选分类。浏览器端把“全部”作为固定的本地筛选项，不请求后端。分类接口使用 `resource=projects|resources|interviews` 区分内容库，返回结果按 `order` 升序排列。
+
+```text
+GET    /api/categories?resource=projects|resources|interviews
+POST   /api/categories
+PATCH  /api/categories/{categoryId}
+DELETE /api/categories/{categoryId}
+```
+
+分类对象：
+
+```json
+{
+  "id": "cat-data",
+  "resource": "projects",
+  "key": "data-engineering",
+  "label": "数据工程",
+  "description": "数据管道、存储与分析系统",
+  "accent": "mint",
+  "icon": "terminal",
+  "order": 6,
+  "enabled": true,
+  "builtIn": false
+}
+```
+
+新增请求体不传 `id`；编辑可只传变更字段。`key` 是对应内容记录的关联值，修改时 Java Core 应在事务内同步迁移使用该分类的项目、资源或面经。内置分类只能停用不能删除；仍被内容使用的自定义分类应返回业务冲突，要求先迁移内容。
+
+分类写接口按项目统一响应约定返回 HTTP `200` 且 `code=200`；失败也返回 HTTP `200`，通过 `code` 和 `msg` 表达业务结果。
+
 新增请求体去掉 `id` 和审计字段；编辑只传变更字段。Java Core 补充 `createdAt`、`updatedAt`、`createdBy`、`updatedBy`、`archivedAt`。删除采用软删除，默认列表不返回已归档记录。
 
 ## 文件上传
@@ -173,7 +211,7 @@ Python 不保存 access token，也不决定内容编辑权限。模型密钥只
 
 ## 规划服务地址
 
-这些是三端计划使用的内部监听地址；当前仓库只保存接口设计，不包含可启动的后端服务代码。
+这些是三端计划使用的内部监听地址；当前仓库内的 FastAPI 只实现认证、账号状态、邀请码和健康检查子集，其余路由仍按本契约待实现。真实缺口以 [`implementation-gap-analysis.md`](./implementation-gap-analysis.md) 为准。
 
 | 服务 | 计划地址 | 归属 |
 | --- | --- | --- |

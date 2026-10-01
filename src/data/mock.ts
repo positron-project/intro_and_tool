@@ -8,6 +8,8 @@ import type {
   Member,
   Project,
   PromptTemplate,
+  ContentCategory,
+  ProjectCategory,
   Resource,
 } from '../types'
 
@@ -37,6 +39,14 @@ export const projects: Project[] = [
   },
 ]
 
+export const projectCategories: ProjectCategory[] = [
+  { id: 'cat-ai', key: 'AI', label: 'AI', description: '智能应用、Agent 与知识工程', accent: 'blue', icon: 'spark', order: 1, enabled: true, builtIn: true },
+  { id: 'cat-web', key: 'Web', label: 'Web', description: '前端体验与全栈产品', accent: 'violet', icon: 'code', order: 2, enabled: true, builtIn: true },
+  { id: 'cat-backend', key: 'Backend', label: 'Backend', description: '服务端、数据与系统工程', accent: 'mint', icon: 'terminal', order: 3, enabled: true, builtIn: true },
+  { id: 'cat-algorithm', key: 'Algorithm', label: 'Algorithm', description: '算法训练、模型与实验', accent: 'orange', icon: 'route', order: 4, enabled: true, builtIn: true },
+  { id: 'cat-tools', key: 'Tools', label: 'Tools', description: '效率工具与校园服务', accent: 'rose', icon: 'rocket', order: 5, enabled: true, builtIn: true },
+]
+
 export const learningNodes: LearningNode[] = [
   { id: 'python', title: 'Python 工程基础', duration: '2 周', resources: 12, projects: 4, description: '语法、模块、虚拟环境与工程习惯' },
   { id: 'git', title: 'Git / GitHub', duration: '1 周', resources: 8, projects: 8, description: '分支协作、Issue、Code Review' },
@@ -50,12 +60,23 @@ export const learningNodes: LearningNode[] = [
 ]
 
 export const resources: Resource[] = [
-  { id: 'r1', title: 'FastAPI 学习路线', description: '从路由到依赖注入，完成第一个可部署服务。', category: '后端', type: '学习路线', tags: ['Python', 'FastAPI'], author: '2025 届 · 林同学', updated: '05-15', views: 1240, accent: 'blue', visibility: 'members' },
-  { id: 'r2', title: 'Docker 从入门到实践', description: '给项目加上可复制的本地开发与部署环境。', category: 'DevOps', type: '文档', tags: ['Docker', '部署'], author: '2024 届 · 陈同学', updated: '05-14', views: 982, accent: 'mint' },
-  { id: 'r3', title: 'LangChain 中文文档整理', description: '小组成员共同维护的 Agent 学习索引。', category: 'Agent', type: 'GitHub', tags: ['LangChain', 'RAG'], author: 'AI 方向组', updated: '05-13', views: 876, accent: 'violet', visibility: 'contributors' },
-  { id: 'r4', title: '前端工程化检查清单', description: '从组件、状态到发布，项目启动前先看这一页。', category: '前端', type: '文章', tags: ['React', '工程化'], author: '2026 届 · 周同学', updated: '05-11', views: 614, accent: 'orange' },
-  { id: 'r5', title: 'SQL 面试题 100 讲', description: '从查询基础到索引与事务的系统复习卡片。', category: '数据库', type: '课程', tags: ['MySQL', '面试'], author: '后端方向组', updated: '05-09', views: 530, accent: 'rose' },
-  { id: 'r6', title: 'Agent Prompt 设计手册', description: '把一个模糊问题拆成可执行、可评估的指令。', category: 'Prompt', type: '文档', tags: ['Prompt', 'Agent'], author: '2025 届 · 何同学', updated: '05-08', views: 488, accent: 'violet' },
+  { id: 'r1', title: 'FastAPI 学习路线', description: '从路由到依赖注入，完成第一个可部署服务。', category: 'backend', type: '学习路线', tags: ['Python', 'FastAPI'], author: '2025 届 · 林同学', updated: '05-15', views: 1240, accent: 'blue', visibility: 'members' },
+  { id: 'r2', title: 'Docker 从入门到实践', description: '给项目加上可复制的本地开发与部署环境。', category: 'devops', type: '文档', tags: ['Docker', '部署'], author: '2024 届 · 陈同学', updated: '05-14', views: 982, accent: 'mint' },
+  { id: 'r3', title: 'LangChain 中文文档整理', description: '小组成员共同维护的 Agent 学习索引。', category: 'agent', type: 'GitHub', tags: ['LangChain', 'RAG'], author: 'AI 方向组', updated: '05-13', views: 876, accent: 'violet', visibility: 'contributors' },
+  { id: 'r4', title: '前端工程化检查清单', description: '从组件、状态到发布，项目启动前先看这一页。', category: 'frontend', type: '文章', tags: ['React', '工程化'], author: '2026 届 · 周同学', updated: '05-11', views: 614, accent: 'orange' },
+  { id: 'r5', title: 'SQL 面试题 100 讲', description: '从查询基础到索引与事务的系统复习卡片。', category: 'database', type: '课程', tags: ['MySQL', '面试'], author: '后端方向组', updated: '05-09', views: 530, accent: 'rose' },
+  { id: 'r6', title: 'Agent Prompt 设计手册', description: '把一个模糊问题拆成可执行、可评估的指令。', category: 'prompt', type: '文档', tags: ['Prompt', 'Agent'], author: '2025 届 · 何同学', updated: '05-08', views: 488, accent: 'violet' },
+]
+
+export const resourceCategories: ContentCategory[] = [
+  { id: 'resource-cat-frontend', key: 'frontend', label: '前端', description: '界面、交互与工程化实践', accent: 'orange', icon: 'code', order: 1, enabled: true, builtIn: true },
+  { id: 'resource-cat-backend', key: 'backend', label: '后端', description: '服务端、数据库与接口设计', accent: 'blue', icon: 'terminal', order: 2, enabled: true, builtIn: true },
+  { id: 'resource-cat-algorithm', key: 'algorithm', label: '算法', description: '算法训练与模型实践', accent: 'violet', icon: 'route', order: 3, enabled: true, builtIn: true },
+  { id: 'resource-cat-ai', key: 'ai', label: 'AI', description: '人工智能与知识工程', accent: 'blue', icon: 'spark', order: 4, enabled: true, builtIn: true },
+  { id: 'resource-cat-agent', key: 'agent', label: 'Agent', description: '智能体编排与应用', accent: 'mint', icon: 'rocket', order: 5, enabled: true, builtIn: true },
+  { id: 'resource-cat-database', key: 'database', label: '数据库', description: 'SQL、存储与数据建模', accent: 'rose', icon: 'folder', order: 6, enabled: true, builtIn: true },
+  { id: 'resource-cat-devops', key: 'devops', label: 'DevOps', description: '部署、容器与运维工具', accent: 'mint', icon: 'terminal', order: 7, enabled: true, builtIn: true },
+  { id: 'resource-cat-prompt', key: 'prompt', label: 'Prompt', description: '提示词与模型协作方法', accent: 'violet', icon: 'spark', order: 8, enabled: true, builtIn: true },
 ]
 
 export const members: Member[] = [
@@ -68,9 +89,17 @@ export const members: Member[] = [
 ]
 
 export const interviews: InterviewExperience[] = [
-  { id: 'i1', company: '字节跳动', role: '后端开发实习', author: '陈默', cohort: '2024 届', date: '2025.11', difficulty: '困难', rounds: 3, tags: ['Java', 'Redis', '系统设计'], summary: '从项目架构讲到缓存一致性，重点准备可观测性和取舍。', visibility: 'members' },
-  { id: 'i2', company: '腾讯', role: '前端开发实习', author: '周一帆', cohort: '2026 届', date: '2026.03', difficulty: '中等', rounds: 2, tags: ['React', '性能优化', '工程化'], summary: '面试官围绕真实项目追问性能指标与组件抽象。' },
-  { id: 'i3', company: '阿里云', role: 'AI 工程师', author: '何宇辰', cohort: '2025 届', date: '2025.10', difficulty: '困难', rounds: 4, tags: ['RAG', '评测', 'Python'], summary: '把一个 Agent 做好，关键是评测集、失败兜底与数据闭环。', visibility: 'contributors' },
+  { id: 'i1', company: '字节跳动', role: '后端开发实习', author: '陈默', cohort: '2024 届', date: '2025.11', difficulty: '困难', rounds: 3, tags: ['Java', 'Redis', '系统设计'], summary: '从项目架构讲到缓存一致性，重点准备可观测性和取舍。', category: 'backend', visibility: 'members' },
+  { id: 'i2', company: '腾讯', role: '前端开发实习', author: '周一帆', cohort: '2026 届', date: '2026.03', difficulty: '中等', rounds: 2, tags: ['React', '性能优化', '工程化'], summary: '面试官围绕真实项目追问性能指标与组件抽象。', category: 'frontend' },
+  { id: 'i3', company: '阿里云', role: 'AI 工程师', author: '何宇辰', cohort: '2025 届', date: '2025.10', difficulty: '困难', rounds: 4, tags: ['RAG', '评测', 'Python'], summary: '把一个 Agent 做好，关键是评测集、失败兜底与数据闭环。', category: 'ai', visibility: 'contributors' },
+]
+
+export const interviewCategories: ContentCategory[] = [
+  { id: 'interview-cat-intern', key: 'intern', label: '实习', description: '暑期、日常与转正实习面试', accent: 'blue', icon: 'users', order: 1, enabled: true, builtIn: true },
+  { id: 'interview-cat-campus', key: 'campus', label: '校招', description: '秋招、春招与校园招聘', accent: 'orange', icon: 'route', order: 2, enabled: true, builtIn: true },
+  { id: 'interview-cat-frontend', key: 'frontend', label: '前端', description: '前端开发与工程化岗位', accent: 'violet', icon: 'code', order: 3, enabled: true, builtIn: true },
+  { id: 'interview-cat-backend', key: 'backend', label: '后端', description: '服务端与系统研发岗位', accent: 'mint', icon: 'terminal', order: 4, enabled: true, builtIn: true },
+  { id: 'interview-cat-ai', key: 'ai', label: 'AI', description: '算法、模型与 AI 工程岗位', accent: 'rose', icon: 'spark', order: 5, enabled: true, builtIn: true },
 ]
 
 export const prompts: PromptTemplate[] = [
@@ -107,7 +136,7 @@ export const quickActions = [
 ]
 
 export const competitionEvents: CompetitionEvent[] = [
-  { id: 'e1', title: '2026 蓝桥杯', type: '省级竞赛', date: '06.18', deadline: '报名截止 06.10', description: '用算法和工程能力，把一个下午变成一次真正的实战。', status: '报名中', accent: 'blue' },
-  { id: 'e2', title: '校内 ACM 程序设计竞赛', type: '校内赛', date: '06.01', deadline: '报名截止 05.28', description: '三人一队，和熟悉的队友一起练习思考与协作。', status: '报名中', accent: 'orange' },
-  { id: 'e3', title: 'Agent 创意挑战赛', type: '项目赛', date: '07.12', deadline: '开放组队 06.20', description: '把一个校园问题交给 Agent，做出可以被使用的答案。', status: '即将开始', accent: 'violet', visibility: 'members' },
+  { id: 'e1', title: '2026 蓝桥杯', seriesName: '蓝桥杯', type: '省级竞赛', date: '06.18', deadline: '报名截止 06.10', description: '用算法和工程能力，把一个下午变成一次真正的实战。', status: '报名中', accent: 'blue' },
+  { id: 'e2', title: '校内 ACM 程序设计竞赛', seriesName: '校内 ACM', type: '校内赛', date: '06.01', deadline: '报名截止 05.28', description: '三人一队，和熟悉的队友一起练习思考与协作。', status: '报名中', accent: 'orange' },
+  { id: 'e3', title: 'Agent 创意挑战赛', seriesName: 'Agent 创意挑战赛', type: '项目赛', date: '07.12', deadline: '开放组队 06.20', description: '把一个校园问题交给 Agent，做出可以被使用的答案。', status: '即将开始', accent: 'violet', visibility: 'members' },
 ]

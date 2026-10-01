@@ -4,11 +4,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.db_conf import get_database #获取数据库会话；
 from models.users import User #导入用户表模型；
+from crud.invites import redeem_invite_code     #调用 crud/invites.py 中已经写好的邀请码兑换逻辑。
 from schemas.users import RegisterRequest, UserInfoResponse, ProfileUpdateRequest
+from schemas.invites import InviteCodeRedeemRequest #接收前端传来的邀请码
 from utils.security import hash_password #导入密码加密函数。
 from crud.users import (
     authenticate_user,
     create_login_token,
+    close_user_account,
     get_user_by_email,
     revoke_login_token,
     change_password as change_user_password,
@@ -31,7 +34,7 @@ router = APIRouter(
 @router.post( #注册用户接口
     "/register",
     response_model=UserInfoResponse, #注册成功后返回 UserInfoResponse；
-    status_code=status.HTTP_201_CREATED, #成功状态码是 201，表示资源创建成功。
+    status_code=status.HTTP_200_OK, #统一业务约定：HTTP 200 且业务 code=200 表示成功。
 )
 async def register(
     register_data: RegisterRequest, #只用于接收注册数据
@@ -122,6 +125,72 @@ async def get_current_user_info(
     current_user: User = Depends(get_current_user),
 ):
     return current_user
+
+
+@router.delete(
+    "/me",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def close_current_user_account(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_database),
+):
+    """
+    注销当前登录账号。
+
+    账号不会从数据库物理删除，而是改为 closed 状态；
+    注销成功后，原登录令牌也会立即失效。
+    """
+
+    await close_user_account(
+        db=db,
+        user=current_user,
+    )
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+
+@router.post(
+    "/me/redeem-invite",
+    response_model=UserInfoResponse,
+)
+async def redeem_current_user_invite(
+    invite_data: InviteCodeRedeemRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_database),
+):
+    """
+    当前登录用户兑换邀请码。
+
+    兑换成功后，普通成员会升级为邀请码指定的角色，默认是 Contributor（组员）。
+    """
+
+    try:
+        # 调用 CRUD 层完成：
+        # 1. 查询邀请码
+        # 2. 检查邀请码是否存在、过期、撤销或用完
+        # 3. 检查当前账号是否为普通成员
+        # 4. 增加邀请码使用次数
+        # 5. 修改当前用户角色
+        # 6. 提交数据库
+        await redeem_invite_code(       #调用 CRUD 层完成真正的兑换操作
+            db=db,      #数据库会话
+            code=invite_data.invite_code,   #接收前端的邀请码
+            user=current_user,      #通过登录令牌找到当前用户
+        )
+
+    except ValueError as error:
+        # CRUD 层发现业务问题时会抛出 ValueError。
+        # 把它转换成前端能识别的 HTTP 400 错误。
+        raise HTTPException(        #把错误转换成 HTTP 响应
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        ) from error
+
+    # CRUD 函数已经修改并刷新了 current_user，
+    # 所以这里返回更新后的用户资料。
+    return current_user     #返回升级后的用户信息
 
 
 

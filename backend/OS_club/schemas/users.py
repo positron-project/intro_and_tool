@@ -60,7 +60,8 @@ class UserInfoResponse(UserInfoBase):  #UserInfoResponse：只用于返回用户
     id: int
     username: str
     email: str
-    # 用户角色，例如 Member、Contributor、Leader、Admin
+    # 用户角色：Member（普通成员）、Contributor（组员）、
+    # CohortLeader（届次负责人）、Leader（组长）、Admin（旧版组长别名）
     role: str
 
     # 账号状态，例如 active、disabled、closed
@@ -68,4 +69,5 @@ class UserInfoResponse(UserInfoBase):  #UserInfoResponse：只用于返回用户
 
     # 所属届次，例如 2029；未分配时为空
     cohort: str | None = None
+    direction: str | None = None
     created_at: datetime

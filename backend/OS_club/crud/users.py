@@ -9,9 +9,11 @@ from datetime import datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from models.members import Member
 from models.users import User, UserToken
 from utils.security import hash_password, verify_password
 from schemas.users import ProfileUpdateRequest
+from utils.uploads import delete_upload_if_unused
 
 
 async def get_user_by_email(    #据邮箱查询用户的数据库
@@ -170,12 +172,48 @@ async def update_user_profile(
     update_values = profile_data.model_dump( #把请求模型转换成字典，并且只保留前端真正提交的字段。
         exclude_unset=True,
     )
+    old_avatar = user.avatar_url if "avatar_url" in update_values else None
 
     for field_name, field_value in update_values.items():
         setattr(user, field_name, field_value)
 
+    # 成员目录也保存头像地址；账号换头像时同步更新对应的成员档案。
+    if "avatar_url" in update_values:
+        result = await db.execute(
+            select(Member).where(Member.user_id == user.id)
+        )
+        member = result.scalar_one_or_none()
+        if member is not None:
+            member.avatar_url = user.avatar_url
+
     if update_values:
         await db.commit()
         await db.refresh(user)
+        await delete_upload_if_unused(db, old_avatar)
 
     return user
+
+
+async def close_user_account(
+    db: AsyncSession,
+    user: User,
+) -> None:
+    """
+    注销当前账号。
+
+    注销采用软删除：保留账号记录，改为 closed 状态，方便管理员
+    保留历史数据；同时删除当前账号的登录令牌，立即结束登录会话。
+    """
+
+    user.status = "closed"
+
+    result = await db.execute(
+        select(UserToken).where(
+            UserToken.user_id == user.id
+        )
+    )
+
+    for user_token in result.scalars().all():
+        await db.delete(user_token)
+
+    await db.commit()

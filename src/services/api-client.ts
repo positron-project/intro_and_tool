@@ -113,6 +113,14 @@ function getErrorMessage(payload: unknown, fallback: string) {
     }
     if (typeof candidate.error === 'string') return candidate.error
     if (typeof candidate.detail === 'string') return candidate.detail
+    if (Array.isArray(candidate.detail)) {
+      const messages = candidate.detail.map((item) => {
+        if (typeof item === 'string') return item
+        if (item && typeof item === 'object' && typeof (item as { msg?: unknown }).msg === 'string') return (item as { msg: string }).msg
+        return null
+      }).filter((item): item is string => Boolean(item))
+      if (messages.length) return messages.join('；')
+    }
   }
   return fallback
 }
@@ -164,9 +172,10 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       const nestedError = errorPayload?.error && typeof errorPayload.error === 'object'
         ? errorPayload.error as { code?: unknown; details?: unknown }
         : undefined
+      const businessStatus = businessResult && businessResult.code !== 200 ? businessResult.code : undefined
       throw new ApiError(
         getErrorMessage(payload, businessResult ? `请求未通过业务校验（${businessResult.code}）` : allowedStatuses ? `请求未返回预期状态（${response.status}）` : `请求失败（${response.status}）`),
-        response.status,
+        businessStatus ?? response.status,
         typeof errorPayload?.code === 'string' || typeof errorPayload?.code === 'number'
           ? errorPayload.code
           : typeof nestedError?.code === 'string' || typeof nestedError?.code === 'number' ? nestedError.code : undefined,

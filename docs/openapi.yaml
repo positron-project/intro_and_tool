@@ -393,6 +393,55 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '422':
           $ref: '#/components/responses/ValidationError'
+  /api/projects/my-submissions:
+    get:
+      tags: [Content]
+      summary: 查询当前用户提交的全部项目
+      operationId: listMyProjectSubmissions
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: 当前用户提交的全部项目及其审核状态
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Project' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/projects/{project_id}/resubmit:
+    parameters:
+      - name: project_id
+        in: path
+        required: true
+        description: 项目编号
+        schema: { type: integer }
+    post:
+      tags: [Content]
+      summary: 修改并重新提交被退回的项目
+      operationId: resubmitProject
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContentPatch' }
+      responses:
+        '200':
+          description: 项目已更新并重新进入待审核状态
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        '400':
+          description: 项目当前状态不允许重新提交
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /api/projects/{idOrSlug}:
     parameters:
       - name: idOrSlug
@@ -447,6 +496,82 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+  /api/categories:
+    get:
+      tags: [Content]
+      summary: 内容分类列表
+      operationId: listContentCategories
+      parameters:
+        - name: resource
+          in: query
+          required: true
+          description: 分类所属内容模块
+          schema: { type: string, enum: [projects, resources, interviews] }
+      responses:
+        '200':
+          description: 分类列表
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ProjectCategory' }
+    post:
+      tags: [Content]
+      summary: 新增内容分类
+      operationId: createContentCategory
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectCategoryInput' }
+      responses:
+        '200':
+          description: 创建成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProjectCategory' }
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/categories/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string }
+    patch:
+      tags: [Content]
+      summary: 编辑内容分类
+      operationId: updateContentCategory
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProjectCategoryPatch' }
+      responses:
+        '200':
+          description: 更新后的分类
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProjectCategory' }
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Content]
+      summary: 删除内容分类
+      operationId: deleteContentCategory
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 删除成功 }
+        '409':
+          $ref: '#/components/responses/Conflict'
   /api/resources:
     get:
       tags: [Content]
@@ -641,26 +766,19 @@ paths:
           $ref: '#/components/responses/NotFound'
   /api/competitions:
     get:
-      tags: [Content]
+      tags: [Competitions]
       summary: 比赛中心列表
       operationId: listCompetitions
-      parameters:
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Category'
-        - $ref: '#/components/parameters/Status'
-        - $ref: '#/components/parameters/Cohort'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Sort'
-        - $ref: '#/components/parameters/Direction'
       responses:
         '200':
-          description: 分页列表
+          description: 根据当前用户角色和赛事可见范围返回列表
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ContentPage' }
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Competition' }
     post:
-      tags: [Content]
+      tags: [Competitions]
       summary: 创建比赛中心记录
       operationId: createCompetition
       security: [{ bearerAuth: [] }]
@@ -668,7 +786,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ContentInput' }
+            schema: { $ref: '#/components/schemas/CompetitionInput' }
       responses:
         '201':
           description: 创建成功
@@ -689,7 +807,7 @@ paths:
         description: 比赛中心记录 id
         schema: { type: string }
     get:
-      tags: [Content]
+      tags: [Competitions]
       summary: 比赛中心详情
       operationId: getCompetition
       responses:
@@ -701,7 +819,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     patch:
-      tags: [Content]
+      tags: [Competitions]
       summary: 编辑比赛中心
       operationId: updateCompetition
       security: [{ bearerAuth: [] }]
@@ -709,7 +827,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ContentPatch' }
+            schema: { $ref: '#/components/schemas/CompetitionPatch' }
       responses:
         '200':
           description: 更新后的记录
@@ -723,12 +841,12 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     delete:
-      tags: [Content]
-      summary: 归档比赛中心
+      tags: [Competitions]
+      summary: 删除比赛中心记录
       operationId: deleteCompetition
       security: [{ bearerAuth: [] }]
       responses:
-        '204': { description: 归档成功 }
+        '204': { description: 删除成功 }
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -818,31 +936,26 @@ paths:
   /api/prompts:
     get:
       tags: [Content]
-      summary: Prompt 模板列表
+      summary: 已公开 Prompt 模板列表
       operationId: listPrompts
-      parameters:
-        - $ref: '#/components/parameters/Search'
-        - $ref: '#/components/parameters/Category'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/Sort'
-        - $ref: '#/components/parameters/Direction'
       responses:
         '200':
-          description: 分页列表
+          description: 只返回已通过审核的模板
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ContentPage' }
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Prompt' }
     post:
       tags: [Content]
-      summary: 创建 Prompt 模板
+      summary: 组长直接创建已公开模板
       operationId: createPrompt
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ContentInput' }
+            schema: { $ref: '#/components/schemas/PromptInput' }
       responses:
         '201':
           description: 创建成功
@@ -852,12 +965,71 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '422': { $ref: '#/components/responses/ValidationError' }
-  /api/prompts/{id}:
-    parameters:
-      - $ref: '#/components/parameters/Id'
+  /api/prompts/mine:
     get:
       tags: [Content]
-      summary: 获取 Prompt 模板详情
+      summary: 当前用户的 Prompt 投稿
+      operationId: listMyPrompts
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: 当前用户的投稿及审核信息
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PromptReview' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/prompts/review:
+    get:
+      tags: [Content]
+      summary: 管理员查看 Prompt 投稿审核队列
+      operationId: listPromptsForReview
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { type: string, enum: [all, pending, approved, rejected, changes_requested], default: all }
+      responses:
+        '200':
+          description: 投稿和审核信息
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PromptReview' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/prompts/submissions:
+    post:
+      tags: [Content]
+      summary: 提交 Prompt 投稿
+      operationId: submitPrompt
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PromptInput' }
+      responses:
+        '201':
+          description: 已提交审核
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PromptReview' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /api/prompts/{prompt_id}:
+    parameters:
+      - name: prompt_id
+        in: path
+        required: true
+        schema: { type: integer, minimum: 1 }
+    get:
+      tags: [Content]
+      summary: 获取已公开 Prompt 模板详情
       operationId: getPrompt
       responses:
         '200':
@@ -875,7 +1047,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ContentPatch' }
+            schema: { $ref: '#/components/schemas/PromptPatch' }
       responses:
         '200':
           description: 更新后的 Prompt
@@ -892,6 +1064,253 @@ paths:
       security: [{ bearerAuth: [] }]
       responses:
         '204': { description: 归档成功 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/prompts/{prompt_id}/review:
+    parameters:
+      - name: prompt_id
+        in: path
+        required: true
+        schema: { type: integer, minimum: 1 }
+    patch:
+      tags: [Content]
+      summary: 审核 Prompt 投稿
+      operationId: reviewPrompt
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [approved, rejected, changes_requested] }
+                reviewNote: { type: string, maxLength: 1000, nullable: true }
+      responses:
+        '200':
+          description: 审核完成
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PromptReview' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/site-copy:
+    get:
+      tags: [Club configuration]
+      summary: 获取首页与小组风采文案
+      operationId: listSiteCopy
+      responses:
+        '200':
+          description: 站点文案列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/SiteCopy' }
+  /api/site-copy/{item_id}:
+    parameters:
+      - name: item_id
+        in: path
+        required: true
+        schema: { type: string, maxLength: 40 }
+    patch:
+      tags: [Club configuration]
+      summary: 修改站点文案
+      operationId: updateSiteCopy
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string, minLength: 1, maxLength: 300 }
+                body: { type: string }
+                author: { type: string, maxLength: 150, nullable: true }
+      responses:
+        '200':
+          description: 更新后的文案
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SiteCopy' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/cohorts:
+    get:
+      tags: [Club configuration]
+      summary: 获取届次列表
+      operationId: listCohorts
+      responses:
+        '200':
+          description: 届次及其小组信息
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Cohort' }
+    post:
+      tags: [Club configuration]
+      summary: 创建届次
+      operationId: createCohort
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CohortInput' }
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cohort' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/cohorts/{cohort_id}:
+    parameters:
+      - name: cohort_id
+        in: path
+        required: true
+        schema: { type: integer, minimum: 1 }
+    get:
+      tags: [Club configuration]
+      summary: 获取届次详情
+      operationId: getCohort
+      responses:
+        '200':
+          description: 届次及其小组信息
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cohort' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Club configuration]
+      summary: 修改届次文案与状态
+      operationId: updateCohort
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CohortPatch' }
+      responses:
+        '200':
+          description: 更新后的届次
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cohort' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Club configuration]
+      summary: 删除届次
+      operationId: deleteCohort
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 删除成功，同时删除该届小组和合影记录 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/cohorts/{cohort_id}/photos:
+    parameters:
+      - name: cohort_id
+        in: path
+        required: true
+        schema: { type: integer, minimum: 1 }
+    get:
+      tags: [Club configuration]
+      summary: 获取某届合影
+      operationId: listCohortPhotos
+      responses:
+        '200':
+          description: 该届合影列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/CohortPhoto' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Club configuration]
+      summary: 添加届次合影
+      operationId: createCohortPhoto
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CohortPhotoInput' }
+      responses:
+        '201':
+          description: 照片元数据已保存；图片地址来自图片上传接口
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CohortPhoto' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/photos/{photo_id}:
+    parameters:
+      - name: photo_id
+        in: path
+        required: true
+        schema: { type: integer, minimum: 1 }
+    patch:
+      tags: [Club configuration]
+      summary: 修改合影说明信息
+      operationId: updateCohortPhoto
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CohortPhotoPatch' }
+      responses:
+        '200':
+          description: 更新后的合影
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CohortPhoto' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Club configuration]
+      summary: 删除届次合影
+      description: 删除照片数据库记录；如果图片位于 uploads/cohort-photos，也会删除对应本地文件。
+      operationId: deleteCohortPhoto
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: 删除成功 }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/photos/{photo_id}/cover:
+    parameters:
+      - name: photo_id
+        in: path
+        required: true
+        schema: { type: integer, minimum: 1 }
+    patch:
+      tags: [Club configuration]
+      summary: 设置当前届次封面合影
+      operationId: setCohortPhotoCover
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: 已设为封面，同届其他照片自动取消封面
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CohortPhoto' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -1143,6 +1562,16 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
+    BadRequest:
+      description: 请求不符合当前业务规则
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: 与已有数据发生冲突
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
     ValidationError:
       description: 参数校验失败
       content:
@@ -1249,6 +1678,43 @@ components:
             accent: { type: string }
             icon: { type: string }
             featured: { type: boolean }
+    ProjectCategory:
+      type: object
+      required: [id, resource, key, label, accent, icon, order, enabled, builtIn]
+      properties:
+        id: { type: string }
+        resource: { type: string, enum: [projects, resources, interviews] }
+        key: { type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$' }
+        label: { type: string, minLength: 1, maxLength: 32 }
+        description: { type: string, maxLength: 120 }
+        accent: { type: string, enum: [blue, violet, mint, orange, rose] }
+        icon: { type: string }
+        order: { type: integer, minimum: 1 }
+        enabled: { type: boolean }
+        builtIn: { type: boolean }
+    ProjectCategoryInput:
+      type: object
+      required: [resource, key, label, accent, icon, order, enabled]
+      properties:
+        resource: { type: string, enum: [projects, resources, interviews] }
+        key: { type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$' }
+        label: { type: string, minLength: 1, maxLength: 32 }
+        description: { type: string, maxLength: 120 }
+        accent: { type: string, enum: [blue, violet, mint, orange, rose] }
+        icon: { type: string }
+        order: { type: integer, minimum: 1 }
+        enabled: { type: boolean }
+    ProjectCategoryPatch:
+      type: object
+      description: 部分更新；内置分类的 key 不可修改。
+      properties:
+        key: { type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$' }
+        label: { type: string, minLength: 1, maxLength: 32 }
+        description: { type: string, maxLength: 120 }
+        accent: { type: string, enum: [blue, violet, mint, orange, rose] }
+        icon: { type: string }
+        order: { type: integer, minimum: 1 }
+        enabled: { type: boolean }
     Resource:
       allOf:
         - $ref: '#/components/schemas/ContentRecord'
@@ -1274,6 +1740,7 @@ components:
             role: { type: string }
             author: { type: string }
             cohort: { type: string }
+            category: { type: string, description: 关联面经分类 key }
             date: { type: string }
             difficulty: { type: string, enum: [简单, 中等, 困难] }
             rounds: { type: integer }
@@ -1283,15 +1750,95 @@ components:
       allOf:
         - $ref: '#/components/schemas/ContentRecord'
         - type: object
-          required: [title, type, date, deadline, description, status, accent]
+          required: [id, title, type, date, deadline, description, status, accent, lifecycle, tracks, projects]
           properties:
             title: { type: string }
+            seriesName: { type: string, nullable: true }
             type: { type: string }
+            organizer: { type: string, nullable: true }
+            officialUrl: { type: string, nullable: true }
+            registrationStart: { type: string, nullable: true }
+            registrationEnd: { type: string, nullable: true }
+            eventStart: { type: string, nullable: true }
+            eventEnd: { type: string, nullable: true }
+            resultDate: { type: string, nullable: true }
+            lifecycle: { type: string, enum: [draft, published, archived] }
             date: { type: string }
             deadline: { type: string }
             description: { type: string }
-            status: { type: string }
+            status:
+              type: string
+              enum: [草稿, 即将报名, 报名中, 报名已截止, 即将开始, 比赛进行中, 等待结果, 已结束]
             accent: { type: string }
+            visibility: { type: string, enum: [public, members, contributors] }
+            tracks:
+              type: array
+              items: { $ref: '#/components/schemas/CompetitionTrack' }
+            projects:
+              type: array
+              items: { $ref: '#/components/schemas/CompetitionProject' }
+            createdBy: { type: string, nullable: true }
+            updatedBy: { type: string, nullable: true }
+            publishedAt: { type: string, format: date-time, nullable: true }
+            archivedAt: { type: string, format: date-time, nullable: true }
+    CompetitionTrack:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        audience: { type: string, nullable: true }
+        format: { type: string, nullable: true }
+        teamSize: { type: string, nullable: true }
+        requirements: { type: string, nullable: true }
+        registrationStart: { type: string, nullable: true }
+        registrationEnd: { type: string, nullable: true }
+        registrationUrl: { type: string, nullable: true }
+        rulesUrl: { type: string, nullable: true }
+        awards: { type: string, nullable: true }
+    CompetitionProject:
+      type: object
+      required: [id, title, cohort, description, sortOrder]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        cohort: { type: string }
+        cohortId: { type: string, nullable: true }
+        description: { type: string }
+        imageUrl: { type: string, nullable: true }
+        imageAssetId: { type: string, nullable: true }
+        projectUrl: { type: string, nullable: true }
+        sortOrder: { type: integer }
+    CompetitionInput:
+      allOf:
+        - $ref: '#/components/schemas/CompetitionPatch'
+        - type: object
+          required: [title, description]
+    CompetitionPatch:
+      type: object
+      description: 只提交需要修改的字段；tracks 传空数组表示清空赛道。
+      properties:
+        title: { type: string, maxLength: 150 }
+        seriesName: { type: string, nullable: true }
+        type: { type: string, default: 其他 }
+        organizer: { type: string, nullable: true }
+        officialUrl: { type: string, nullable: true }
+        registrationStart: { type: string, nullable: true }
+        registrationEnd: { type: string, nullable: true }
+        eventStart: { type: string, nullable: true }
+        eventEnd: { type: string, nullable: true }
+        resultDate: { type: string, nullable: true }
+        lifecycle: { type: string, enum: [draft, published, archived], default: draft }
+        date: { type: string }
+        deadline: { type: string }
+        description: { type: string, maxLength: 10000 }
+        status: { type: string, default: 草稿 }
+        accent: { type: string, default: blue }
+        visibility: { type: string, enum: [public, members, contributors], default: members }
+        tracks:
+          type: array
+          items: { $ref: '#/components/schemas/CompetitionTrack' }
     Announcement:
       allOf:
         - $ref: '#/components/schemas/ContentRecord'
@@ -1303,16 +1850,115 @@ components:
             detail: { type: string }
             date: { type: string }
     Prompt:
+      type: object
+      required: [id, title, usage, model, category, preview, status, favoriteCount, isFavorited]
+      properties:
+        id: { type: string }
+        title: { type: string, maxLength: 150 }
+        usage: { type: string, maxLength: 500 }
+        model: { type: string, maxLength: 100 }
+        category: { type: string, maxLength: 50 }
+        preview: { type: string, maxLength: 4000 }
+        status: { type: string, enum: [pending, approved, rejected, changes_requested, archived] }
+        favoriteCount: { type: integer, minimum: 0 }
+        isFavorited: { type: boolean }
+        createdAt: { type: string, format: date-time, nullable: true }
+        updatedAt: { type: string, format: date-time, nullable: true }
+    PromptReview:
       allOf:
-        - $ref: '#/components/schemas/ContentRecord'
+        - $ref: '#/components/schemas/Prompt'
         - type: object
-          required: [title, usage, model, category, preview]
           properties:
-            title: { type: string }
-            usage: { type: string }
-            model: { type: string }
-            category: { type: string }
-            preview: { type: string }
+            submitterId: { type: string, nullable: true }
+            submitterName: { type: string, nullable: true }
+            submitterCohort: { type: string, nullable: true }
+            submitterDirection: { type: string, nullable: true }
+            submittedAt: { type: string, format: date-time, nullable: true }
+            reviewedAt: { type: string, format: date-time, nullable: true }
+            reviewNote: { type: string, nullable: true }
+    PromptInput:
+      type: object
+      required: [title, category, preview]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 150 }
+        usage: { type: string, maxLength: 500, default: '' }
+        model: { type: string, maxLength: 100, default: 通用模型 }
+        category: { type: string, minLength: 1, maxLength: 50 }
+        preview: { type: string, minLength: 1, maxLength: 4000 }
+    PromptPatch:
+      type: object
+      properties:
+        title: { type: string, minLength: 1, maxLength: 150 }
+        usage: { type: string, maxLength: 500 }
+        model: { type: string, maxLength: 100 }
+        category: { type: string, minLength: 1, maxLength: 50 }
+        preview: { type: string, minLength: 1, maxLength: 4000 }
+    SiteCopy:
+      type: object
+      required: [id, label, title, body, updatedAt]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        title: { type: string }
+        body: { type: string }
+        author: { type: string, nullable: true }
+        updatedAt: { type: string, format: date-time }
+    Cohort:
+      type: object
+      required: [id, year, generationLabel, status, description, teams, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        year: { type: string }
+        generationLabel: { type: string }
+        status: { type: string, enum: [active, archived, draft] }
+        description: { type: string }
+        teams:
+          type: array
+          items: { type: object, additionalProperties: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    CohortInput:
+      type: object
+      required: [year]
+      properties:
+        year: { type: string, minLength: 1, maxLength: 20 }
+        generationLabel: { type: string, maxLength: 100, default: '' }
+        status: { type: string, enum: [active, archived, draft], default: draft }
+        description: { type: string, default: '' }
+    CohortPatch:
+      type: object
+      properties:
+        year: { type: string, minLength: 1, maxLength: 20 }
+        generationLabel: { type: string, maxLength: 100 }
+        status: { type: string, enum: [active, archived, draft] }
+        description: { type: string }
+    CohortPhoto:
+      type: object
+      required: [id, cohortId, dataUrl, name, caption, isCover, createdAt]
+      properties:
+        id: { type: string }
+        cohortId: { type: string }
+        dataUrl: { type: string, description: 图片上传接口返回的 URL }
+        name: { type: string }
+        caption: { type: string }
+        isCover: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    CohortPhotoInput:
+      type: object
+      required: [cohortId, dataUrl, name, caption]
+      properties:
+        cohortId: { type: string }
+        dataUrl: { type: string, description: 图片上传接口返回的 URL }
+        name: { type: string, minLength: 1, maxLength: 255 }
+        caption: { type: string, minLength: 1, maxLength: 255 }
+        isCover: { type: boolean, default: false }
+    CohortPhotoPatch:
+      type: object
+      properties:
+        dataUrl: { type: string, nullable: true }
+        name: { type: string, minLength: 1, maxLength: 255, nullable: true }
+        caption: { type: string, minLength: 1, maxLength: 255, nullable: true }
+        isCover: { type: boolean, nullable: true }
     Member:
       allOf:
         - $ref: '#/components/schemas/ContentRecord'
