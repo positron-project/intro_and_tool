@@ -5987,7 +5987,7 @@ main.tools-main+.site-footer {
   min-height:100vh;
   isolation:isolate;
   background-color:#dce8f3;
-  background-image:linear-gradient(180deg,#eff7ff66,#edf6fe85 47%,#f6f9fcc2),url(../assets/campus-tools-bg.png);
+  background-image:linear-gradient(180deg,#eff7ff66,#edf6fe85 47%,#f6f9fcc2),url(../assets/campus-tools-bg.webp);
   background-position:center,center 25%;
   background-size:cover,cover;
   background-repeat:no-repeat;
@@ -6044,7 +6044,7 @@ html[data-theme=dark] .app-shell:not(.landing-shell) {
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, .2);
   --shadow-sm: 0 12px 30px rgba(0, 0, 0, .28);
   background-color:#101c2d;
-  background-image:linear-gradient(180deg,#07122070,#0914228f 48%,#080d16b8),url(../assets/campus-tools-bg.png)
+  background-image:linear-gradient(180deg,#07122070,#0914228f 48%,#080d16b8),url(../assets/campus-tools-bg.webp)
 }
 html[data-theme=dark] .app-shell:not(.landing-shell) .topbar {
   background:#080f1b8f;
@@ -9237,13 +9237,13 @@ html[data-theme='dark'] .app-shell.site-background-shell.site-bg-mist::before { 
 html[data-theme='dark'] .app-shell.site-background-shell.site-bg-paper::before { background: linear-gradient(135deg, rgba(50, 48, 43, .94), rgba(28, 29, 29, .97)); }
 html[data-theme='dark'] .admin-background-option.mist .admin-background-preview { background: linear-gradient(135deg, #263c52, #1a2937 54%, #456276); }
 .app-shell.site-background-shell.site-bg-campus::before {
-  background-image: radial-gradient(circle at 8% 14%, rgba(129, 184, 247, .22), transparent 31%), radial-gradient(circle at 89% 76%, rgba(151, 214, 235, .18), transparent 29%), linear-gradient(180deg, rgba(228, 241, 255, .46), rgba(247, 250, 253, .62)), url('/assets/campus-tools-bg.png');
+  background-image: radial-gradient(circle at 8% 14%, rgba(129, 184, 247, .22), transparent 31%), radial-gradient(circle at 89% 76%, rgba(151, 214, 235, .18), transparent 29%), linear-gradient(180deg, rgba(228, 241, 255, .46), rgba(247, 250, 253, .62)), url('/assets/campus-tools-bg.webp');
   background-position: center, center, center, center 25%;
   background-size: auto, auto, auto, cover;
   background-repeat: no-repeat;
 }
 html[data-theme='dark'] .app-shell.site-background-shell.site-bg-campus::before {
-  background-image: radial-gradient(circle at 8% 14%, rgba(72, 135, 205, .24), transparent 31%), radial-gradient(circle at 89% 76%, rgba(63, 147, 165, .17), transparent 29%), linear-gradient(180deg, rgba(16, 36, 59, .72), rgba(9, 15, 25, .84)), url('/assets/campus-tools-bg.png');
+  background-image: radial-gradient(circle at 8% 14%, rgba(72, 135, 205, .24), transparent 31%), radial-gradient(circle at 89% 76%, rgba(63, 147, 165, .17), transparent 29%), linear-gradient(180deg, rgba(16, 36, 59, .72), rgba(9, 15, 25, .84)), url('/assets/campus-tools-bg.webp');
   background-position: center, center, center, center 25%;
   background-size: auto, auto, auto, cover;
   background-repeat: no-repeat;

@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowRight, ArrowDown, X, Calendar, User, Tag, Clock } from 'lucide-react'
-import { blogPosts } from '../../data/mock'
+import { useContent } from '../../services/content.context'
 import type { BlogPost } from '../../types'
 import './blog-section.css'
 
@@ -11,29 +11,80 @@ interface BlogSectionProps {
 }
 
 export function BlogSection({ onNavigate, onNextSection }: BlogSectionProps) {
+  const { data: { blogPosts } } = useContent()
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null)
+  const drawerRef = useRef<HTMLElement | null>(null)
+
+  const handleOpenPost = (post: BlogPost, el?: HTMLElement) => {
+    triggerRef.current = el || (document.activeElement as HTMLElement)
+    setSelectedPost(post)
+  }
+
+  const handleCloseDrawer = () => {
+    setSelectedPost(null)
+    // 关闭后将焦点回到原先触发的文章卡片
+    setTimeout(() => {
+      triggerRef.current?.focus()
+    }, 50)
+  }
 
   // 监听 Esc 键快速关闭阅读抽屉
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setSelectedPost(null)
+      if (e.key === 'Escape' && selectedPost) {
+        handleCloseDrawer()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [selectedPost])
 
-  // 抽屉打开时锁定 body 滚动并暂停 Lenis，防止背景页面穿透联动
+  // 抽屉打开时：锁定 body 滚动、设置初始焦点，并维护焦点陷阱 (Focus Trap)
   useEffect(() => {
     if (selectedPost) {
       const originalOverflow = document.body.style.overflow
       document.body.style.overflow = 'hidden'
       const lenis = (window as unknown as { __lenis?: { stop: () => void; start: () => void } }).__lenis
       lenis?.stop?.()
+
+      // 初始焦点移至关闭按钮
+      const timer = setTimeout(() => {
+        closeBtnRef.current?.focus()
+      }, 60)
+
+      // 抽屉内键盘 Tab 焦点陷阱
+      const handleTrapTab = (e: KeyboardEvent) => {
+        if (e.key !== 'Tab' || !drawerRef.current) return
+        const focusableElements = drawerRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+        if (focusableElements.length === 0) return
+
+        const firstElement = focusableElements[0]
+        const lastElement = focusableElements[focusableElements.length - 1]
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            e.preventDefault()
+            lastElement.focus()
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            e.preventDefault()
+            firstElement.focus()
+          }
+        }
+      }
+
+      window.addEventListener('keydown', handleTrapTab)
+
       return () => {
+        clearTimeout(timer)
         document.body.style.overflow = originalOverflow
         lenis?.start?.()
+        window.removeEventListener('keydown', handleTrapTab)
       }
     }
   }, [selectedPost])
@@ -46,12 +97,12 @@ export function BlogSection({ onNavigate, onNextSection }: BlogSectionProps) {
 
   const easeCurve = [0.16, 1, 0.3, 1] as const
 
+  // 入场动画去 blur，仅保留透明度与位移，保障中低端移动端流畅度
   const fadeUp = {
-    hidden: { opacity: 0, y: 24, filter: 'blur(8px)' },
+    hidden: { opacity: 0, y: 24 },
     visible: (delay: number = 0.1) => ({
       opacity: 1,
       y: 0,
-      filter: 'blur(0px)',
       transition: {
         duration: 0.75,
         delay,
@@ -105,8 +156,8 @@ export function BlogSection({ onNavigate, onNextSection }: BlogSectionProps) {
           <div className="blog-heading-row">
             <motion.h2
               className="blog-main-title"
-              initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
-              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.7, delay: 0.08, ease: easeCurve }}
             >
@@ -137,14 +188,20 @@ export function BlogSection({ onNavigate, onNextSection }: BlogSectionProps) {
           {featuredPost && (
             <motion.article
               className="blog-featured-article"
+              role="button"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               variants={fadeUp}
               custom={0.1}
-              onClick={() => setSelectedPost(featuredPost)}
+              onClick={(e) => handleOpenPost(featuredPost, e.currentTarget)}
               tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && setSelectedPost(featuredPost)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  handleOpenPost(featuredPost, e.currentTarget)
+                }
+              }}
               aria-label={`阅读主文章：${featuredPost.title}`}
             >
               {/* 刊物主标栏 */}
@@ -188,14 +245,20 @@ export function BlogSection({ onNavigate, onNextSection }: BlogSectionProps) {
             {secondPost && (
               <motion.article
                 className="blog-secondary-article"
+                role="button"
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.2 }}
                 variants={fadeUp}
                 custom={0.18}
-                onClick={() => setSelectedPost(secondPost)}
+                onClick={(e) => handleOpenPost(secondPost, e.currentTarget)}
                 tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && setSelectedPost(secondPost)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleOpenPost(secondPost, e.currentTarget)
+                  }
+                }}
                 aria-label={`阅读文章：${secondPost.title}`}
               >
                 <div className="secondary-header-rule">
@@ -222,14 +285,20 @@ export function BlogSection({ onNavigate, onNextSection }: BlogSectionProps) {
             {thirdPost && (
               <motion.article
                 className="blog-secondary-article"
+                role="button"
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.2 }}
                 variants={fadeUp}
                 custom={0.24}
-                onClick={() => setSelectedPost(thirdPost)}
+                onClick={(e) => handleOpenPost(thirdPost, e.currentTarget)}
                 tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && setSelectedPost(thirdPost)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleOpenPost(thirdPost, e.currentTarget)
+                  }
+                }}
                 aria-label={`阅读文章：${thirdPost.title}`}
               >
                 <div className="secondary-header-rule">
@@ -261,14 +330,20 @@ export function BlogSection({ onNavigate, onNextSection }: BlogSectionProps) {
         {fourthPost && (
           <motion.article
             className="blog-row-article"
+            role="button"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
             variants={fadeUp}
             custom={0.28}
-            onClick={() => setSelectedPost(fourthPost)}
+            onClick={(e) => handleOpenPost(fourthPost, e.currentTarget)}
             tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && setSelectedPost(fourthPost)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handleOpenPost(fourthPost, e.currentTarget)
+              }
+            }}
             aria-label={`阅读周报：${fourthPost.title}`}
           >
             <div className="row-rule-top" />
@@ -335,11 +410,12 @@ export function BlogSection({ onNavigate, onNextSection }: BlogSectionProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setSelectedPost(null)}
+              onClick={handleCloseDrawer}
               aria-hidden="true"
             />
 
             <motion.aside
+              ref={drawerRef}
               className="blog-drawer-panel"
               role="dialog"
               aria-modal="true"
@@ -357,9 +433,10 @@ export function BlogSection({ onNavigate, onNextSection }: BlogSectionProps) {
                   <span className="drawer-cat">CATEGORY / {selectedPost.category}</span>
                 </div>
                 <button
+                  ref={closeBtnRef}
                   type="button"
                   className="drawer-close-btn"
-                  onClick={() => setSelectedPost(null)}
+                  onClick={handleCloseDrawer}
                   aria-label="关闭文章阅读"
                 >
                   <X size={18} />
@@ -369,9 +446,9 @@ export function BlogSection({ onNavigate, onNextSection }: BlogSectionProps) {
               {/* 抽屉文章主体 */}
               <div className="drawer-content-scroll" data-lenis-prevent>
                 <header className="drawer-article-header">
-                  <h1 id="drawer-title" className="drawer-title">
+                  <h2 id="drawer-title" className="drawer-title">
                     {selectedPost.title}
-                  </h1>
+                  </h2>
 
                   <div className="drawer-meta-panel">
                     <div className="drawer-meta-cell">

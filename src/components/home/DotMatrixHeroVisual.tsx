@@ -242,9 +242,8 @@ export function DotMatrixHeroVisual() {
       currentW = Math.max(rect.width, 320)
       currentH = Math.max(rect.height, 320)
 
-      // 半径约 1px 的小圆在 1× 屏（含 Windows 125% 缩放）上只有 1× 的落笔精度，
-      // 颗粒自身也发毛。把下限提到 2 让浏览器缩采样，代价只是填充面积 ×4。
-      const dpr = Math.min(Math.max(window.devicePixelRatio || 1, 2), 3)
+      // 优化：移动端与普通屏不强制下限 2，上限设为 2，避免 1× 屏 4 倍像素面积填充耗电
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
       canvas.width = currentW * dpr
       canvas.height = currentH * dpr
       canvas.style.width = `${currentW}px`
@@ -302,12 +301,49 @@ export function DotMatrixHeroVisual() {
         ny < currentH + EDGE_MARGIN
     }
 
+    // 动力学状态与减耗控制
+    const reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    let isIntersecting = true
+    let isDocVisible = typeof document !== 'undefined' ? !document.hidden : true
+    let isRunning = false
+    let isSleeping = false
+    let idleFrames = 0
+    let lastTime = performance.now()
+
+    const wakeUp = () => {
+      if (reducedMotion) return
+      idleFrames = 0
+      if (isSleeping) {
+        isSleeping = false
+        if (isIntersecting && isDocVisible && !isRunning) {
+          startLoop()
+        }
+      }
+    }
+
+    const startLoop = () => {
+      if (isRunning || reducedMotion || !isIntersecting || !isDocVisible || isSleeping) return
+      isRunning = true
+      lastTime = performance.now()
+      animFrameId.current = requestAnimationFrame(render)
+    }
+
+    const stopLoop = () => {
+      isRunning = false
+      if (animFrameId.current) {
+        cancelAnimationFrame(animFrameId.current)
+        animFrameId.current = 0
+      }
+    }
+
     const handleMouseMove = (e: MouseEvent) => {
-      // 布局可能因为页面滚动/其他版块展开而变动，按需重测（不每帧测，避免强制 layout）
+      if (!isIntersecting || !isDocVisible) return
+      // 布局可能因为页面滚动/其他版块展开而变动，按需重测
       if (e.clientX < heroRect.left - 1 || e.clientX > heroRect.left + heroRect.width + 1) {
         measureRects()
       }
       handlePointerSample(e.clientX, e.clientY)
+      wakeUp()
     }
 
     const deactivatePointer = () => {
@@ -322,9 +358,10 @@ export function DotMatrixHeroVisual() {
       if (!touch) return
       measureRects()
       handlePointerSample(touch.clientX, touch.clientY)
+      wakeUp()
     }
 
-    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mousemove', handleMouseMove, { passive: true })
     window.addEventListener('scroll', measureRects, { passive: true })
     document.documentElement.addEventListener('mouseleave', deactivatePointer)
     window.addEventListener('blur', deactivatePointer)
@@ -334,13 +371,39 @@ export function DotMatrixHeroVisual() {
     container.addEventListener('touchend', deactivatePointer, { passive: true })
     container.addEventListener('touchcancel', deactivatePointer, { passive: true })
 
-    // 动画动力学循环
-    let lastTime = performance.now()
+    // 页面可见性变化监听
+    const handleVisibilityChange = () => {
+      isDocVisible = !document.hidden
+      if (isDocVisible) {
+        wakeUp()
+        startLoop()
+      } else {
+        stopLoop()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    // 视口相交监听：滚出首屏时立即暂停动画循环，完全消除后台 GPU/CPU 占用
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        isIntersecting = entry ? entry.isIntersecting : true
+        if (isIntersecting) {
+          wakeUp()
+          startLoop()
+        } else {
+          stopLoop()
+        }
+      },
+      { threshold: 0.05 }
+    )
+    intersectionObserver.observe(container)
 
     const render = (now: number) => {
+      if (!isRunning) return
+
       const dt = Math.min(Math.max(now - lastTime, 1), MAX_FRAME_MS)
       lastTime = now
-      // 把物理常数（按 60fps 标定）换算到真实帧间隔，120Hz/掉帧时手感一致
       const dtScale = dt / FRAME_MS
 
       ctx.clearRect(0, 0, currentW, currentH)
@@ -378,7 +441,7 @@ export function DotMatrixHeroVisual() {
       ctx.stroke()
       ctx.restore()
 
-      // 2. 绘制明日方舟 World 风格环境浮游微粒
+      // 2. 绘制微粒与浮游
       for (let i = 0; i < motes.length; i++) {
         const m = motes[i]
         m.x += m.vx
@@ -411,13 +474,9 @@ export function DotMatrixHeroVisual() {
       }
 
       // 3. 点阵受力与积分
-      // 斥力球**只认指针当前位置**这一个点：半径恒为 radius，不随移动速度或滑动过程变化。
-      // （早先用「上一帧位置→当前位置」的线段来算，等价于把球拉长成胶囊 ——
-      //  滑动中有效作用范围会被撑大、停手后又缩回，这正是要避免的现象。）
       const repX = mouse.x
       const repY = mouse.y
 
-      // 逐帧算一次的粗筛包围盒，绝大多数远离指针的点可跳过 sqrt
       const boundMinX = repX - radius
       const boundMaxX = repX + radius
       const boundMinY = repY - radius
@@ -427,11 +486,11 @@ export function DotMatrixHeroVisual() {
       const returnStep = RETURN_SPEED * dtScale
       const forceScale = REPULSION_FORCE * dtScale
       const active = mouse.active
+      let maxVelocity = 0
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i]
 
-        // 视差基准点（目标的最终归位位置）
         const restX = p.originX + mouse.tiltX * (1 + p.normX * 0.4)
         const restY = p.originY + mouse.tiltY * (1 + p.normY * 0.4)
 
@@ -455,7 +514,7 @@ export function DotMatrixHeroVisual() {
           }
         }
 
-        // 极弱复位弹力：推得越远回得越快，但全过程都不急停
+        // 极弱复位弹力
         p.vx += (restX - p.x) * returnStep
         p.vy += (restY - p.y) * returnStep
 
@@ -466,7 +525,10 @@ export function DotMatrixHeroVisual() {
         p.x += p.vx * dtScale
         p.y += p.vy * dtScale
 
-        // 完全静止后吸附回原位，消除长期亚像素抖动
+        const vMag = Math.abs(p.vx) + Math.abs(p.vy)
+        if (vMag > maxVelocity) maxVelocity = vMag
+
+        // 完全静止后吸附回原位
         if (
           !active &&
           Math.abs(mouse.tiltX) < 0.02 &&
@@ -488,14 +550,35 @@ export function DotMatrixHeroVisual() {
         ctx.fill()
       }
 
+      // 如果开启减少动画，渲染一帧后即可退出
+      if (reducedMotion) {
+        isRunning = false
+        return
+      }
+
+      // 粒子完全静止时计帧，达到阈值后进入睡眠以节约能源
+      if (!active && maxVelocity < 0.02 && Math.abs(mouse.tiltX) < 0.01 && Math.abs(mouse.tiltY) < 0.01) {
+        idleFrames++
+        if (idleFrames > 120) { // 静止约 2 秒后休眠
+          isSleeping = true
+          stopLoop()
+          return
+        }
+      } else {
+        idleFrames = 0
+      }
+
       animFrameId.current = requestAnimationFrame(render)
     }
 
-    animFrameId.current = requestAnimationFrame(render)
+    // 初始启动
+    startLoop()
 
     return () => {
-      cancelAnimationFrame(animFrameId.current)
+      stopLoop()
       resizeObserver.disconnect()
+      intersectionObserver.disconnect()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('scroll', measureRects)
       window.removeEventListener('resize', measureRects)

@@ -1,8 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   announcements as mockAnnouncements,
+  blogPosts as mockBlogPosts,
   citations as mockCitations,
   competitionEvents as mockCompetitionEvents,
+  contactInfo as mockContactInfo,
   growthStats as mockGrowthStats,
   interviews as mockInterviews,
   learningNodes as mockLearningNodes,
@@ -46,6 +48,7 @@ import {
 } from './content.service'
 import type {
   Announcement,
+  BlogPost,
   CompetitionEvent,
   CreateInput,
   InterviewExperience,
@@ -62,8 +65,10 @@ import type {
 
 export interface ContentSnapshot {
   announcements: Announcement[]
+  blogPosts: BlogPost[]
   citations: Citation[]
   competitionEvents: CompetitionEvent[]
+  contactInfo: typeof mockContactInfo
   growthStats: typeof mockGrowthStats
   interviews: InterviewExperience[]
   learningNodes: LearningNode[]
@@ -117,8 +122,10 @@ function copy<T>(value: T): T {
 function fallbackContent(): ContentSnapshot {
   return {
     announcements: copy(mockAnnouncements),
+    blogPosts: copy(mockBlogPosts),
     citations: copy(mockCitations),
     competitionEvents: copy(mockCompetitionEvents),
+    contactInfo: copy(mockContactInfo),
     growthStats: copy(mockGrowthStats),
     interviews: copy(mockInterviews),
     learningNodes: copy(mockLearningNodes),
@@ -137,8 +144,10 @@ function emptyRemoteContent(): ContentSnapshot {
   const emptyRoute: LearningRoute = { id: 'remote-empty', title: '', direction: '', description: '', nodes: [], featuredProjectIds: [] }
   return {
     announcements: [],
+    blogPosts: copy(mockBlogPosts),
     citations: [],
     competitionEvents: [],
+    contactInfo: copy(mockContactInfo),
     growthStats: copy(mockGrowthStats),
     interviews: [],
     learningNodes: [],

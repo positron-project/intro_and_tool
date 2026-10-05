@@ -55,34 +55,45 @@ export function AboutSection({
   isPastTrigger = true,
   onGroupSelected,
 }: AboutSectionProps) {
-  /* 悬念字是否已退场（首次越过触发线后置真，此后不再出现） */
-  const [teaserGone, setTeaserGone] = useState(false)
-  /* 选择器是否在场 */
+  /* 悬念字是否已退场：默认已退场，直接展示分组正文，不阻断阅读与深链 */
+  const [teaserGone, setTeaserGone] = useState(true)
+  /* 选择器是否在场：默认不打开全屏选择器，保留 SWITCH 入口可唤出 */
   const [isForkOpen, setIsForkOpen] = useState(false)
-  /* 已选定的组；为空表示还没做过选择 */
-  const [selectedGroup, setSelectedGroup] = useState<AboutGroupId | null>(null)
+  /* 已选定的组；默认选中项目组 */
+  const [selectedGroup, setSelectedGroup] = useState<AboutGroupId>('project')
   /* 选择器的入场方式：first=首次（带 stagger），reopen=从内容区切回（更短、不 stagger） */
-  const [forkEntryMode, setForkEntryMode] = useState<'first' | 'reopen'>('first')
+  const [forkEntryMode, setForkEntryMode] = useState<'first' | 'reopen'>('reopen')
   /* 当前被悬浮/聚焦预览的组：鼠标与键盘共用同一状态，用于让另一侧变暗 */
   const [previewGroup, setPreviewGroup] = useState<AboutGroupId | null>(null)
-  /* 选择器退场结束后要不要把焦点交给内容层里的重选按钮（见下方 useEffect）。
-     必须走 state 而不是直接在回调里 focus()：
-     首次选择时 selectedGroup 还是 null，内容层此刻仍是 inert，
-     在 inert 子树里 focus() 会被浏览器直接拒掉。 */
+  /* 选择器退场结束后要不要把焦点交给内容层里的重选按钮（见下方 useEffect）。 */
   const [handoffFocus, setHandoffFocus] = useState(false)
 
-  /* 是否已经启动过整条流程 —— 用 ref 而非 state：
-     它只需在生命周期内持久记录，不参与渲染，避免额外的重渲染 */
-  const hasEnteredRef = useRef(false)
+  /* 是否已经启动过整条流程 */
+  const hasEnteredRef = useRef(true)
   /* 上一次的 isPastTrigger，用于检测上升沿 */
   const prevPastTriggerRef = useRef(false)
-  /* 点击某一侧的瞬间先记下目标组：
-     等选择器退场动画真正结束（onExitComplete）再据此启动内容入场，
-     避免读 state 时的闭包过期，也避免了用 setTimeout 去猜退场时长 */
+  /* 点击某一侧的瞬间先记下目标组 */
   const pendingSelectRef = useRef<AboutGroupId | null>(null)
-  /* 两半区与「重选」按钮的 DOM 引用，仅用于焦点管理（见下方两处 useEffect） */
+  /* 两半区与「重选」按钮的 DOM 引用，仅用于焦点管理 */
   const halfRefs = useRef<Array<HTMLButtonElement | null>>([])
   const switchBtnRef = useRef<HTMLButtonElement | null>(null)
+
+  /* 初始通知外层选定项目组 */
+  useEffect(() => {
+    onGroupSelected?.('project')
+  }, [onGroupSelected])
+
+  /* 选择器打开时支持按 Esc 键关闭 */
+  useEffect(() => {
+    if (!isForkOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsForkOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isForkOpen])
 
   /* 无障碍：系统开启「减少动态效果」时，把所有位移/模糊的时长归零（只保留瞬时切换） */
   const prefersReducedMotion = useReducedMotion()
@@ -194,11 +205,10 @@ export function AboutSection({
   const chapterVariant = {
     /* hidden 也带 transition：按「重选」退回时（contentVisible → false）走的是这条，
        不写的话会落到 Framer 默认过渡上，reduced-motion 归零就管不住它 */
-    hidden: { opacity: 0, x: -46, filter: 'blur(8px)', transition: { duration: dur(0.25), ease: EASE_OUT } },
+    hidden: { opacity: 0, x: -46, transition: { duration: dur(0.25), ease: EASE_OUT } },
     visible: {
       opacity: 1,
       x: 0,
-      filter: 'blur(0px)',
       transition: {
         duration: dur(0.65),
         delay: dur(0.08),
@@ -209,14 +219,13 @@ export function AboutSection({
 
   /* ============================================================
      2. 剩下内容变体：主标题、引言、正文——在图二淡入完毕后触发
-        从下往上升起，且带有极为细腻的动态运动模糊 (filter: blur)
+        从下往上升起（不带昂贵的 filter: blur，保障中低端手机流畅度）
      ============================================================ */
   const mainContentVariant = {
-    hidden: { opacity: 0, y: 38, filter: 'blur(14px)', transition: { duration: dur(0.25), ease: EASE_OUT } },
+    hidden: { opacity: 0, y: 38, transition: { duration: dur(0.25), ease: EASE_OUT } },
     visible: (customDelay: number = 0.5) => ({
       opacity: 1,
       y: 0,
-      filter: 'blur(0px)',
       transition: {
         duration: dur(0.8),
         delay: dur(customDelay),
@@ -226,17 +235,16 @@ export function AboutSection({
   }
 
   /* ============================================================
-     3. 图三四大关键词变体：从左到右逐个显示，同样带有动态运动模糊
+     3. 图三四大关键词变体：从左到右逐个显示
      ============================================================ */
   const keywordVariant = {
-    hidden: { opacity: 0, y: 30, filter: 'blur(10px)', transition: { duration: dur(0.25), ease: EASE_OUT } },
+    hidden: { opacity: 0, y: 30, transition: { duration: dur(0.25), ease: EASE_OUT } },
     visible: (index: number) => ({
       opacity: 1,
       y: 0,
-      filter: 'blur(0px)',
       transition: {
         duration: dur(0.7),
-        delay: dur(0.75 + index * 0.14), // 从左至右阶梓式触发
+        delay: dur(0.75 + index * 0.14), // 从左至右阶梯式触发
         ease: EASE_OUT,
       },
     }),
@@ -390,9 +398,9 @@ export function AboutSection({
           <motion.div
             className="about-teaser-centered"
             key="about-teaser-center"
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 16, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -20, filter: 'blur(16px)' }}
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             transition={{ duration: dur(0.38), ease: EASE_OUT }}
           >
             <span className="about-teaser-title">我们是谁？</span>
@@ -421,7 +429,7 @@ export function AboutSection({
             style={{ pointerEvents: isForkOpen ? 'auto' : 'none' }}
             initial={prefersReducedMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, y: -14, filter: 'blur(10px)' }}
+            exit={{ opacity: 0, y: -14 }}
             transition={{
               duration: dur(forkEntryMode === 'reopen' ? FORK_REOPEN_DURATION : FORK_ENTER_DURATION),
               ease: EASE_OUT,
@@ -431,6 +439,14 @@ export function AboutSection({
             <div className="about-fork-title">
               <span className="about-fork-title-zh">我们各有特色</span>
               <span className="about-fork-title-en">EACH WITH OUR OWN STRENGTH · SELECT A DIRECTION</span>
+              <button
+                type="button"
+                className="about-fork-close-btn"
+                onClick={() => setIsForkOpen(false)}
+                aria-label="关闭选择器并返回当前介绍"
+              >
+                ✕ 返回正文 (ESC)
+              </button>
             </div>
 
             <div className="about-fork-halves">
@@ -457,9 +473,9 @@ export function AboutSection({
                     aria-label={`选择${item.name}`}
                     aria-pressed={selectedGroup === groupId}
                     initial={
-                      prefersReducedMotion ? false : { opacity: 0, y: 18, filter: 'blur(8px)' }
+                      prefersReducedMotion ? false : { opacity: 0, y: 18 }
                     }
-                    animate={{ opacity: isDimmed ? 0.42 : 1, y: 0, filter: 'blur(0px)' }}
+                    animate={{ opacity: isDimmed ? 0.42 : 1, y: 0 }}
                     /* opacity 不参与 stagger、时长固定：
                        它是运行期反馈（悬浮变暗 / 移开复原），必须立刻响应；
                        位移与模糊仍走带 stagger 的入场过渡。 */

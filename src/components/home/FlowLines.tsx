@@ -1,6 +1,7 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 
 export function FlowLines() {
+  const prefersReducedMotion = useReducedMotion()
   return (
     <div className="flow-lines-layer" aria-hidden="true">
       <svg
@@ -87,69 +88,84 @@ export function FlowLines() {
 
         {/* ------------------------------------------------------------
             节点微动效组：缓慢沿着轨道行进 (8s ~ 16s 周期)
+            若开启减少动态效果，直接作为静态点呈现
             ------------------------------------------------------------ */}
         {/* Line 1 上的动态实心圆点 */}
-        <motion.circle
-          r="3"
-          fill="#073F73"
-          stroke="#8FC7D9"
-          strokeWidth="1.5"
-          animate={{
-            x: [200, 1400],
-            y: [670, 220],
-          }}
-          transition={{
-            duration: 14,
-            repeat: Infinity,
-            ease: 'linear',
-          }}
-        />
+        {!prefersReducedMotion ? (
+          <motion.circle
+            r="3"
+            fill="#073F73"
+            stroke="#8FC7D9"
+            strokeWidth="1.5"
+            animate={{
+              x: [200, 1400],
+              y: [670, 220],
+            }}
+            transition={{
+              duration: 14,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+          />
+        ) : (
+          <circle cx="800" cy="445" r="3" fill="#073F73" stroke="#8FC7D9" strokeWidth="1.5" />
+        )}
 
         {/* Line 1 上的空心环节点 */}
         <circle cx="850" cy="425" r="4.5" fill="#FAF8F2" stroke="#8FC7D9" strokeWidth="1.4" />
 
         {/* Line 2 上的细小菱形/方块 */}
-        <motion.g
-          animate={{
-            x: [380, 1300],
-            y: [760, 440],
-          }}
-          transition={{
-            duration: 16,
-            repeat: Infinity,
-            ease: 'linear',
-            delay: 3,
-          }}
-        >
-          <rect
-            width="5"
-            height="5"
-            fill="#8FC7D9"
-            transform="rotate(45 2.5 2.5)"
-          />
-        </motion.g>
+        {!prefersReducedMotion ? (
+          <motion.g
+            animate={{
+              x: [380, 1300],
+              y: [760, 440],
+            }}
+            transition={{
+              duration: 16,
+              repeat: Infinity,
+              ease: 'linear',
+              delay: 3,
+            }}
+          >
+            <rect
+              width="5"
+              height="5"
+              fill="#8FC7D9"
+              transform="rotate(45 2.5 2.5)"
+            />
+          </motion.g>
+        ) : (
+          <g transform="translate(840, 600)">
+            <rect width="5" height="5" fill="#8FC7D9" transform="rotate(45 2.5 2.5)" />
+          </g>
+        )}
 
         {/* Line 2 上的静态小圆点 */}
         <circle cx="580" cy="690" r="2.5" fill="#8FC7D9" />
         <circle cx="1120" cy="510" r="2" fill="#8FC7D9" opacity="0.8" />
 
         {/* Line 3 上的空心小圆环 */}
-        <motion.circle
-          r="4"
-          fill="#FAF8F2"
-          stroke="#073F73"
-          strokeWidth="1.2"
-          animate={{
-            x: [300, 1200],
-            y: [460, 170],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: 'linear',
-            delay: 1.5,
-          }}
-        />
+        {!prefersReducedMotion ? (
+          <motion.circle
+            r="4"
+            fill="#FAF8F2"
+            stroke="#073F73"
+            strokeWidth="1.2"
+            animate={{
+              x: [300, 1200],
+              y: [460, 170],
+            }}
+            transition={{
+              duration: 12,
+              repeat: Infinity,
+              ease: 'linear',
+              delay: 1.5,
+            }}
+          />
+        ) : (
+          <circle cx="750" cy="315" r="4" fill="#FAF8F2" stroke="#073F73" strokeWidth="1.2" />
+        )}
 
         {/* Line 4 上的静止小端点 */}
         <circle cx="700" cy="760" r="2.2" fill="#8FC7D9" />

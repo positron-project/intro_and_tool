@@ -1,32 +1,40 @@
 import { useState, useRef, useEffect } from 'react'
+import { Menu, X } from 'lucide-react'
 
-interface SiteHeaderProps {
-  onScrollToSection?: (sectionIndex: number) => void
+export interface StorySectionItem {
+  id: string
+  label: string
 }
 
-/* ============================================================
-   首页顶栏（仅用于 #/home 的滚动叙事页）
-   ------------------------------------------------------------
-   按需求收敛为「只保留左侧标识」：
-     · 中部区段导航（首页/关于我们/带来什么/小组力荐/小组博客/加入我们）
-       整块移除，连带它的滑动下划线测量逻辑；
-     · 移动端汉堡按钮与抽屉导航一并移除；
-     · 保留校园标识 lockup（logo 图形 + 院校名 + 细线 + 小组名），
-       品牌区仍可点击 —— 回到首屏顶部。
-   区段下标含义由 src/App.tsx 的 STORY_SECTIONS 定义，0 即 story-hero。
-   ============================================================ */
-const HERO_SECTION_INDEX = 0
+interface SiteHeaderProps {
+  activeIndex?: number
+  sections?: StorySectionItem[]
+  onScrollToSection?: (sectionIndex: number) => void
+  onNavigate?: (path: string) => void
+}
 
-export function SiteHeader({ onScrollToSection }: SiteHeaderProps) {
+const DEFAULT_SECTIONS: StorySectionItem[] = [
+  { id: 'story-hero', label: '01 / 首页' },
+  { id: 'story-about', label: '02 / 关于我们' },
+  { id: 'story-offer', label: '03 / 带来什么' },
+  { id: 'story-picks', label: '04 / 小组力荐' },
+  { id: 'story-blog', label: '05 / 小组博客' },
+  { id: 'story-join', label: '06 / 加入我们' },
+]
+
+export function SiteHeader({
+  activeIndex = 0,
+  sections = DEFAULT_SECTIONS,
+  onScrollToSection,
+  onNavigate,
+}: SiteHeaderProps) {
   const [scrolled, setScrolled] = useState(false)
-  /* 上一次的"已离开顶部"，用于把滚动热路径上的 setState 收敛到只翻转一次 */
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const scrolledRef = useRef(false)
 
   useEffect(() => {
     const handleScroll = () => {
       const isPastTop = (window.scrollY || 0) > 20
-      /* 滚动事件每帧都来：值没变直接返回。
-         同值 setState 虽然会被 bail out，但每次仍要走一遍调度与比对 */
       if (isPastTop === scrolledRef.current) return
       scrolledRef.current = isPastTop
       setScrolled(isPastTop)
@@ -38,21 +46,29 @@ export function SiteHeader({ onScrollToSection }: SiteHeaderProps) {
 
   return (
     <header className={`site-header ${scrolled ? 'is-scrolled' : ''}`} role="banner">
+      {/* 键盘与读屏支持：跳到主要内容 */}
+      <a
+        href="#story-about"
+        className="skip-to-main-link"
+        onClick={(e) => {
+          e.preventDefault()
+          onScrollToSection?.(1)
+        }}
+      >
+        跳到主要内容
+      </a>
+
       <div className="site-header-inner">
-        {/* 左侧圆形标记 Logo + 院校名 / 小组名上下排布 */}
-        <div
+        {/* 左侧品牌区：改为语义化 <a> 标签 */}
+        <a
+          href="#/home"
           className="site-brand"
-          onClick={() => onScrollToSection?.(HERO_SECTION_INDEX)}
-          /* 导航整块移除后，品牌区就是顶栏唯一的控件：
-             既然给了 role="button" + tabIndex，键盘也要能激活它
-             （Enter/Space 与点击同义；统一走这个函数，避免两处逻辑漂移） */
-          onKeyDown={(event) => {
-            if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') return
-            event.preventDefault()
-            onScrollToSection?.(HERO_SECTION_INDEX)
+          onClick={(e) => {
+            e.preventDefault()
+            onScrollToSection?.(0)
+            setMobileMenuOpen(false)
           }}
-          role="button"
-          tabIndex={0}
+          aria-label="返回首页顶部"
         >
           <img
             className="site-brand-mark"
@@ -68,11 +84,89 @@ export function SiteHeader({ onScrollToSection }: SiteHeaderProps) {
               alt="南昌航空大学科技学院"
               draggable={false}
             />
-            {/* 上下两行之间的分隔细线 */}
             <span className="site-brand-rule" aria-hidden="true" />
-            <span className="site-brand-name">计算机小组</span>
+            <span className="site-brand-name">计算机科技小组</span>
           </span>
+        </a>
+
+        {/* 中间区段导航（桌面端） */}
+        <nav className="site-nav" aria-label="页面区段导航">
+          {sections.map((section, index) => (
+            <button
+              key={section.id}
+              type="button"
+              className={`site-nav-item ${activeIndex === index ? 'is-active' : ''}`}
+              onClick={() => onScrollToSection?.(index)}
+              aria-current={activeIndex === index ? 'true' : undefined}
+            >
+              {section.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* 右侧常驻主按钮与移动端切换 */}
+        <div className="site-header-actions">
+          <a
+            href="#/tools"
+            className="site-tools-btn"
+            onClick={(e) => {
+              if (onNavigate) {
+                e.preventDefault()
+                onNavigate('tools')
+              }
+            }}
+          >
+            <span>进入工具站</span>
+            <span className="site-tools-arrow" aria-hidden="true">→</span>
+          </a>
+
+          <button
+            type="button"
+            className="site-mobile-toggle"
+            aria-label={mobileMenuOpen ? '关闭菜单' : '打开导航菜单'}
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
+
+        {/* 移动端汉堡抽屉 */}
+        {mobileMenuOpen && (
+          <div className="site-mobile-drawer" role="navigation" aria-label="移动端区段导航">
+            <div className="site-mobile-nav">
+              {sections.map((section, index) => (
+                <button
+                  key={section.id}
+                  type="button"
+                  className={`site-mobile-item ${activeIndex === index ? 'is-active' : ''}`}
+                  onClick={() => {
+                    onScrollToSection?.(index)
+                    setMobileMenuOpen(false)
+                  }}
+                >
+                  {section.label}
+                </button>
+              ))}
+              <a
+                href="#/tools"
+                className="site-mobile-tools-btn"
+                onClick={(e) => {
+                  setMobileMenuOpen(false)
+                  if (onNavigate) {
+                    e.preventDefault()
+                    onNavigate('tools')
+                  }
+                }}
+              >
+                进入工具站 →
+              </a>
+            </div>
+            <div className="site-mobile-slogan">
+              让知识持续发生 · 南昌航空大学科技学院计算机科技小组
+            </div>
+          </div>
+        )}
       </div>
     </header>
   )

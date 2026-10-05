@@ -3,10 +3,12 @@ import { motion } from 'framer-motion'
 
 interface CampusVisualProps {
   sketchSrc?: string
+  sketchWebpSrc?: string
 }
 
 export function CampusVisual({
   sketchSrc = './assets/campus/campus-line-art.png',
+  sketchWebpSrc = './assets/campus/campus-line-art.webp',
 }: CampusVisualProps) {
   const [sketchLoaded, setSketchLoaded] = useState(true)
 
@@ -19,12 +21,18 @@ export function CampusVisual({
         transition={{ duration: 1.0, delay: 0.1, ease: 'easeOut' }}
       >
         {sketchLoaded && (
-          <img
-            src={sketchSrc}
-            alt="南昌航空大学科技学院校训石与图书馆线稿图"
-            className="campus-sketch-img"
-            onError={() => setSketchLoaded(false)}
-          />
+          <picture>
+            <source srcSet={sketchWebpSrc} type="image/webp" />
+            <img
+              src={sketchSrc}
+              alt="南昌航空大学科技学院校训石与图书馆线稿图"
+              className="campus-sketch-img"
+              width="1440"
+              height="900"
+              decoding="async"
+              onError={() => setSketchLoaded(false)}
+            />
+          </picture>
         )}
       </motion.div>
     </div>

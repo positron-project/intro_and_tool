@@ -17,13 +17,13 @@
 }
 
 /* ============================================================
-   首屏视口容器 (Desktop First: 100vh, min 720px, overflow hidden)
+   首屏视口容器 (统一使用 100svh，去固定 720px，适配移动端和横屏)
    ============================================================ */
 .home-hero-viewport {
   position: relative;
   width: 100%;
-  height: 100vh;
-  min-height: 720px;
+  height: 100svh;
+  min-height: 100svh;
   overflow: hidden;
   background-color: var(--home-bg-warm);
   background-image: 
@@ -31,13 +31,35 @@
     radial-gradient(ellipse 50% 60% at 10% 90%, rgba(159, 209, 222, 0.18) 0%, transparent 60%);
   color: var(--home-navy);
   font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
-  user-select: none;
   box-sizing: border-box;
 }
 
 /* ============================================================
    Layer 7: 顶部导航 (SiteHeader)
    ============================================================ */
+/* 键盘无障碍跳过导航链接 */
+.skip-to-main-link {
+  position: absolute;
+  top: -9999px;
+  left: 24px;
+  z-index: 10000;
+  padding: 10px 18px;
+  background: var(--blue-ink, #073F73);
+  color: #FAF8F2;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 0 0 6px 6px;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(7, 63, 115, 0.25);
+  transition: top 0.15s ease-out;
+}
+
+.skip-to-main-link:focus {
+  top: 0;
+  outline: 2px solid #8FC7D9;
+  outline-offset: 2px;
+}
+
 .site-header {
   position: fixed;
   top: 0;
@@ -142,27 +164,25 @@
 
 /* 中间主要导航项 */
 .site-nav {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: clamp(32px, 3.2vw, 54px);
+  gap: clamp(14px, 1.6vw, 28px);
   height: 100%;
 }
 
 .site-nav-item {
   background: none;
   border: none;
-  padding: 8px 4px;
-  font-size: clamp(15px, 1.05vw, 16.5px);
+  padding: 6px 4px;
+  font-size: clamp(13px, 0.92vw, 14.5px);
   font-weight: 600;
   color: var(--home-navy);
-  opacity: 0.78;
+  opacity: 0.68;
   cursor: pointer;
-  transition: opacity 0.25s ease, color 0.25s ease;
+  transition: opacity 0.2s ease, color 0.2s ease;
   position: relative;
   font-family: inherit;
+  white-space: nowrap;
 }
 
 .site-nav-item:hover,
@@ -171,30 +191,55 @@
   color: var(--home-navy-deep);
 }
 
-/* 导航项下方深蓝色短横线 (位于文字下方约 12px) */
-.site-nav-underline {
+.site-nav-item.is-active::after {
+  content: '';
   position: absolute;
-  bottom: clamp(18px, 2.2vh, 26px);
-  left: 0;
-  height: 2.5px;
+  bottom: 0;
+  left: 4px;
+  right: 4px;
+  height: 2px;
   background-color: var(--home-navy);
   border-radius: 2px;
-  pointer-events: none;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 右侧标语 */
-.site-slogan {
+/* 右侧常驻操作区 */
+.site-header-actions {
   display: flex;
   align-items: center;
+  gap: 12px;
+  z-index: 10;
 }
 
-.site-slogan-text {
-  font-size: clamp(12px, 0.9vw, 13.5px);
-  font-weight: 500;
-  color: var(--home-navy-muted);
-  letter-spacing: 0.04em;
+.site-tools-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--home-navy, #073F73);
+  color: #FAF8F2;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: all 0.2s ease;
   white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.site-tools-btn:hover {
+  background: var(--home-navy-deep, #042749);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(7, 63, 115, 0.16);
+}
+
+.site-tools-arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.site-tools-btn:hover .site-tools-arrow {
+  transform: translateX(2px);
 }
 
 /* 移动端汉堡切换 */
@@ -204,11 +249,26 @@
   border: none;
   color: var(--home-navy);
   cursor: pointer;
-  padding: 8px;
+  padding: 6px;
+  display: none;
 }
 
 .site-mobile-drawer {
   display: none;
+}
+
+.site-mobile-tools-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--home-navy, #073F73);
+  color: #FAF8F2;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 999px;
+  text-decoration: none;
+  margin-top: 10px;
 }
 
 /* ============================================================
@@ -274,6 +334,131 @@
   margin-top: 14px;
 }
 
+/* 核心价值说明 */
+.hero-value-desc {
+  margin: clamp(14px, 1.8vh, 20px) 0 0 0;
+  max-width: clamp(340px, 36vw, 560px);
+  font-size: clamp(14px, 0.98vw, 16px);
+  line-height: 1.68;
+  color: var(--home-navy);
+  opacity: 0.85;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* 行动按钮群 */
+.hero-cta-group {
+  margin-top: clamp(20px, 2.6vh, 32px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.hero-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--home-navy, #073F73);
+  color: #FAF8F2;
+  font-size: clamp(14px, 0.96vw, 15px);
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 999px;
+  text-decoration: none;
+  box-shadow: 0 4px 18px rgba(7, 63, 115, 0.16);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.02em;
+}
+
+.hero-btn-primary:hover {
+  background: var(--home-navy-deep, #042749);
+  color: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(7, 63, 115, 0.22);
+}
+
+.hero-btn-icon {
+  transition: transform 0.22s ease;
+}
+
+.hero-btn-primary:hover .hero-btn-icon {
+  transform: translate(2px, -2px);
+}
+
+.hero-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(250, 248, 242, 0.7);
+  color: var(--home-navy, #073F73);
+  font-size: clamp(14px, 0.96vw, 15px);
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(7, 63, 115, 0.25);
+  text-decoration: none;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.hero-btn-secondary:hover {
+  background: rgba(7, 63, 115, 0.06);
+  border-color: var(--home-navy, #073F73);
+  transform: translateY(-2px);
+}
+
+.hero-btn-arrow {
+  transition: transform 0.22s ease;
+}
+
+.hero-btn-secondary:hover .hero-btn-arrow {
+  transform: translateX(3px);
+}
+
+/* 事实数据指标 */
+.hero-stats-row {
+  margin-top: clamp(24px, 3.2vh, 40px);
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 1.8vw, 24px);
+  padding: 12px clamp(16px, 1.6vw, 22px);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(7, 63, 115, 0.1);
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.hero-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hero-stat-number {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: clamp(18px, 1.4vw, 22px);
+  font-weight: 700;
+  color: var(--home-navy, #073F73);
+  line-height: 1.1;
+}
+
+.hero-stat-label {
+  font-size: clamp(11px, 0.78vw, 12.5px);
+  color: var(--home-navy-muted, #4A6E8D);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.hero-stat-divider {
+  width: 1px;
+  height: 26px;
+  background: rgba(7, 63, 115, 0.12);
+}
+
 /* ============================================================
    Layer 2 & Layer 5: CampusVisual (建筑线稿与校园实景)
    ============================================================ */
@@ -283,6 +468,8 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* 建筑与校训石手绘蓝调线稿容器 (Layer 2 & 5) */
@@ -604,9 +791,6 @@
    响应式断点 (Tablet & Mobile)
    ============================================================ */
 @media (max-width: 1200px) {
-  .site-slogan {
-    display: none;
-  }
   .hero-main-title {
     font-size: clamp(56px, 7.2vw, 92px);
   }
@@ -694,7 +878,7 @@
 @media (max-width: 600px) {
   .home-hero-viewport {
     height: 100svh;
-    min-height: 600px;
+    min-height: 100svh;
   }
 
   /* 窄屏品牌区整体缩一档，避免与汉堡按钮互相挤压 */
@@ -715,38 +899,40 @@
 
   .hero-content-stage {
     left: 24px;
-    top: 110px;
+    top: 100px;
     max-width: 90vw;
   }
 
   .hero-main-title {
-    font-size: clamp(48px, 12vw, 68px);
-    line-height: 1.05;
+    font-size: clamp(40px, 11vw, 60px);
+    line-height: 1.08;
   }
 
   .hero-sub-title {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .campus-sketch-container,
   .campus-photo-container {
     width: 92vw;
-    height: 44vh;
+    height: 40vh;
     right: -4vw;
     bottom: 20px;
     opacity: 0.84;
   }
 
+  /* 窄屏下点阵位置略微下移，并降低不透明度，防止与两行大标题及行动按钮重叠 */
   .dot-matrix-hero-visual {
-    width: clamp(230px, 70vw, 290px);
-    height: clamp(230px, 70vw, 290px);
-    left: 52%;
-    top: 55%;
+    width: clamp(200px, 60vw, 260px);
+    height: clamp(200px, 60vw, 260px);
+    left: 60%;
+    top: 62%;
     right: auto;
     bottom: auto;
     transform: translate(-50%, -50%);
-    opacity: 0.9;
+    opacity: 0.65;
     padding: 0;
+    pointer-events: none;
   }
 
   .scroll-indicator {
@@ -754,6 +940,21 @@
     bottom: 20px;
     transform: scale(0.9);
     transform-origin: bottom left;
+  }
+}
+
+/* 矮屏机型适配 (如 iPhone SE 或横屏设备，高 <= 680px 且窄屏)，隐藏点阵确保文字和操作区完全不被遮挡 */
+@media (max-height: 680px) and (max-width: 600px) {
+  .dot-matrix-hero-visual {
+    display: none;
+  }
+  .hero-content-stage {
+    top: 85px;
+  }
+  .campus-sketch-container,
+  .campus-photo-container {
+    height: 32vh;
+    opacity: 0.5;
   }
 }
 

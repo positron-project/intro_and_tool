@@ -10,24 +10,48 @@ interface PicksSectionProps {
 
 export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
   const [copiedAddress, setCopiedAddress] = useState(false)
+  const [copyFailed, setCopyFailed] = useState(false)
   const serverAddress = 'mc.scse.club'
 
-  const handleCopyAddress = () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(serverAddress)
-      setCopiedAddress(true)
-      setTimeout(() => setCopiedAddress(false), 2000)
+  const handleCopyAddress = async () => {
+    setCopyFailed(false)
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(serverAddress)
+        setCopiedAddress(true)
+        setTimeout(() => setCopiedAddress(false), 2000)
+      } else {
+        // 降级使用 textarea 拷贝
+        const textArea = document.createElement('textarea')
+        textArea.value = serverAddress
+        textArea.style.position = 'fixed'
+        textArea.style.opacity = '0'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        const success = document.execCommand('copy')
+        document.body.removeChild(textArea)
+        if (success) {
+          setCopiedAddress(true)
+          setTimeout(() => setCopiedAddress(false), 2000)
+        } else {
+          setCopyFailed(true)
+          setTimeout(() => setCopyFailed(false), 3000)
+        }
+      }
+    } catch {
+      setCopyFailed(true)
+      setTimeout(() => setCopyFailed(false), 3000)
     }
   }
 
   const easeCurve = [0.16, 1, 0.3, 1] as const
 
   const cardVariant = {
-    hidden: { opacity: 0, y: 32, filter: 'blur(10px)' },
+    hidden: { opacity: 0, y: 32 },
     visible: (delay: number = 0.1) => ({
       opacity: 1,
       y: 0,
-      filter: 'blur(0px)',
       transition: {
         duration: 0.8,
         delay,
@@ -96,8 +120,8 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
           <div className="picks-heading-row">
             <motion.h2
               className="picks-main-title"
-              initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
-              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.7, delay: 0.08, ease: easeCurve }}
             >
@@ -218,6 +242,10 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
                             <Check size={12} className="text-success" />
                             <span className="copied-tip">已复制</span>
                           </>
+                        ) : copyFailed ? (
+                          <>
+                            <span className="copied-tip" style={{ color: '#d9534f' }}>复制失败，请手动选择</span>
+                          </>
                         ) : (
                           <>
                             <Copy size={12} />
@@ -251,9 +279,9 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
               </div>
             </div>
 
-            {/* 右侧分栏：视频/图片手绘取景框占位视窗 */}
+            {/* 右侧分栏：视频/图片手绘取景框占位视窗 (移除无意义的 tabIndex，避免干扰键盘导航) */}
             <div className="sketch-card-right">
-              <div className="sketch-media-viewport" tabIndex={0} aria-label="Minecraft 服务器实景占位视窗">
+              <div className="sketch-media-viewport" aria-label="Minecraft 服务器实景占位视窗">
                 {/* 顶部工程图纸取景框栏 */}
                 <div className="sketch-viewport-topbar">
                   <div className="viewport-status-dot" />
@@ -421,9 +449,9 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
               </div>
             </div>
 
-            {/* 右侧分栏：视频/图片手绘取景框占位视窗 */}
+            {/* 右侧分栏：视频/图片手绘取景框占位视窗 (移除无意义的 tabIndex) */}
             <div className="sketch-card-right">
-              <div className="sketch-media-viewport" tabIndex={0} aria-label="小组工具页实景占位视窗">
+              <div className="sketch-media-viewport" aria-label="小组工具页实景占位视窗">
                 {/* 顶部工程图纸取景框栏 */}
                 <div className="sketch-viewport-topbar">
                   <div className="viewport-status-dot" />

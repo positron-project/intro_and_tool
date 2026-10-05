@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowUp, ArrowUpRight, Check, Copy } from 'lucide-react'
-import { contactInfo } from '../../data/mock'
+import { useContent } from '../../services/content.context'
 import './join-section.css'
 
 interface JoinSectionProps {
@@ -15,8 +15,9 @@ export function JoinSection({
   onNavigate,
   onScrollToTop,
   onScrollToSection,
-  qrCodeSrc,
+  qrCodeSrc = './assets/qq-group-qrcode.svg',
 }: JoinSectionProps) {
+  const { data: { contactInfo } } = useContent()
   const [copied, setCopied] = useState(false)
 
   const handleCopyQQ = async () => {
@@ -393,48 +394,66 @@ export function JoinSection({
           <div className="footer-nav-col">
             <span className="footer-col-caption">NAVIGATION</span>
             <nav className="footer-nav-list" aria-label="页脚导航">
-              <button
-                type="button"
+              <a
+                href="#story-hero"
                 className="footer-nav-link"
-                onClick={() => handleNavClick('story-hero', '#/home')}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleNavClick('story-hero', '#/home')
+                }}
               >
                 首页
-              </button>
-              <button
-                type="button"
+              </a>
+              <a
+                href="#story-about"
                 className="footer-nav-link"
-                onClick={() => handleNavClick('story-about', '#/home')}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleNavClick('story-about', '#/home')
+                }}
               >
                 关于我们
-              </button>
-              <button
-                type="button"
+              </a>
+              <a
+                href="#story-offer"
                 className="footer-nav-link"
-                onClick={() => handleNavClick('story-offer', '#/home')}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleNavClick('story-offer', '#/home')
+                }}
               >
                 带来什么
-              </button>
-              <button
-                type="button"
+              </a>
+              <a
+                href="#story-picks"
                 className="footer-nav-link"
-                onClick={() => handleNavClick('story-picks', '#/home')}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleNavClick('story-picks', '#/home')
+                }}
               >
                 小组力荐
-              </button>
-              <button
-                type="button"
+              </a>
+              <a
+                href="#story-blog"
                 className="footer-nav-link"
-                onClick={() => handleNavClick('story-blog', '#/home')}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleNavClick('story-blog', '#/home')
+                }}
               >
                 小组博客
-              </button>
-              <button
-                type="button"
+              </a>
+              <a
+                href="#story-join"
                 className="footer-nav-link"
-                onClick={() => handleNavClick('story-join', '#/home')}
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleNavClick('story-join', '#/home')
+                }}
               >
                 加入我们
-              </button>
+              </a>
             </nav>
           </div>
 

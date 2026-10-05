@@ -46,11 +46,10 @@ export function OfferSection({ onNavigate, onNextSection }: OfferSectionProps) {
   const easeCurve = [0.16, 1, 0.3, 1] as const
 
   const rowVariant = {
-    hidden: { opacity: 0, y: 24, filter: 'blur(8px)' },
+    hidden: { opacity: 0, y: 24 },
     visible: (customDelay: number = 0.15) => ({
       opacity: 1,
       y: 0,
-      filter: 'blur(0px)',
       transition: {
         duration: 0.7,
         delay: customDelay,
@@ -123,8 +122,8 @@ export function OfferSection({ onNavigate, onNextSection }: OfferSectionProps) {
           <div className="offer-title-wrap">
             <motion.h2
               className="offer-main-title"
-              initial={{ opacity: 0, y: 24, filter: 'blur(10px)' }}
-              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.7, delay: 0.1, ease: easeCurve }}
             >
@@ -154,8 +153,8 @@ export function OfferSection({ onNavigate, onNextSection }: OfferSectionProps) {
         {/* 杂志式错位第二视觉焦点：醒目辅助短句 */}
         <motion.div
           className="offer-focal-row"
-          initial={{ opacity: 0, y: 18, filter: 'blur(8px)' }}
-          whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.7, delay: 0.18, ease: easeCurve }}
         >

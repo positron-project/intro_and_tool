@@ -724,6 +724,28 @@
   text-transform: uppercase;
 }
 
+.about-fork-close-btn {
+  margin-top: 14px;
+  pointer-events: auto;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--home-navy, #073F73);
+  background: rgba(250, 248, 242, 0.85);
+  border: 1px solid rgba(7, 63, 115, 0.2);
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.about-fork-close-btn:hover,
+.about-fork-close-btn:focus-visible {
+  background: var(--home-navy, #073F73);
+  color: #FAF8F2;
+  border-color: var(--home-navy, #073F73);
+}
+
 /* 两条横条：上下堆叠，整块只占屏高约 1/3（731 高的视口下是 240），
    贴回页面的左右基准线，与标题、底栏同一条边
    （高度按 flex 比例分配——悬浮哪条，哪条长大） */

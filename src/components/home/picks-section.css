@@ -235,11 +235,11 @@
 .sketch-corner-marker {
   position: absolute;
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.12em;
   color: var(--home-navy, #073F73);
-  opacity: 0.42;
+  opacity: 0.68;
   user-select: none;
   pointer-events: none;
 }
@@ -309,11 +309,11 @@
 
 .sketch-logo-badge {
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.2em;
   color: var(--home-navy, #073F73);
-  opacity: 0.55;
+  opacity: 0.72;
   text-transform: uppercase;
 }
 
@@ -340,11 +340,11 @@
 
 .sketch-item-tag {
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.18em;
   color: var(--home-navy, #073F73);
-  opacity: 0.6;
+  opacity: 0.75;
 }
 
 .sketch-item-title {
@@ -512,11 +512,11 @@
   justify-content: space-between;
   padding: 0 12px;
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.12em;
   color: var(--home-navy, #073F73);
-  opacity: 0.75;
+  opacity: 0.82;
 }
 
 .viewport-status-dot {
@@ -595,8 +595,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 10px;
-  color: rgba(7, 63, 115, 0.35);
+  font-size: 12px;
+  color: rgba(7, 63, 115, 0.65);
 }
 
 /* 占位中心徽标与说明 */
@@ -636,11 +636,11 @@
 
 .viewport-placeholder-title {
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.2em;
   color: var(--home-navy, #073F73);
-  opacity: 0.75;
+  opacity: 0.85;
 }
 
 .viewport-placeholder-desc {
@@ -653,11 +653,11 @@
 
 .viewport-placeholder-spec {
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.1em;
   color: var(--home-navy, #073F73);
-  opacity: 0.48;
+  opacity: 0.72;
 }
 
 /* 浅青蓝微薄滤镜蒙版 */
@@ -893,7 +893,7 @@
   }
 
   .sketch-corner-marker {
-    font-size: 9px;
+    font-size: 12px;
   }
 
   .sketch-corner-marker.top-right,

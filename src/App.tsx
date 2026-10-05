@@ -264,7 +264,10 @@ function Navbar({ route, theme, onTheme, onSearch, mobileOpen, setMobileOpen }: 
       <header className="topbar">
         <div className="topbar-inner">
         <a href="#/home" className="brand" aria-label="回到首页">
-          <img className="brand-logo" src="./assets/college-logo-cropped.png" alt="南昌航空大学科技学院校徽" />
+          <picture>
+            <source srcSet="./assets/college-logo-cropped.webp" type="image/webp" />
+            <img className="brand-logo" src="./assets/college-logo-cropped.png" alt="南昌航空大学科技学院校徽" width="36" height="36" loading="lazy" />
+          </picture>
           <span className="brand-copy"><strong>南昌航空大学科技学院</strong><small>计算机科技小组 · Computer Science Club</small></span>
         </a>
 
@@ -2134,34 +2137,19 @@ const MemoJoinSection = memo(JoinSection)
 function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [isPastTrigger, setIsPastTrigger] = useState(false)
-  /* 02 里选定的分组；为空表示还没选过 —— 03 之后的内容区整块不出场 */
-  const [aboutGroup, setAboutGroup] = useState<AboutGroupId | null>(null)
+  /* 02 选定的分组；默认选中项目组，03-06 始终挂载显示 */
+  const [aboutGroup, setAboutGroup] = useState<AboutGroupId>('project')
   const heroFrameRef = useRef<HTMLDivElement | null>(null)
   const lenisRef = useRef<Lenis | null>(null)
   /* 阈值状态存在 ref 里：只有真正翻转时才 setState，避免每帧都排一次 React 更新 */
   const pastTriggerRef = useRef(false)
 
+  /* 导航区段滚动偏移常量（与 SiteHeader 高度呼应） */
+  const HEADER_OFFSET = -70
+
   useEffect(() => {
-    const lenis = new Lenis({
-      /* 滚轮/触摸走 lerp 模式：由输入驱动、松手自然衰减（lenis 默认 0.1，0.08–0.12 为常用区间）；
-         跳转动画不走这里，改由 scrollToSection 按距离传入 duration/easing */
-      lerp: 0.1,
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
-      smoothWheel: true,
-      wheelMultiplier: 1.0,
-      touchMultiplier: 1.5,
-    })
-
-    lenisRef.current = lenis
-    ;(window as any).__lenis = lenis
-
-    let rafId: number
-    function raf(time: number) {
-      lenis.raf(time)
-      rafId = requestAnimationFrame(raf)
-    }
-    rafId = requestAnimationFrame(raf)
+    /* 减少动态效果遵循：系统开启 reduced-motion 时不初始化 Lenis，由原生滚动接管 */
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     /* Lenis 滚动与原生滚动共用一个入口，不再各自 setState 一次 */
     const applyScrollState = (scroll: number) => {
@@ -2186,6 +2174,36 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
         setIsPastTrigger(next)
       }
     }
+
+    if (prefersReducedMotion) {
+      const handleNativeScroll = () => applyScrollState(window.scrollY)
+      window.addEventListener('scroll', handleNativeScroll, { passive: true })
+      applyScrollState(window.scrollY)
+      return () => {
+        window.removeEventListener('scroll', handleNativeScroll)
+      }
+    }
+
+    const lenis = new Lenis({
+      /* 滚轮/触摸走 lerp 模式：由输入驱动、松手自然衰减（lenis 默认 0.1，0.08–0.12 为常用区间）；
+         跳转动画不走这里，改由 scrollToSection 按距离传入 duration/easing */
+      lerp: 0.1,
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 1.5,
+    })
+
+    lenisRef.current = lenis
+    ;(window as any).__lenis = lenis
+
+    let rafId: number
+    function raf(time: number) {
+      lenis.raf(time)
+      rafId = requestAnimationFrame(raf)
+    }
+    rafId = requestAnimationFrame(raf)
 
     lenis.on('scroll', ({ scroll }: { scroll: number }) => applyScrollState(scroll))
 
@@ -2268,16 +2286,17 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
     }
     const targetElement = document.getElementById(targetId)
     if (targetElement) {
-      const targetScroll = targetElement.getBoundingClientRect().top + currentScroll - 70
+      const targetScroll = targetElement.getBoundingClientRect().top + currentScroll + HEADER_OFFSET
       const distance = Math.abs(targetScroll - currentScroll)
       if (lenis) {
         lenis.scrollTo(targetElement, {
-          offset: -70,
+          offset: HEADER_OFFSET,
           duration: getJumpDuration(distance),
           easing: JUMP_EASING,
         })
       } else {
-        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        const topPos = targetElement.getBoundingClientRect().top + window.scrollY + HEADER_OFFSET
+        window.scrollTo({ top: topPos, behavior: 'smooth' })
       }
     }
   }, [])
@@ -2298,13 +2317,18 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
     <div className="home-story-scroll" data-active-screen={activeIndex}>
       {/* 顶部全局悬浮导航 */}
       <MemoSiteHeader
+        activeIndex={activeIndex}
+        sections={STORY_SECTIONS}
         onScrollToSection={handleHeaderScrollToSection}
+        onNavigate={onNavigate}
       />
 
       <div className="hero-sticky-container">
         <div ref={heroFrameRef} className="hero-sticky-frame">
           <MemoHomeLanding
             onScrollDown={handleHeroScrollDown}
+            onJoinClick={handleNextJoin}
+            onNavigate={onNavigate}
           />
         </div>
       </div>
@@ -2317,35 +2341,32 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
         onGroupSelected={handleAboutGroupSelected}
       />
 
-      {/* 03 之后的内容区：在 02 里选定分组之后才出场（未选时整块不挂载，含 06 与页脚） */}
-      {aboutGroup && (
-        <>
-          {/* 03 / WHAT WE OFFER (我们可以给你带来什么) */}
-          <MemoOfferSection
-            onNavigate={onNavigate}
-            onNextSection={handleNextPicks}
-          />
+      {/* 03 之后的内容区：始终挂载显示，分组切换只改变 02 正文 */}
+      {/* 03 / WHAT WE OFFER (我们可以给你带来什么) */}
+      <MemoOfferSection
+        onNavigate={onNavigate}
+        onNextSection={handleNextPicks}
+      />
 
-          {/* 04 / OUR PICKS (小组力荐) */}
-          <MemoPicksSection
-            onNavigate={onNavigate}
-            onNextSection={handleNextBlog}
-          />
+      {/* 04 / OUR PICKS (小组力荐) */}
+      <MemoPicksSection
+        onNavigate={onNavigate}
+        onNextSection={handleNextBlog}
+      />
 
-          {/* 05 / BLOG (小组博客 · 最近文章) */}
-          <MemoBlogSection
-            onNavigate={onNavigate}
-            onNextSection={handleNextJoin}
-          />
+      {/* 05 / BLOG (小组博客 · 最近文章) */}
+      <MemoBlogSection
+        onNavigate={onNavigate}
+        onNextSection={handleNextJoin}
+      />
 
-          {/* 06 / JOIN US (加入我们 & 整站一体化 Footer)：连同页脚一起关在门内 */}
-          <MemoJoinSection
-            onNavigate={onNavigate}
-            onScrollToTop={handleJoinScrollToTop}
-            onScrollToSection={handleJoinScrollToSection}
-          />
-        </>
-      )}
+      {/* 06 / JOIN US (加入我们 & 整站一体化 Footer) */}
+      <MemoJoinSection
+        onNavigate={onNavigate}
+        onScrollToTop={handleJoinScrollToTop}
+        onScrollToSection={handleJoinScrollToSection}
+        qrCodeSrc="./assets/qq-group-qrcode.svg"
+      />
     </div>
   )
 }

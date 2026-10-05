@@ -8,10 +8,14 @@ import './home-redesign.css'
 
 interface HomeLandingProps {
   onScrollDown?: () => void
+  onJoinClick?: () => void
+  onNavigate?: (path: string) => void
 }
 
 export function HomeLanding({
   onScrollDown,
+  onJoinClick,
+  onNavigate,
 }: HomeLandingProps) {
   return (
     <section id="story-hero" className="home-hero-viewport" aria-label="计算机小组 · 品牌首页">
@@ -32,7 +36,10 @@ export function HomeLanding({
 
       {/* Layer 6: 左侧 Hero 排版（让知识 持续发生） */}
       <div className="hero-content-stage">
-        <HeroSection />
+        <HeroSection
+          onJoinClick={onJoinClick}
+          onToolsClick={() => onNavigate?.('tools')}
+        />
       </div>
 
       {/* 左下方 Scroll Down 指示器 */}
