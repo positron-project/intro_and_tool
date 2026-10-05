@@ -96,18 +96,18 @@ export function HeroSection({ onJoinClick, onToolsClick }: HeroSectionProps) {
         transition={{ duration: 0.85, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="hero-stat-item">
-          <span className="hero-stat-number">10+</span>
-          <span className="hero-stat-label">届技术传承</span>
+          <span className="hero-stat-number">280+</span>
+          <span className="hero-stat-label">历届成员</span>
         </div>
         <div className="hero-stat-divider" aria-hidden="true" />
         <div className="hero-stat-item">
-          <span className="hero-stat-number">100+</span>
-          <span className="hero-stat-label">往届与现役成员</span>
+          <span className="hero-stat-number">5届</span>
+          <span className="hero-stat-label">传承沉淀</span>
         </div>
         <div className="hero-stat-divider" aria-hidden="true" />
         <div className="hero-stat-item">
-          <span className="hero-stat-number">30+</span>
-          <span className="hero-stat-label">落地实战项目</span>
+          <span className="hero-stat-number">60+</span>
+          <span className="hero-stat-label">沉淀项目</span>
         </div>
       </motion.div>
     </div>

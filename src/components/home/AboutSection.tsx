@@ -8,7 +8,7 @@ interface AboutSectionProps {
   onNavigate?: (path: string) => void
   onNextSection?: () => void
   isPastTrigger?: boolean
-  /* 某组被真正选定后通知外层（外层据此决定要不要放出 03 之后的内容区） */
+  /* 某组被真正选定后通知外层 */
   onGroupSelected?: (groupId: AboutGroupId) => void
 }
 
@@ -55,8 +55,6 @@ export function AboutSection({
   isPastTrigger = true,
   onGroupSelected,
 }: AboutSectionProps) {
-  /* 悬念字是否已退场：默认已退场，直接展示分组正文，不阻断阅读与深链 */
-  const [teaserGone, setTeaserGone] = useState(true)
   /* 选择器是否在场：默认不打开全屏选择器，保留 SWITCH 入口可唤出 */
   const [isForkOpen, setIsForkOpen] = useState(false)
   /* 已选定的组；默认选中项目组 */
@@ -68,10 +66,6 @@ export function AboutSection({
   /* 选择器退场结束后要不要把焦点交给内容层里的重选按钮（见下方 useEffect）。 */
   const [handoffFocus, setHandoffFocus] = useState(false)
 
-  /* 是否已经启动过整条流程 */
-  const hasEnteredRef = useRef(true)
-  /* 上一次的 isPastTrigger，用于检测上升沿 */
-  const prevPastTriggerRef = useRef(false)
   /* 点击某一侧的瞬间先记下目标组 */
   const pendingSelectRef = useRef<AboutGroupId | null>(null)
   /* 两半区与「重选」按钮的 DOM 引用，仅用于焦点管理 */
@@ -102,46 +96,13 @@ export function AboutSection({
     [prefersReducedMotion]
   )
 
-  useEffect(() => {
-    const prev = prevPastTriggerRef.current
-    prevPastTriggerRef.current = isPastTrigger
-
-    /* ---- 情况 A：下滑进入（false → true 上升沿）----
-       只负责首次那一次：让悬念字退场；
-       退场完成由 AnimatePresence 的 onExitComplete 接手打开选择器 */
-    if (!prev && isPastTrigger) {
-      if (!hasEnteredRef.current) {
-        hasEnteredRef.current = true
-        setTeaserGone(true)
-      }
-      return
-    }
-
-    /* ---- 情况 B：回到 hero（true → false 下降沿）----
-       只记录标记，不动任何阶段：选择器或已选内容都保持原位，避免闪烁与重播 */
-    if (prev && !isPastTrigger) {
-      return
-    }
-  }, [isPastTrigger])
-
-  /* 悬念字退场完成 → 选择器进场 */
-  const handleTeaserExitComplete = useCallback(() => {
-    setForkEntryMode('first')
-    setIsForkOpen(true)
-  }, [])
-
   /* 选择器退场完成 → 若确实选了组，这时才让该组内容入场（两段动画不重叠） */
   const handleForkExitComplete = useCallback(() => {
     const picked = pendingSelectRef.current
     if (!picked) return
     pendingSelectRef.current = null
     setSelectedGroup(picked)
-    /* 通知外层：到这里才算真选了（外层据此放出 03 之后的内容区） */
     onGroupSelected?.(picked)
-    /* 焦点交接：两半区是此刻才真正卸载的。
-       早一步（内容层刚变可见时）聚焦会偶发被卸载动作连带丢到 body（实测 3 次里丢 1 次）；
-       直接在这里 focus() 又会撞上首次选择时内容层尚为 inert 的问题。
-       统一交给 handoffFocus 的 useEffect，在提交之后执行。 */
     setHandoffFocus(true)
   }, [onGroupSelected])
 
@@ -384,30 +345,6 @@ export function AboutSection({
           </g>
         </svg>
       </div>
-
-      {/* ============================================================
-          第一段：前置居中悬念大字（我们是谁？ / WHO WE ARE）
-          首次越过触发线后平滑模糊淡出；退场完成的回调里打开选择器，
-          两段动画不重叠 —— 读起来就是同一处文字的收缩续接
-
-          ⚠️ 只播一次：teaserGone 置真后该节点不再挂载，
-          回滑再进入时 hasEnteredRef 已是 true，上升沿不再启动它
-          ============================================================ */}
-      <AnimatePresence onExitComplete={handleTeaserExitComplete}>
-        {!teaserGone && (
-          <motion.div
-            className="about-teaser-centered"
-            key="about-teaser-center"
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: dur(0.38), ease: EASE_OUT }}
-          >
-            <span className="about-teaser-title">我们是谁？</span>
-            <span className="about-teaser-en">WHO WE ARE</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ============================================================
           第二段：分组选择器（上：项目组 / 下：算法组）

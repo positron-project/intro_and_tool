@@ -138,11 +138,11 @@
 
 .join-chapter-sub {
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.16em;
   color: var(--home-navy, #073F73);
-  opacity: 0.45;
+  opacity: 0.55;
   margin-left: 8px;
 }
 
@@ -252,11 +252,11 @@
 
 .step-num {
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--home-navy, #073F73);
-  opacity: 0.5;
+  opacity: 0.65;
 }
 
 .step-dot {
@@ -304,11 +304,11 @@
   align-items: center;
   gap: 8px;
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.2em;
   color: var(--home-navy, #073F73);
-  opacity: 0.65;
+  opacity: 0.75;
   user-select: none;
 }
 
@@ -340,11 +340,11 @@
   align-items: center;
   justify-content: space-between;
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.16em;
   color: var(--home-navy, #073F73);
-  opacity: 0.6;
+  opacity: 0.7;
   border-bottom: 1px solid rgba(7, 63, 115, 0.12);
   padding-bottom: 8px;
 }
@@ -489,17 +489,17 @@
   align-items: center;
   justify-content: space-between;
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.16em;
   color: var(--home-navy, #073F73);
-  opacity: 0.6;
+  opacity: 0.7;
 }
 
 .group-club-name {
   font-family: "MiSans", sans-serif;
-  font-size: 11px;
-  opacity: 0.8;
+  font-size: 12px;
+  opacity: 0.85;
 }
 
 .group-number-row {
@@ -526,7 +526,7 @@
   border: 1px solid rgba(7, 63, 115, 0.3);
   padding: 5px 10px;
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--home-navy, #073F73);
@@ -777,11 +777,11 @@
 
 .footer-page-index {
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.16em;
   color: var(--home-navy, #073F73);
-  opacity: 0.4;
+  opacity: 0.55;
 }
 
 .footer-back-to-top {
@@ -792,11 +792,11 @@
   border: none;
   padding: 4px 0;
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.18em;
   color: var(--home-navy, #073F73);
-  opacity: 0.65;
+  opacity: 0.75;
   cursor: pointer;
   transition: opacity 0.2s ease, color 0.2s ease;
 }
@@ -894,7 +894,7 @@
 
   .group-copy-btn {
     padding: 4px 8px;
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .steps-flow-line {

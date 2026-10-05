@@ -177,11 +177,18 @@ function routeFromHash() {
   if (raw.startsWith('story-') || raw === '' || raw === '/') {
     return '/home'
   }
-  return raw.replace(/\/$/, '') || '/home'
+  const clean = raw.replace(/\/$/, '')
+  return clean.startsWith('/') ? clean : `/${clean}`
 }
 
 function navigate(path: string) {
-  window.location.hash = path.startsWith('#') ? path.slice(1) : path
+  if (path.startsWith('#')) {
+    window.location.hash = path.slice(1)
+  } else if (path.startsWith('/')) {
+    window.location.hash = path
+  } else {
+    window.location.hash = `/${path}`
+  }
 }
 
 function safeLink(value?: string) {
@@ -266,7 +273,7 @@ function Navbar({ route, theme, onTheme, onSearch, mobileOpen, setMobileOpen }: 
         <a href="#/home" className="brand" aria-label="回到首页">
           <picture>
             <source srcSet="./assets/college-logo-cropped.webp" type="image/webp" />
-            <img className="brand-logo" src="./assets/college-logo-cropped.png" alt="南昌航空大学科技学院校徽" width="36" height="36" loading="lazy" />
+            <img className="brand-logo" src="./assets/college-logo-cropped.png" alt="南昌航空大学科技学院校徽" width="36" height="36" decoding="async" />
           </picture>
           <span className="brand-copy"><strong>南昌航空大学科技学院</strong><small>计算机科技小组 · Computer Science Club</small></span>
         </a>
@@ -2136,13 +2143,8 @@ const MemoJoinSection = memo(JoinSection)
 
 function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const [activeIndex, setActiveIndex] = useState(0)
-  const [isPastTrigger, setIsPastTrigger] = useState(false)
-  /* 02 选定的分组；默认选中项目组，03-06 始终挂载显示 */
-  const [aboutGroup, setAboutGroup] = useState<AboutGroupId>('project')
   const heroFrameRef = useRef<HTMLDivElement | null>(null)
   const lenisRef = useRef<Lenis | null>(null)
-  /* 阈值状态存在 ref 里：只有真正翻转时才 setState，避免每帧都排一次 React 更新 */
-  const pastTriggerRef = useRef(false)
 
   /* 导航区段滚动偏移常量（与 SiteHeader 高度呼应） */
   const HEADER_OFFSET = -70
@@ -2151,7 +2153,7 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
     /* 减少动态效果遵循：系统开启 reduced-motion 时不初始化 Lenis，由原生滚动接管 */
     const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    /* Lenis 滚动与原生滚动共用一个入口，不再各自 setState 一次 */
+    /* Lenis 滚动与原生滚动共用一个入口 */
     const applyScrollState = (scroll: number) => {
       const vh = window.innerHeight || 800
       const frame = heroFrameRef.current
@@ -2164,14 +2166,6 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
         } else {
           frame.style.visibility = 'hidden'
         }
-      }
-
-      // 用户要求：从头屏下滑、滚动过半屏（50%）后再继续，02 入场居中悬念大字淡出，02 页面元素分步登场
-      // （原为 38%：切换来得太早，2026-10-05 调大到 50%）
-      const next = scroll >= vh * 0.5
-      if (next !== pastTriggerRef.current) {
-        pastTriggerRef.current = next
-        setIsPastTrigger(next)
       }
     }
 
@@ -2310,8 +2304,6 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
   const handleNextJoin = useCallback(() => scrollToSection('story-join'), [scrollToSection])
   const handleJoinScrollToTop = useCallback(() => scrollToSection('story-hero'), [scrollToSection])
   const handleJoinScrollToSection = useCallback((sectionId: string) => scrollToSection(sectionId), [scrollToSection])
-  /* 稳定身份：MemoAboutSection 不会因父组件重渲染而重建 */
-  const handleAboutGroupSelected = useCallback((groupId: AboutGroupId) => setAboutGroup(groupId), [])
 
   return (
     <div className="home-story-scroll" data-active-screen={activeIndex}>
@@ -2337,8 +2329,6 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
       <MemoAboutSection
         onNavigate={onNavigate}
         onNextSection={handleNextOffer}
-        isPastTrigger={isPastTrigger}
-        onGroupSelected={handleAboutGroupSelected}
       />
 
       {/* 03 之后的内容区：始终挂载显示，分组切换只改变 02 正文 */}

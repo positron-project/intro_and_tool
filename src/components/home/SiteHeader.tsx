@@ -112,7 +112,7 @@ export function SiteHeader({
             onClick={(e) => {
               if (onNavigate) {
                 e.preventDefault()
-                onNavigate('tools')
+                onNavigate('#/tools')
               }
             }}
           >
@@ -155,15 +155,12 @@ export function SiteHeader({
                   setMobileMenuOpen(false)
                   if (onNavigate) {
                     e.preventDefault()
-                    onNavigate('tools')
+                    onNavigate('#/tools')
                   }
                 }}
               >
                 进入工具站 →
               </a>
-            </div>
-            <div className="site-mobile-slogan">
-              让知识持续发生 · 南昌航空大学科技学院计算机科技小组
             </div>
           </div>
         )}

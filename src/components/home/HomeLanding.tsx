@@ -38,7 +38,7 @@ export function HomeLanding({
       <div className="hero-content-stage">
         <HeroSection
           onJoinClick={onJoinClick}
-          onToolsClick={() => onNavigate?.('tools')}
+          onToolsClick={() => onNavigate?.('#/tools')}
         />
       </div>
 

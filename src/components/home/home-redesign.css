@@ -647,9 +647,9 @@
   justify-content: space-between;
   pointer-events: none;
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.08em;
-  color: rgba(7, 63, 115, 0.55);
+  color: rgba(7, 63, 115, 0.65);
 }
 
 .dot-matrix-hud-tag {
@@ -690,9 +690,9 @@
   justify-content: space-between;
   pointer-events: none;
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.06em;
-  color: rgba(7, 63, 115, 0.45);
+  color: rgba(7, 63, 115, 0.6);
   border-top: 1px dashed rgba(143, 199, 217, 0.35);
   padding-top: 8px;
 }
@@ -704,7 +704,7 @@
 }
 
 .hud-status-hint {
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 600;
 }
 
@@ -780,7 +780,7 @@
 /* 文本标签 */
 .scroll-text {
   font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.22em;
   color: var(--home-navy);
@@ -854,9 +854,15 @@
     color: var(--home-navy-muted);
   }
 
+  /* 移动端与平板：解除 height: 100svh 与 overflow: hidden 的死锁截断，改为自然自适应流式，确保矮屏/横屏内容完整展示 */
   .hero-content-stage {
-    max-width: 80vw;
-    top: 140px;
+    position: relative;
+    left: 0;
+    top: 0;
+    margin-left: clamp(20px, 4vw, 40px);
+    padding-top: clamp(100px, 14vh, 130px);
+    padding-bottom: 60px;
+    max-width: 88vw;
   }
 
   .campus-sketch-container,
@@ -877,8 +883,10 @@
 
 @media (max-width: 600px) {
   .home-hero-viewport {
-    height: 100svh;
+    height: auto;
     min-height: 100svh;
+    overflow-x: hidden;
+    overflow-y: visible;
   }
 
   /* 窄屏品牌区整体缩一档，避免与汉堡按钮互相挤压 */
@@ -898,63 +906,119 @@
   }
 
   .hero-content-stage {
-    left: 24px;
-    top: 100px;
-    max-width: 90vw;
+    position: relative;
+    left: 0;
+    top: 0;
+    margin-left: 20px;
+    margin-right: 20px;
+    padding-top: 96px;
+    padding-bottom: 50px;
+    max-width: calc(100vw - 40px);
   }
 
   .hero-main-title {
-    font-size: clamp(40px, 11vw, 60px);
+    font-size: clamp(38px, 11vw, 56px);
     line-height: 1.08;
   }
 
   .hero-sub-title {
-    font-size: 20px;
+    font-size: 19px;
+  }
+
+  .hero-value-desc {
+    max-width: 100%;
+    font-size: 13.5px;
+  }
+
+  .hero-cta-group {
+    margin-top: 18px;
+    gap: 10px;
+  }
+
+  .hero-stats-row {
+    margin-top: 20px;
+    padding: 10px 14px;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 
   .campus-sketch-container,
   .campus-photo-container {
     width: 92vw;
-    height: 40vh;
+    height: 38vh;
     right: -4vw;
     bottom: 20px;
-    opacity: 0.84;
+    opacity: 0.75;
   }
 
   /* 窄屏下点阵位置略微下移，并降低不透明度，防止与两行大标题及行动按钮重叠 */
   .dot-matrix-hero-visual {
-    width: clamp(200px, 60vw, 260px);
-    height: clamp(200px, 60vw, 260px);
-    left: 60%;
-    top: 62%;
+    width: clamp(180px, 50vw, 240px);
+    height: clamp(180px, 50vw, 240px);
+    left: 65%;
+    top: 60%;
     right: auto;
     bottom: auto;
     transform: translate(-50%, -50%);
-    opacity: 0.65;
+    opacity: 0.55;
     padding: 0;
     pointer-events: none;
   }
 
   .scroll-indicator {
-    left: 24px;
-    bottom: 20px;
-    transform: scale(0.9);
-    transform-origin: bottom left;
+    display: none;
   }
 }
 
-/* 矮屏机型适配 (如 iPhone SE 或横屏设备，高 <= 680px 且窄屏)，隐藏点阵确保文字和操作区完全不被遮挡 */
-@media (max-height: 680px) and (max-width: 600px) {
+/* 矮屏与横屏机型深度适配 (如 iPhone SE、横屏手机，高 <= 680px)，彻底消除溢出裁切风险 */
+@media (max-height: 680px) {
+  .home-hero-viewport {
+    height: auto !important;
+    min-height: 100svh;
+    overflow-y: visible !important;
+  }
+
   .dot-matrix-hero-visual {
-    display: none;
+    display: none !important;
   }
+
   .hero-content-stage {
-    top: 85px;
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    padding-top: 85px !important;
+    padding-bottom: 40px !important;
   }
+
   .campus-sketch-container,
   .campus-photo-container {
-    height: 32vh;
-    opacity: 0.5;
+    height: 28vh;
+    opacity: 0.45;
+  }
+
+  .hero-main-title {
+    font-size: clamp(34px, 7vw, 48px);
+  }
+
+  .hero-subtitle-group {
+    margin-top: 14px;
+  }
+
+  .hero-value-desc {
+    margin-top: 10px;
+  }
+
+  .hero-cta-group {
+    margin-top: 14px;
+  }
+
+  .hero-stats-row {
+    margin-top: 14px;
+    padding: 8px 12px;
+  }
+
+  .scroll-indicator {
+    display: none !important;
   }
 }
 
