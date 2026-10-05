@@ -4,13 +4,6 @@
    Palette: Warm Ivory (--home-bg-warm) + Deep Navy (--home-navy) + Pale Cyan
    ============================================================ */
 
-/* ------------------------------------------------------------
-   关键词悬停覆盖框的配色（作用域限本版块，不外溢）
-
-   · --about-kw-complement : 覆盖框底色 = 文字色 #073F73 的互补色
-        #073F73 → HSL(207°, 88%, 24%) → 色相 +180° = 27° → #734007（暖琥珀/焦糖）
-   · --about-kw-on-complement : 覆盖框内的字体色 = 页面背景色
-   ------------------------------------------------------------ */
 .about-section-viewport {
   position: relative;
   width: 100%;
@@ -22,14 +15,16 @@
     radial-gradient(ellipse 55% 65% at 5% 85%, rgba(159, 209, 222, 0.16) 0%, transparent 60%);
   color: var(--home-navy, #073F73);
   font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
-  overflow: hidden;
+  /* 用 clip 而不是 hidden：hidden 会让本 section 成为滚动容器，
+     内部的 position: sticky（左侧分组栏）就永远粘不住；
+     clip 以同样方式裁掉溢出装饰，但不创建滚动容器。 */
+  overflow: hidden; /* 旧内核兜底 */
+  overflow: clip;
   box-sizing: border-box;
   padding: clamp(96px, 12vh, 136px) 0 clamp(48px, 6vh, 72px);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  --about-kw-complement: #734007;
-  --about-kw-on-complement: var(--home-bg-warm, #FAF8F2);
 }
 
 /* ============================================================
@@ -120,7 +115,7 @@
 }
 
 /* ============================================================
-   主体内容排版层 (不对称三栏架构：左章节标 + 中部核心叙事 + 下方直出关键词)
+   主体内容排版层 (版块标题 + 左分组栏 / 右组特性卡)
    ============================================================ */
 .about-content-stage {
   position: relative;
@@ -135,26 +130,270 @@
   gap: clamp(40px, 6vh, 64px);
 }
 
-/* ------------------------------------------------------------
-   上半段：不对称排版 (左章节标 + 中部叙事)
-   ------------------------------------------------------------ */
-.about-top-grid {
+/* ============================================================
+   两栏骨架：左分组栏 + 右组特性卡
+   ------------------------------------------------------------
+   左栏固定窄轨道 clamp(220px,18vw,280px)，右栏自适应（约到 920px），
+   两栏顶部对齐，栏间距 clamp(24px,3vw,56px)。
+   ============================================================ */
+.about-layout {
   display: grid;
-  grid-template-columns: clamp(90px, 9vw, 150px) 1fr;
-  gap: clamp(32px, 4.5vw, 84px);
-  align-items: flex-start;
+  grid-template-columns: clamp(220px, 18vw, 280px) minmax(0, 1fr);
+  gap: clamp(24px, 3vw, 56px);
+  align-items: start;
 }
 
-/* 左侧章节系统：02 / 蓝线 / 当前组的英文组标 / 当前组名 / 重选入口
-   （英文组标由数据驱动：PROJECT TEAM / ALGORITHM TEAM，见 about-groups.ts） */
-.about-chapter-column {
+/* ------------------------------------------------------------
+   左侧：悬浮分组栏
+   · 浮层质感：1px 细边 + 半透明纸面 + blur + 极浅投影
+   · 桌面端 sticky 吸顶；≤768px 变横向分段控件（见媒体查询）
+   · 只在点击 / 键盘操作时切换组，hover 只提亮文字，不换内容
+   ------------------------------------------------------------ */
+.about-group-rail {
+  position: sticky;
+  top: clamp(96px, 14vh, 140px);
+  align-self: start;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  border: 1px solid rgba(7, 63, 115, 0.14);
+  border-radius: 6px;
+  background: rgba(250, 248, 242, 0.72);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px rgba(7, 63, 115, 0.06);
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 1.8vh, 20px);
+}
+
+/* 栏顶：章节号 02 / 短横线 / ABOUT US —— 代替原来的 about-chapter-column
+   （三条基础规则沿用原样，见下方「章节编号基础样式」） */
+.about-rail-head {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding-top: 6px;
-  user-select: none;
 }
 
+/* 分组列表：竖向 tablist */
+.about-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+/* 一个组 = 一枚 tab。
+   未选中：透明底 + 深蓝 0.6；hover 提到 0.9；选中：深蓝块 + 纸面色。 */
+.about-group-tab {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  text-align: left;
+  font-family: inherit;
+  color: rgba(7, 63, 115, 0.6);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.22s ease;
+}
+
+.about-group-tab:hover {
+  color: rgba(7, 63, 115, 0.9);
+}
+
+.about-group-tab[data-active='true'] {
+  color: var(--home-bg-warm, #FAF8F2);
+}
+
+/* 键盘焦点环：2px 次级蓝，offset 2px */
+.about-group-tab:focus-visible {
+  outline: 2px solid #0B5A9E;
+  outline-offset: 2px;
+}
+
+/* 选中态的背景块：独立一层，交给 Framer 的 layoutId 在各项之间滑动 */
+.about-group-indicator {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 4px;
+  background-color: var(--home-navy, #073F73);
+}
+
+/* 文字层抬到背景块之上 */
+.about-group-tab > .about-tab-index,
+.about-group-tab > .about-tab-body {
+  position: relative;
+  z-index: 1;
+}
+
+.about-tab-index {
+  flex: none;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: clamp(10px, 0.78vw, 11.5px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.7;
+}
+
+.about-tab-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.about-tab-name {
+  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+  font-size: clamp(15px, 1.15vw, 17px);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
+.about-tab-chapter {
+  margin-top: 4px;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: clamp(9px, 0.7vw, 10px);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+.about-tab-meta {
+  margin-top: 4px;
+  font-size: clamp(10.5px, 0.8vw, 12px);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+  opacity: 0.65;
+}
+
+/* ------------------------------------------------------------
+   右侧：组特性卡（蓝图规格卡）
+   · 只画框、四角定位标与分隔线；不做大阴影 / 渐变 / 玻璃拟态
+   · 高度稳定（方案 A）：所有组的面板叠在同一格里，
+     不可见的那一份只承担高度 —— 外框高度恒等于最高的一组
+   ------------------------------------------------------------ */
+.about-spec-card {
+  position: relative;
+  width: 100%;
+  max-width: 920px;
+  box-sizing: border-box;
+  padding: clamp(24px, 3vw, 48px);
+  border: 1px solid rgba(7, 63, 115, 0.14);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+/* 四角定位标：10px 的「+」，深蓝 0.35 */
+.about-spec-corner {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.about-spec-corner::before,
+.about-spec-corner::after {
+  content: '';
+  position: absolute;
+  background-color: var(--home-navy, #073F73);
+}
+
+.about-spec-corner::before {
+  left: 0;
+  right: 0;
+  top: 4.5px;
+  height: 1px;
+}
+
+.about-spec-corner::after {
+  top: 0;
+  bottom: 0;
+  left: 4.5px;
+  width: 1px;
+}
+
+.about-spec-corner--tl {
+  top: -5px;
+  left: -5px;
+}
+
+.about-spec-corner--tr {
+  top: -5px;
+  right: -5px;
+}
+
+.about-spec-corner--bl {
+  bottom: -5px;
+  left: -5px;
+}
+
+.about-spec-corner--br {
+  bottom: -5px;
+  right: -5px;
+}
+
+/* 方案 A：所有组的面板叠在同一格里 */
+.about-spec-stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.about-spec-stack > * {
+  grid-area: 1 / 1;
+}
+
+/* 高度锚点层：每一组各一份，隐藏但保留布局 —— 外框高度由它决定。
+   visibility:hidden 让它既不显示、也不进无障碍树与 Tab 序列。 */
+.about-spec-anchors {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  visibility: hidden;
+}
+
+.about-spec-anchors > * {
+  grid-area: 1 / 1;
+}
+
+/* 卡片内容柱：元信息条 → 主文案 → 正文 */
+.about-spec-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* 顶部元信息条：SPEC · 组标 · 规模 */
+.about-spec-meta {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--home-navy, #073F73);
+  opacity: 0.55;
+}
+
+.about-spec-rule {
+  width: 100%;
+  height: 1px;
+  background-color: rgba(7, 63, 115, 0.14);
+  margin: 10px 0 clamp(20px, 2.6vh, 30px);
+}
+
+/* 章节编号基础样式（被 .about-rail-head 使用） */
 .about-chapter-num {
   font-family: "DM Mono", "SF Mono", monospace;
   font-size: clamp(40px, 4.2vw, 64px);
@@ -180,14 +419,6 @@
   text-transform: uppercase;
   color: var(--home-navy-muted, rgba(7, 63, 115, 0.65));
   white-space: nowrap;
-}
-
-/* 中部核心介绍区 */
-.about-main-column {
-  max-width: 920px;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(24px, 3.2vh, 38px);
 }
 
 /* 主标题行：组标题（现为「我们各有特色」）+ 侧边英文 WHO WE ARE */
@@ -235,13 +466,14 @@
 }
 
 /* 第二视觉焦点：醒目短句 */
+/* 第二视觉焦点：两行醒目短句（第二行用次级蓝 #0B5A9E） */
 .about-focal-quote {
   margin: 0;
   padding: 0;
-  font-size: clamp(20px, 1.9vw, 30px);
-  font-weight: 700;
-  line-height: 1.45;
-  letter-spacing: -0.015em;
+  font-size: clamp(28px, 3.2vw, 48px);
+  font-weight: 800;
+  line-height: 1.24;
+  letter-spacing: -0.02em;
   color: var(--home-navy, #073F73);
   display: flex;
   flex-direction: column;
@@ -249,6 +481,15 @@
 
 .about-quote-line {
   display: block;
+}
+
+.about-quote-line--sub {
+  color: #0B5A9E;
+}
+
+/* 卡片内的段落间距（不改动 .about-body-narrative 本体） */
+.about-spec-panel .about-body-narrative {
+  margin-top: clamp(18px, 2.4vh, 28px);
 }
 
 /* 正文段落：编辑式排版、深灰蓝、大行距、约100字 */
@@ -272,222 +513,10 @@
   margin-bottom: 0;
 }
 
-/* ------------------------------------------------------------
-   下半段：四大关键词 (杂志 / 建筑图纸排版，直接存在于画布中，绝非卡片)
-   ------------------------------------------------------------ */
-.about-keywords-stage {
-  margin-top: clamp(16px, 2.5vh, 32px);
-  padding-top: clamp(24px, 3vh, 36px);
-  border-top: 1px solid rgba(7, 63, 115, 0.1);
-  position: relative;
-}
-
-/* 顶部结构标尺微线与坐标十字 */
-.about-keywords-ruler {
-  position: absolute;
-  top: -1px;
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  pointer-events: none;
-}
-
-.about-ruler-mark {
-  font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 12px;
-  color: rgba(7, 63, 115, 0.45);
-  transform: translateY(-50%);
-  background: var(--home-bg-warm, #FAF8F2);
-  padding: 0 4px;
-}
-
-.about-keywords-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: clamp(14px, 1.4vw, 22px);
-  position: relative;
-  /* stretch：四列等高，框体尺寸完全统一（原先 flex-end 会让框高随内容浮动） */
-  align-items: stretch;
-}
-
-/* 单个关键词项目 (完全无边框白卡片，纯粹的版面字体排印)
-   ⚠️ width:100% —— 让每个框占满自己那一列，四个框等宽，
-   覆盖框才有足够的“面积感”（此前框宽由内容撑开，只有列宽的 34~49%） */
-.about-kw-item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  position: relative;
-  width: 100%;
-  transition: transform 0.3s ease;
-  cursor: default;
-}
-
-.about-kw-item:hover {
-  transform: translateY(-2px);
-}
-
-/* ============================================================
-   悬停交互层：承载英文大词 + 中文释义 + 左→右扫入的覆盖框
-   四个框的结构完全一致，仅内部文案不同
-
-   尺寸策略：框占满整列（width:100%），靠内边距撑出饱满的框体。
-   英文大词用中文释义的长度决定框宽不受文字影响 —— 四个框尺寸统一。
-   ============================================================ */
-.about-kw-body {
-  position: relative;
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  /* 覆盖框的框体范围：充分的纵向留白，让色块有面积感而非紧贴文字 */
-  padding: clamp(18px, 2.2vh, 26px) clamp(18px, 1.6vw, 26px);
-  /* 让覆盖框向外溢出一点，避免被网格裁切 */
-  isolation: isolate;
-}
-
-/* 英文大词：DM Mono / 纯净无衬线
-   z-index:1 —— 位于覆盖框【下层】；扫过时靠下面的混合模式露出反相字面 */
-.about-kw-en {
-  position: relative;
-  z-index: 1;
-  display: block;
-  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  font-size: clamp(26px, 2.4vw, 40px);
-  font-weight: 850;
-  line-height: 0.95;
-  letter-spacing: -0.025em;
-  color: var(--home-navy, #073F73);
-  margin-bottom: 8px;
-  text-transform: uppercase;
-}
-
-/* 中文释义：小字号、高透气度。同样在覆盖框下层 */
-.about-kw-zh {
-  position: relative;
-  z-index: 1;
-  display: block;
-  font-size: clamp(13px, 0.95vw, 15px);
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  color: var(--home-navy-muted, rgba(7, 63, 115, 0.65));
-  transition: opacity 0.2s ease;
-}
-
-/* ------------------------------------------------------------
-   覆盖框（sweep）——从左往右扫入
-   · 底色 = 该框文字色 #073F73 的 HSL 色相补色 → hue 207° + 180° = 27° → #734007
-   · 字体色 = 页面背景色 #FAF8F2
-   · 用 scaleX 从 0 → 1 扫入，transform-origin 定在 left 保证方向为「左→右」
-   ------------------------------------------------------------ */
-.about-kw-sweep {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  /* 新文案贴底部对齐，给上方的英文大词留出空间（标题字要一直存在）。
-     内边距与 .about-kw-body 一致，保证文案落在框内的正确位置。 */
-  align-items: flex-end;
-  padding: clamp(18px, 2.2vh, 26px) clamp(18px, 1.6vw, 26px);
-  box-sizing: border-box;
-  /* 扫入框的底色：深海军蓝的互补色（暖琥珀 / 焦糖） */
-  background-color: var(--about-kw-complement, #734007);
-  border-radius: 3px;
-  /* 初始：完全收起（从左端起） */
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
-  pointer-events: none;
-}
-
-/* 覆盖框内的文案：字体为背景色，初始略滞后淡入避免扫入途中就被读到 */
-.about-kw-sweep-text {
-  display: block;
-  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
-  font-size: clamp(15px, 1.15vw, 18px);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-  /* 字体色 = 页面背景色 */
-  color: var(--about-kw-on-complement, #FAF8F2);
-  opacity: 0;
-  transform: translateX(-8px);
-  transition: opacity 0.28s ease 0.12s, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1) 0.12s;
-}
-
-/* ---- 悬停 / 键盘聚焦：扫入完成 ---- */
-.about-kw-item:hover .about-kw-sweep,
-.about-kw-item:focus-within .about-kw-sweep {
-  transform: scaleX(1);
-}
-
-.about-kw-item:hover .about-kw-sweep-text,
-.about-kw-item:focus-within .about-kw-sweep-text {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* ---- 标题字仍然存在 ----
-   英文大词在悬停时【抬到覆盖框之上】（z-index 3），并用
-   mix-blend-mode: difference 与琥珀底色做差：
-   深蓝字面压在 #734007 上 → 反相成明亮的浅色字，标题依然清晰可读，
-   同时不与覆盖框内的新文案抢位（两者在竖直方向错开）。
-   ⚠️ 必须在文字自身上做混合，且父级要有 isolation 形成隔离的混合容器，
-   否则会一路混到页面背景上、颜色不可控。 */
-.about-kw-item:hover .about-kw-en,
-.about-kw-item:focus-within .about-kw-en {
-  z-index: 3;
-  mix-blend-mode: difference;
-  color: #FFFFFF;
-}
-
-/* 原中文释义（学习 / 创造…）被新文案取代，淡出即可 */
-.about-kw-item:hover .about-kw-zh,
-.about-kw-item:focus-within .about-kw-zh {
-  opacity: 0;
-}
-
-/* 辅助引出细线与坐标点 */
-.about-kw-guide {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  margin-bottom: clamp(10px, 1.4vh, 16px);
-}
-
-.about-kw-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background-color: var(--home-navy, #073F73);
-  opacity: 0.5;
-}
-
-.about-kw-line {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(to right, rgba(7, 63, 115, 0.25), rgba(7, 63, 115, 0.04));
-}
-
-.about-kw-num {
-  font-family: "DM Mono", "SF Mono", monospace;
-  font-size: clamp(11px, 0.85vw, 13px);
-  font-weight: 700;
-  color: var(--home-navy, #073F73);
-  opacity: 0.45;
-  letter-spacing: 0.05em;
-}
-
-/* 四个关键词字号完全一致（此前 BUILD 由 .is-featured 单独放大，已按要求取消） */
-
 /* ============================================================
    底部衔接微引导 (引向下一屏 03 / WHAT WE OFFER)
 
-   z-index 提到 50 的原因：分组选择器层（z-index 30）覆盖整个 02 视口，
-   底部这枚「03」提示在选组阶段依旧可见（与悬念字阶段一致），
-   高一层才能保住自己的点击区域，不被透明层吞掉。
+   z-index 50：浮在分组栏与规格卡之上，任何布局下都点得到。
    ============================================================ */
 .about-footer-nav {
   position: relative;
@@ -561,12 +590,6 @@
 /* ============================================================
    响应式媒体查询 (Responsive)
    ============================================================ */
-@media (max-width: 1024px) {
-  .about-keywords-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 28px 36px;
-  }
-}
 
 @media (max-width: 768px) {
   .about-section-viewport {
@@ -578,22 +601,46 @@
     gap: 36px;
   }
 
-  .about-top-grid {
+  /* 两栏改一栏：分组栏变成卡片上方的横向分段控件 */
+  .about-layout {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 20px;
   }
 
-  .about-chapter-column {
+  .about-group-rail {
+    position: static;
+    padding: 6px;
+    gap: 0;
+  }
+
+  /* 隐藏章节号与规则线，只留分段控件 */
+  .about-rail-head {
+    display: none;
+  }
+
+  .about-group-list {
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .about-group-tab {
+    flex: 1 1 0;
+    min-width: 0;
     flex-direction: row;
     align-items: center;
-    gap: 12px;
-    padding-top: 0;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 6px;
   }
 
-  .about-chapter-rule {
-    width: 24px;
-    height: 1.5px;
-    margin: 0;
+  .about-tab-body {
+    align-items: center;
+  }
+
+  /* 分段控件只显示编号与组名 */
+  .about-tab-chapter,
+  .about-tab-meta {
+    display: none;
   }
 
   .about-bg-watermark {
@@ -622,11 +669,6 @@
 
   .about-title-aside-dot {
     margin-top: 0;
-  }
-
-  .about-keywords-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
   }
 
   .about-footer-nav {
@@ -673,526 +715,14 @@
 }
 
 /* ============================================================
-   分组选择器：上（项目组） / 下（算法组）
-   ------------------------------------------------------------
-   设计语言与 02 其余部分一致：暖白纸面 + 深蓝油墨 + mono 小字。
-   形态：上下两条等高的横条，贴回页面的左右基准线（与标题、底栏同一条边），
-   整块只占屏高约 1/3；行内排成三列 —— 编号 + 组名 / 方向 / 人数 + 箭头，
-   两行同列对齐。
-   交互沿用关键词的「填色」母题：悬浮/聚焦时深蓝自下而上长满该条，
-   文字转为纸面色，该条长到约 3/4 而另一条收拢；另一条变暗。
-
-   层级：teaser 40 > 选择器 30 > 内容层 10；底部引导提到 50。
-   ============================================================ */
-.about-fork-stage {
-  position: absolute;
-  inset: 0;
-  z-index: 30;
-}
-
-/* 小标题：与悬念字同位同字体族，字号降下来，位置续接悬念字；
-   文案改成「我们各有特色」，切换后不再重复悬念语 */
-.about-fork-title {
-  position: absolute;
-  top: clamp(80px, 11vh, 120px);
-  left: 0;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  pointer-events: none;
-}
-
-.about-fork-title-zh {
-  font-family: 'MiSans', -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
-  font-size: clamp(30px, 3.4vw, 50px);
-  font-weight: 900;
-  color: var(--home-navy, #073F73);
-  letter-spacing: -0.03em;
-  line-height: 1.08;
-}
-
-.about-fork-title-en {
-  font-family: "DM Mono", "SF Mono", monospace;
-  font-size: clamp(10.5px, 0.82vw, 12.5px);
-  font-weight: 700;
-  letter-spacing: 0.26em;
-  color: var(--home-navy, #073F73);
-  opacity: 0.42;
-  margin-top: 12px;
-  text-transform: uppercase;
-}
-
-.about-fork-close-btn {
-  margin-top: 14px;
-  pointer-events: auto;
-  font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--home-navy, #073F73);
-  background: rgba(250, 248, 242, 0.85);
-  border: 1px solid rgba(7, 63, 115, 0.2);
-  padding: 6px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.about-fork-close-btn:hover,
-.about-fork-close-btn:focus-visible {
-  background: var(--home-navy, #073F73);
-  color: #FAF8F2;
-  border-color: var(--home-navy, #073F73);
-}
-
-/* 两条横条：上下堆叠，整块只占屏高约 1/3（731 高的视口下是 240），
-   贴回页面的左右基准线，与标题、底栏同一条边
-   （高度按 flex 比例分配——悬浮哪条，哪条长大） */
-.about-fork-halves {
-  position: absolute;
-  left: clamp(24px, 6vw, 120px);
-  right: clamp(24px, 6vw, 120px);
-  top: clamp(210px, 39.3vh, 340px);
-  bottom: auto;
-  height: clamp(200px, 32.8vh, 268px);
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-/* 一条横条 = 一行，行内三列：① 编号 + 组名/组标  ② 方向  ③ 人数 + 箭头
-   第一列给固定宽度（而不是按内容自适应），两行的后两列才会对齐成列 */
-.about-fork-half {
-  position: relative;
-  display: grid;
-  grid-template-columns: clamp(170px, 21.5vw, 306px) 1fr auto;
-  align-items: center;
-  gap: clamp(18px, 1.9vw, 30px);
-  min-height: 0;
-  padding: 0 clamp(24px, 3vw, 48px);
-  box-sizing: border-box;
-  background: none;
-  border: 0;
-  text-align: left;
-  cursor: pointer;
-  overflow: hidden;
-  font-family: inherit;
-  color: var(--home-navy, #073F73);
-  -webkit-tap-highlight-color: transparent;
-  /* 高度互换是这个方案的主角：只过渡 flex-grow，其余属性各管各的 */
-  transition: flex-grow 0.44s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* 默认两条等高（各占一半） */
-.about-fork-half--left,
-.about-fork-half--right {
-  flex: 1 1 0;
-}
-
-/* 悬浮/聚焦的那条长大到约 3/4，另一条收拢
-   （data-hovered / data-dimmed 由 JSX 按 previewGroup 输出，二者互斥） */
-.about-fork-half[data-hovered='true'] {
-  flex-grow: 1.45;
-}
-
-.about-fork-half[data-dimmed='true'] {
-  flex-grow: 0.55;
-}
-
-/* 行分隔线画在 padding 盒内部、z-index -1（而不是用 border）：
-   填色层 inset:0 铺的是 padding 盒，用 border 会让深色行底露出一道纸色细线。
-   ⚠️ 只挂在上条上：下条没有定位偏移，::before/::after 会落到静态位置，
-   在行内留下两道多余细线。 */
-.about-fork-half--left::before,
-.about-fork-half--left::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background-color: rgba(7, 63, 115, 0.12);
-  z-index: -1;
-  pointer-events: none;
-}
-
-.about-fork-half--left::before {
-  top: 0;
-}
-
-.about-fork-half--left::after {
-  bottom: 0;
-}
-
-/* 注意：这里刻意**不写** opacity 过渡。
-   变暗/复原的 opacity 由 Framer Motion 逐帧写成行内样式，
-   再叠加一条 CSS transition 只会互相阻尼、拖出尾巴。
-   （data-dimmed / data-hovered 仍由 JSX 输出，供调试与选择器使用） */
-
-/* 填色层：深蓝自下而上长满整张卡片 */
-.about-fork-fill {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background-color: var(--home-navy, #073F73);
-  transform: translateY(101%);
-  transition: transform 0.46s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: none;
-}
-
-.about-fork-half:hover .about-fork-fill,
-.about-fork-half:focus-visible .about-fork-fill {
-  transform: translateY(0);
-}
-
-/* 文字层：编号 + 组名/英文组标 / 方向 / 人数 + 箭头 */
-.about-fork-cell,
-.about-fork-index,
-.about-fork-nameblock,
-.about-fork-name,
-.about-fork-en,
-.about-fork-info,
-.about-fork-preview,
-.about-fork-meta,
-.about-fork-arrow {
-  position: relative;
-  z-index: 1;
-  /* 颜色延迟 0.08s：等填色先铺到，文字再翻白，不会在纸色底上先变白 */
-  transition: color 0.3s ease 0.08s, opacity 0.3s ease,
-    transform 0.34s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* 第一列：编号 + 组名/组标，横向成簇 */
-.about-fork-cell {
-  display: flex;
-  align-items: center;
-  gap: clamp(14px, 1.6vw, 22px);
-  min-width: 0;
-}
-
-.about-fork-index {
-  flex: none;
-  width: clamp(34px, 3.1vw, 44px);
-  font-family: "DM Mono", "SF Mono", monospace;
-  font-size: clamp(11px, 0.85vw, 12.5px);
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  opacity: 0.4;
-}
-
-.about-fork-name {
-  font-family: 'MiSans', -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
-  font-size: clamp(24px, 2.4vw, 34px);
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  line-height: 1.06;
-}
-
-.about-fork-en {
-  margin-top: 7px;
-  font-family: "DM Mono", "SF Mono", monospace;
-  font-size: clamp(9px, 0.72vw, 10px);
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  opacity: 0.46;
-  text-transform: uppercase;
-}
-
-/* 组名与英文组标竖排成簇：第一列里，左端是编号、右侧才是名字 */
-.about-fork-nameblock {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-/* 第二列：方向（默认不显示 —— 悬浮 / 键盘聚焦该条时才滑出；
-   触屏与窄屏常显，见下方 @media） */
-.about-fork-preview {
-  min-width: 0;
-  font-size: clamp(12.5px, 0.95vw, 13.5px);
-  font-weight: 600;
-  /* opacity 0 仍占位：宽度不因显隐变化，所以两行不会因为悬浮而抖动 */
-  opacity: 0;
-  transform: translateX(-10px);
-  white-space: nowrap;
-}
-
-/* 第三列：人数 + 箭头，贴着行的右端 */
-.about-fork-info {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: clamp(14px, 1.6vw, 22px);
-  justify-self: end;
-  min-width: 0;
-}
-
-.about-fork-meta {
-  font-family: "DM Mono", "SF Mono", monospace;
-  font-size: clamp(9px, 0.72vw, 10.5px);
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  opacity: 0;
-  transform: translateX(-10px);
-  white-space: nowrap;
-}
-
-/* 行右端的进入箭头（纯装饰）：22px 细圈，悬浮时圈线提亮并右移 */
-.about-fork-arrow {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: clamp(20px, 1.55vw, 22px);
-  height: clamp(20px, 1.55vw, 22px);
-  border: 1px solid rgba(7, 63, 115, 0.26);
-  border-radius: 50%;
-  opacity: 0.6;
-  /* 单独声明以追加 border-color（必须写在上面那条共用 transition 之后） */
-  transition: color 0.3s ease 0.08s, opacity 0.3s ease,
-    transform 0.34s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
-}
-
-/* ---- 悬浮 / 键盘聚焦：填色铺满，文字反白，箭头亮起 ---- */
-.about-fork-half:hover .about-fork-index,
-.about-fork-half:focus-visible .about-fork-index,
-.about-fork-half:hover .about-fork-name,
-.about-fork-half:focus-visible .about-fork-name,
-.about-fork-half:hover .about-fork-en,
-.about-fork-half:focus-visible .about-fork-en,
-.about-fork-half:hover .about-fork-preview,
-.about-fork-half:focus-visible .about-fork-preview,
-.about-fork-half:hover .about-fork-meta,
-.about-fork-half:focus-visible .about-fork-meta,
-.about-fork-half:hover .about-fork-arrow,
-.about-fork-half:focus-visible .about-fork-arrow {
-  color: var(--home-bg-warm, #FAF8F2);
-}
-
-.about-fork-half:hover .about-fork-index,
-.about-fork-half:focus-visible .about-fork-index {
-  opacity: 0.7;
-}
-
-.about-fork-half:hover .about-fork-preview,
-.about-fork-half:focus-visible .about-fork-preview {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.about-fork-half:hover .about-fork-meta,
-.about-fork-half:focus-visible .about-fork-meta {
-  opacity: 0.66;
-  transform: translateX(0);
-}
-
-.about-fork-half:hover .about-fork-arrow,
-.about-fork-half:focus-visible .about-fork-arrow {
-  border-color: rgba(250, 248, 242, 0.45);
-  opacity: 1;
-  transform: translate(2px, -2px);
-}
-
-/* 已选中的那一组：序号旁一枚很小的强调色方块（与 aria-pressed 同步） */
-.about-fork-half[aria-pressed='true'] .about-fork-index::after {
-  content: '';
-  display: inline-block;
-  width: 4px;
-  height: 4px;
-  margin-left: 8px;
-  background-color: var(--home-accent-line, #8FC7D9);
-  vertical-align: middle;
-}
-
-/* 键盘焦点环：细蓝描边，不用浏览器默认外框 */
-.about-fork-half:focus-visible {
-  outline: 1px solid rgba(7, 63, 115, 0.35);
-  outline-offset: 4px;
-}
-
-/* 没有悬浮能力的设备（触屏）：方向 / 人数常显 —— 否则永远看不到 */
-@media (hover: none) {
-  .about-fork-preview {
-    opacity: 0.86;
-    transform: none;
-  }
-
-  .about-fork-meta {
-    opacity: 0.46;
-    transform: none;
-  }
-}
-
-/* ============================================================
-   章节列里的「当前分组」与重选入口
-   ============================================================ */
-.about-chapter-group {
-  margin-top: 10px;
-  font-family: 'MiSans', -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
-  font-size: clamp(12px, 0.95vw, 14px);
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: var(--home-navy, #073F73);
-  opacity: 0.72;
-}
-
-.about-chapter-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: clamp(12px, 1.8vh, 20px);
-  padding: 2px 0;
-  background: none;
-  border: 0;
-  border-bottom: 1px solid rgba(7, 63, 115, 0.16);
-  font-family: "DM Mono", "SF Mono", monospace;
-  font-size: clamp(9.5px, 0.72vw, 11px);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: rgba(7, 63, 115, 0.45);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: color 0.22s ease, border-color 0.22s ease, transform 0.22s ease;
-}
-
-.about-chapter-switch:hover,
-.about-chapter-switch:focus-visible {
-  color: var(--home-navy, #073F73);
-  border-color: rgba(7, 63, 115, 0.42);
-  transform: translateY(1px);
-}
-
-/* ============================================================
-   ≤768px：章节列在上面那条既有规则里已改成横向一行，
-   这里把新增的「当前组名 + 重选入口」一起收回行内排布。
-   5 个元素（02 / 短线 / 英文组标 / 组名 / SWITCH）一行挤不下时允许换行，
-   否则会被 .about-section-viewport 的 overflow:hidden 直接裁掉。
-
-   ⚠️ 必须写在这两条基础规则之后：同为单类选择器、媒体查询不提供额外权重，
-   只能靠书写顺序取胜（文件靠前的 768 断点会被后面的基础规则反超）。
-   ============================================================ */
-@media (max-width: 768px) {
-  .about-chapter-column {
-    flex-wrap: wrap;
-    row-gap: 8px;
-  }
-
-  .about-chapter-group,
-  .about-chapter-switch {
-    margin-top: 0;
-  }
-
-  .about-chapter-switch {
-    white-space: normal;
-  }
-}
-
-/* ============================================================
-   窄屏：行内改为竖排（编号 → 组名/组标 → 方向 → 人数 + 箭头），
-   两条改由内容撑开，不再按比例分配高度
-   （触屏没有 hover，高度互换不会触发，信息本来就常显）
-   ============================================================ */
-@media (max-width: 900px) {
-  /* 两行改由内容撑开，不再按比例分配高度
-     （bottom 一旦保留，内容会被拉满整屏，矮屏下第二行会掉出视口） */
-  .about-fork-halves {
-    left: clamp(18px, 5vw, 40px);
-    right: clamp(18px, 5vw, 40px);
-    top: clamp(140px, 19vh, 200px);
-    bottom: auto;
-    height: auto;
-  }
-
-  /* 窄屏不再争夺高度：两行各按内容排布，flex-grow 归零 */
-  .about-fork-half--left,
-  .about-fork-half--right,
-  .about-fork-half[data-hovered='true'],
-  .about-fork-half[data-dimmed='true'] {
-    flex: 0 0 auto;
-  }
-
-  /* 三列改回竖排：编号 → 组名/组标 → 方向 → 人数 + 箭头 */
-  .about-fork-half {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    gap: clamp(8px, 2vw, 14px);
-    min-height: clamp(150px, 20vh, 190px);
-    padding: clamp(20px, 5vw, 30px) clamp(18px, 4.5vw, 28px);
-  }
-
-  .about-fork-cell {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: clamp(8px, 2vw, 14px);
-  }
-
-  .about-fork-index {
-    width: auto;
-    font-size: clamp(12px, 3.6vw, 16px);
-  }
-
-  .about-fork-name {
-    font-size: clamp(26px, 7.4vw, 40px);
-  }
-
-  /* 人数与箭头在行底摊开：人数贴左、箭头贴右（不再用绝对定位） */
-  .about-fork-info {
-    width: 100%;
-    justify-content: space-between;
-    gap: clamp(12px, 3vw, 20px);
-  }
-
-  .about-fork-preview {
-    font-size: clamp(12.5px, 3.4vw, 15px);
-    white-space: normal;
-    /* 窄屏常显（触屏、行内三列已改上下堆叠） */
-    opacity: 0.86;
-    transform: none;
-  }
-
-  .about-fork-meta {
-    opacity: 0.62;
-    transform: none;
-  }
-}
-
-/* ============================================================
-   矮屏（笔记本横屏）：行内字号降一档
-   ------------------------------------------------------------
-   两条高度是比例分配的，屏太矮时收拢的那条会不够放「组名 + 组标」，
-   这里把名字降一档，保证收拢状态也读得清。
-   ============================================================ */
-@media (max-height: 720px) and (min-width: 901px) {
-  /* 块高被压到 200 上下，组名再降一档，收拢的那条也放得下 */
-  .about-fork-name {
-    font-size: clamp(20px, 2.1vw, 29px);
-  }
-}
-
-/* ============================================================
    无障碍 (prefers-reduced-motion)
    ------------------------------------------------------------
-   只把过渡时长归零：悬浮反转依旧是瞬时状态切换，不产生位移或模糊。
-   （组件内的 Framer Motion 入场时长已在 JS 侧一并归零）
+   只把过渡时长归零：切换组依旧是瞬时的状态变化，不产生位移或模糊。
+   （组件内的 Framer Motion 时长已在 JS 侧一并归零）
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  .about-fork-half,
-  .about-fork-fill,
-  .about-fork-index,
-  .about-fork-cell,
-  .about-fork-nameblock,
-  .about-fork-name,
-  .about-fork-en,
-  .about-fork-info,
-  .about-fork-preview,
-  .about-fork-meta,
-  .about-fork-arrow,
-  .about-chapter-switch {
+  .about-group-tab,
+  .about-group-indicator {
     transition: none !important;
   }
 }
-
-
-
