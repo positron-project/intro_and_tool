@@ -53,6 +53,19 @@ const PARALLAX_RANGE = 4.5
 const DOT_RADIUS_BASE = 1.15
 const DOT_RADIUS_JITTER = 0.2
 
+/*
+ * 边缘软化参数。
+ * 源图边缘本来带着抗锯齿的覆盖率，但硬阈值会把它压成 0/1，斜边于是成为台阶。
+ * 改成按网格单元的平均覆盖率取一段斜坡：覆盖率 ≤ LO 完全不画，≥ HI 按满强度画，
+ * 中间线性过渡，并把过渡区颗粒的半径与不透明度一起收窄，
+ * 让边界读起来是渐隐而不是切断。LO 取 0.2 是因为硬阈值 85 只对应约 33% 覆盖率，
+ * 等于刚过三成就在满强度落点，斜边被向外撑出一圈。
+ */
+const COVERAGE_LO = 0.2
+const COVERAGE_HI = 0.62
+const EDGE_RADIUS_MIN = 0.62
+const EDGE_ALPHA_MIN = 0.35
+
 const DOT_BASE_COLORS: Array<[number, number, number, number]> = [
   [7, 63, 115, 0.86], // 品牌学术深蓝
   [14, 116, 144, 0.88], // 湖蓝
@@ -129,17 +142,26 @@ export function DotMatrixHeroVisual() {
 
     for (let y = 0; y < logoSize; y += step) {
       for (let x = 0; x < logoSize; x += step) {
-        const px = Math.floor(x)
-        const py = Math.floor(y)
-        const index = (py * imgData.width + px) * 4
+        // 取整个网格单元的平均覆盖率，而不是单元格左上角那一个像素：
+        // step 不是整数，单像素取样会让相位逐行漂移，把斜边切成参差的毛刺。
+        const xEnd = Math.min(logoSize, Math.floor(x + step))
+        const yEnd = Math.min(logoSize, Math.floor(y + step))
+        let coverageSum = 0
+        let coverageCount = 0
+        for (let sy = Math.floor(y); sy < yEnd; sy += 1) {
+          for (let sx = Math.floor(x); sx < xEnd; sx += 1) {
+            const si = (sy * imgData.width + sx) * 4
+            coverageSum +=
+              (data[si] * 0.299 + data[si + 1] * 0.587 + data[si + 2] * 0.114) *
+              (data[si + 3] / 255)
+            coverageCount += 1
+          }
+        }
 
-        const r = data[index]
-        const g = data[index + 1]
-        const b = data[index + 2]
-        const a = data[index + 3]
-
-        const brightness = (r * 0.299 + g * 0.587 + b * 0.114) * (a / 255)
-        if (brightness > 85) {
+        // coverage：0 = 完全在形状外，1 = 完全在形状内；k 是软化后的边缘强度
+        const coverage = coverageCount > 0 ? coverageSum / coverageCount / 255 : 0
+        const k = clamp((coverage - COVERAGE_LO) / (COVERAGE_HI - COVERAGE_LO), 0, 1)
+        if (k > 0) {
           const originX = offsetX + x
           const originY = offsetY + y
           const normX = x / logoSize
@@ -160,8 +182,13 @@ export function DotMatrixHeroVisual() {
             y: originY,
             vx: 0,
             vy: 0,
-            radius: DOT_RADIUS_BASE + Math.random() * DOT_RADIUS_JITTER,
-            baseColor: `rgba(${cr}, ${cg}, ${cb}, ${ca})`,
+            // 半径与不透明度都随 k 收窄：边界上的颗粒更小更淡，读起来是渐隐而非切断
+            radius:
+              (DOT_RADIUS_BASE + Math.random() * DOT_RADIUS_JITTER * k) *
+              (EDGE_RADIUS_MIN + (1 - EDGE_RADIUS_MIN) * k),
+            baseColor: `rgba(${cr}, ${cg}, ${cb}, ${(
+              ca * (EDGE_ALPHA_MIN + (1 - EDGE_ALPHA_MIN) * k)
+            ).toFixed(3)})`,
             normX,
             normY,
           })
@@ -215,7 +242,9 @@ export function DotMatrixHeroVisual() {
       currentW = Math.max(rect.width, 320)
       currentH = Math.max(rect.height, 320)
 
-      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      // 半径约 1px 的小圆在 1× 屏（含 Windows 125% 缩放）上只有 1× 的落笔精度，
+      // 颗粒自身也发毛。把下限提到 2 让浏览器缩采样，代价只是填充面积 ×4。
+      const dpr = Math.min(Math.max(window.devicePixelRatio || 1, 2), 3)
       canvas.width = currentW * dpr
       canvas.height = currentH * dpr
       canvas.style.width = `${currentW}px`

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -107,6 +107,7 @@ import { TurnstileWidget } from './components/turnstile-widget'
 import { HomeLanding } from './components/home/HomeLanding'
 import { SiteHeader } from './components/home/SiteHeader'
 import { AboutSection } from './components/home/AboutSection'
+import type { AboutGroupId } from './components/home/about-groups'
 import { OfferSection } from './components/home/OfferSection'
 import { PicksSection } from './components/home/PicksSection'
 import { BlogSection } from './components/home/BlogSection'
@@ -2113,16 +2114,38 @@ const STORY_SECTIONS: StorySection[] = [
   { id: 'story-join', label: '06 / 加入我们' },
 ]
 
+/* 跳转手感：时长随距离自适应（不再是固定 1.2s），缓动换成无“前冲”的 easeInOutCubic */
+const JUMP_MIN_DURATION = 0.55
+const JUMP_MAX_DURATION = 1.3
+const JUMP_EASING = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+const getJumpDuration = (distance: number) =>
+  Math.min(JUMP_MAX_DURATION, Math.max(JUMP_MIN_DURATION, 0.45 + distance / 5200))
+
+/* 首屏滚动热路径：各区段 memo 化，配合稳定的回调身份，
+   让 isPastTrigger / activeIndex 翻转时只重渲染真正需要的那一块 */
+const MemoSiteHeader = memo(SiteHeader)
+const MemoHomeLanding = memo(HomeLanding)
+const MemoAboutSection = memo(AboutSection)
+const MemoOfferSection = memo(OfferSection)
+const MemoPicksSection = memo(PicksSection)
+const MemoBlogSection = memo(BlogSection)
+const MemoJoinSection = memo(JoinSection)
+
 function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [isPastTrigger, setIsPastTrigger] = useState(false)
+  /* 02 里选定的分组；为空表示还没选过 —— 03 之后的内容区整块不出场 */
+  const [aboutGroup, setAboutGroup] = useState<AboutGroupId | null>(null)
   const heroFrameRef = useRef<HTMLDivElement | null>(null)
   const lenisRef = useRef<Lenis | null>(null)
+  /* 阈值状态存在 ref 里：只有真正翻转时才 setState，避免每帧都排一次 React 更新 */
+  const pastTriggerRef = useRef(false)
 
   useEffect(() => {
     const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      /* 滚轮/触摸走 lerp 模式：由输入驱动、松手自然衰减（lenis 默认 0.1，0.08–0.12 为常用区间）；
+         跳转动画不走这里，改由 scrollToSection 按距离传入 duration/easing */
+      lerp: 0.1,
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
@@ -2140,7 +2163,8 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
     }
     rafId = requestAnimationFrame(raf)
 
-    lenis.on('scroll', ({ scroll }: { scroll: number }) => {
+    /* Lenis 滚动与原生滚动共用一个入口，不再各自 setState 一次 */
+    const applyScrollState = (scroll: number) => {
       const vh = window.innerHeight || 800
       const frame = heroFrameRef.current
       if (frame) {
@@ -2154,20 +2178,32 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
         }
       }
 
-      // 用户要求：滚动屏幕约 35% 到 40% 后继续，02 入场居中悬念大字淡出，02 页面元素分步登场
-      const triggerThreshold = vh * 0.38
-      setIsPastTrigger(scroll >= triggerThreshold)
-    })
-
-    const handleNativeScroll = () => {
-      const vh = window.innerHeight || 800
-      const triggerThreshold = vh * 0.38
-      setIsPastTrigger(window.scrollY >= triggerThreshold)
+      // 用户要求：从头屏下滑、滚动过半屏（50%）后再继续，02 入场居中悬念大字淡出，02 页面元素分步登场
+      // （原为 38%：切换来得太早，2026-10-05 调大到 50%）
+      const next = scroll >= vh * 0.5
+      if (next !== pastTriggerRef.current) {
+        pastTriggerRef.current = next
+        setIsPastTrigger(next)
+      }
     }
+
+    lenis.on('scroll', ({ scroll }: { scroll: number }) => applyScrollState(scroll))
+
+    const handleNativeScroll = () => applyScrollState(window.scrollY)
     window.addEventListener('scroll', handleNativeScroll, { passive: true })
+
+    /* 挂载时同步一次（兜底）：刷新、前进/后退、滚动恢复等情况下，
+       页面挂载时就可能已经停在 50vh 之下，而此后不会再有 scroll 事件 ——
+       阈值永远不翻转，02 会停在 idle 不播入场。
+       深链 #/story-* 另有下面 350ms 的 hash 定位兜底，这里补的是"本来就在下面"的情况。
+       applyScrollState 内部只在真正翻转时才 setState，重复调用幂等。 */
+    applyScrollState(window.scrollY)
+    /* 浏览器的滚动恢复可能发生在挂载之后，故下一帧再补判一次 */
+    const syncRaf = requestAnimationFrame(() => applyScrollState(window.scrollY))
 
     return () => {
       cancelAnimationFrame(rafId)
+      cancelAnimationFrame(syncRaf)
       window.removeEventListener('scroll', handleNativeScroll)
       lenis.destroy()
       delete (window as any).__lenis
@@ -2212,7 +2248,7 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
     }
   }, [])
 
-  const scrollToSection = (target: number | string) => {
+  const scrollToSection = useCallback((target: number | string) => {
     let targetId = ''
     if (typeof target === 'number') {
       targetId = STORY_SECTIONS[target]?.id ?? ''
@@ -2221,9 +2257,10 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
     }
     if (!targetId) return
     const lenis = lenisRef.current
+    const currentScroll = window.scrollY
     if (targetId === 'story-hero') {
       if (lenis) {
-        lenis.scrollTo(0, { duration: 1.2 })
+        lenis.scrollTo(0, { duration: getJumpDuration(currentScroll), easing: JUMP_EASING })
       } else {
         window.scrollTo({ top: 0, behavior: 'smooth' })
       }
@@ -2231,61 +2268,84 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
     }
     const targetElement = document.getElementById(targetId)
     if (targetElement) {
+      const targetScroll = targetElement.getBoundingClientRect().top + currentScroll - 70
+      const distance = Math.abs(targetScroll - currentScroll)
       if (lenis) {
-        lenis.scrollTo(targetElement, { offset: -70, duration: 1.2 })
+        lenis.scrollTo(targetElement, {
+          offset: -70,
+          duration: getJumpDuration(distance),
+          easing: JUMP_EASING,
+        })
       } else {
         targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
     }
-  }
+  }, [])
+
+  /* 稳定的回调身份：memo 化的区段不会因为父组件重渲染而被连带重渲染 */
+  const handleHeaderScrollToSection = useCallback((sectionIndex: number) => scrollToSection(sectionIndex), [scrollToSection])
+  const handleHeroScrollDown = useCallback(() => scrollToSection('story-about'), [scrollToSection])
+  const handleNextOffer = useCallback(() => scrollToSection('story-offer'), [scrollToSection])
+  const handleNextPicks = useCallback(() => scrollToSection('story-picks'), [scrollToSection])
+  const handleNextBlog = useCallback(() => scrollToSection('story-blog'), [scrollToSection])
+  const handleNextJoin = useCallback(() => scrollToSection('story-join'), [scrollToSection])
+  const handleJoinScrollToTop = useCallback(() => scrollToSection('story-hero'), [scrollToSection])
+  const handleJoinScrollToSection = useCallback((sectionId: string) => scrollToSection(sectionId), [scrollToSection])
+  /* 稳定身份：MemoAboutSection 不会因父组件重渲染而重建 */
+  const handleAboutGroupSelected = useCallback((groupId: AboutGroupId) => setAboutGroup(groupId), [])
 
   return (
     <div className="home-story-scroll" data-active-screen={activeIndex}>
       {/* 顶部全局悬浮导航 */}
-      <SiteHeader
-        onNavigate={onNavigate}
-        onScrollToSection={(sectionId) => scrollToSection(sectionId)}
+      <MemoSiteHeader
+        onScrollToSection={handleHeaderScrollToSection}
       />
 
       <div className="hero-sticky-container">
         <div ref={heroFrameRef} className="hero-sticky-frame">
-          <HomeLanding
-            onScrollDown={() => scrollToSection('story-about')}
+          <MemoHomeLanding
+            onScrollDown={handleHeroScrollDown}
           />
         </div>
       </div>
 
       {/* 02 / ABOUT US (项目组介绍) */}
-      <AboutSection
+      <MemoAboutSection
         onNavigate={onNavigate}
-        onNextSection={() => scrollToSection('story-offer')}
+        onNextSection={handleNextOffer}
         isPastTrigger={isPastTrigger}
+        onGroupSelected={handleAboutGroupSelected}
       />
 
-      {/* 03 / WHAT WE OFFER (我们可以给你带来什么) */}
-      <OfferSection
-        onNavigate={onNavigate}
-        onNextSection={() => scrollToSection('story-picks')}
-      />
+      {/* 03 之后的内容区：在 02 里选定分组之后才出场（未选时整块不挂载，含 06 与页脚） */}
+      {aboutGroup && (
+        <>
+          {/* 03 / WHAT WE OFFER (我们可以给你带来什么) */}
+          <MemoOfferSection
+            onNavigate={onNavigate}
+            onNextSection={handleNextPicks}
+          />
 
-      {/* 04 / OUR PICKS (小组力荐) */}
-      <PicksSection
-        onNavigate={onNavigate}
-        onNextSection={() => scrollToSection('story-blog')}
-      />
+          {/* 04 / OUR PICKS (小组力荐) */}
+          <MemoPicksSection
+            onNavigate={onNavigate}
+            onNextSection={handleNextBlog}
+          />
 
-      {/* 05 / BLOG (小组博客 · 最近文章) */}
-      <BlogSection
-        onNavigate={onNavigate}
-        onNextSection={() => scrollToSection('story-join')}
-      />
+          {/* 05 / BLOG (小组博客 · 最近文章) */}
+          <MemoBlogSection
+            onNavigate={onNavigate}
+            onNextSection={handleNextJoin}
+          />
 
-      {/* 06 / JOIN US (加入我们 & 整站一体化 Footer) */}
-      <JoinSection
-        onNavigate={onNavigate}
-        onScrollToTop={() => scrollToSection('story-hero')}
-        onScrollToSection={(sectionId) => scrollToSection(sectionId)}
-      />
+          {/* 06 / JOIN US (加入我们 & 整站一体化 Footer)：连同页脚一起关在门内 */}
+          <MemoJoinSection
+            onNavigate={onNavigate}
+            onScrollToTop={handleJoinScrollToTop}
+            onScrollToSection={handleJoinScrollToSection}
+          />
+        </>
+      )}
     </div>
   )
 }

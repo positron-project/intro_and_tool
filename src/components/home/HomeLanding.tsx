@@ -35,8 +35,6 @@ export function HomeLanding({
         <HeroSection />
       </div>
 
-
-
       {/* 左下方 Scroll Down 指示器 */}
       <ScrollIndicator onClick={onScrollDown} />
     </section>

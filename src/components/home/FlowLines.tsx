@@ -109,11 +109,7 @@ export function FlowLines() {
         <circle cx="850" cy="425" r="4.5" fill="#FAF8F2" stroke="#8FC7D9" strokeWidth="1.4" />
 
         {/* Line 2 上的细小菱形/方块 */}
-        <motion.rect
-          width="5"
-          height="5"
-          fill="#8FC7D9"
-          transform="rotate(45)"
+        <motion.g
           animate={{
             x: [380, 1300],
             y: [760, 440],
@@ -124,7 +120,14 @@ export function FlowLines() {
             ease: 'linear',
             delay: 3,
           }}
-        />
+        >
+          <rect
+            width="5"
+            height="5"
+            fill="#8FC7D9"
+            transform="rotate(45 2.5 2.5)"
+          />
+        </motion.g>
 
         {/* Line 2 上的静态小圆点 */}
         <circle cx="580" cy="690" r="2.5" fill="#8FC7D9" />

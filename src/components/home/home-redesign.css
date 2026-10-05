@@ -75,11 +75,11 @@
   position: relative;
 }
 
-/* 左侧 Logo 与名称 */
+/* 左侧 Logo：圆形标记 + 院校名/小组名上下排布 */
 .site-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: clamp(10px, 0.9vw, 14px);
   cursor: pointer;
   text-decoration: none;
   transition: opacity 0.2s ease;
@@ -90,19 +90,54 @@
   opacity: 0.86;
 }
 
-.site-brand-symbol {
-  font-family: "DM Mono", "SF Mono", monospace;
-  font-size: clamp(20px, 1.8vw, 24px);
-  font-weight: 800;
-  color: var(--home-navy);
-  letter-spacing: -0.04em;
+/* 圆形平滑标记（矢量，已改为站内深海军蓝） */
+.site-brand-mark {
+  display: block;
+  height: clamp(48px, 4vw, 58px);
+  width: auto;
+  flex: none;
+  -webkit-user-drag: none;
+}
+
+/* 右侧文字区块：院校名（上）— 细线 — 小组名（下） */
+.site-brand-lockup {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(3px, 0.5vh, 5px);
+}
+
+.site-brand-college {
+  display: block;
+  height: clamp(15px, 1.05vw, 17.5px);
+  width: auto;
+  opacity: 0.88;
+  -webkit-user-drag: none;
+}
+
+/* 两行之间的简洁分隔：1px 深蓝渐隐细线 */
+.site-brand-rule {
+  display: block;
+  height: 1px;
+  width: 100%;
+  border-radius: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(7, 63, 115, 0.46) 0%,
+    rgba(7, 63, 115, 0.24) 52%,
+    rgba(7, 63, 115, 0.06) 100%
+  );
 }
 
 .site-brand-name {
-  font-size: clamp(16px, 1.25vw, 18px);
+  align-self: flex-start;
+  font-size: clamp(13.5px, 0.92vw, 15px);
   font-weight: 700;
   color: var(--home-navy);
-  letter-spacing: -0.01em;
+  letter-spacing: 0.1em;
+  margin-right: -0.1em;
+  line-height: 1.15;
+  white-space: nowrap;
 }
 
 /* 中间主要导航项 */
@@ -660,6 +695,22 @@
   .home-hero-viewport {
     height: 100svh;
     min-height: 600px;
+  }
+
+  /* 窄屏品牌区整体缩一档，避免与汉堡按钮互相挤压 */
+  .site-brand {
+    gap: 9px;
+  }
+  .site-brand-mark {
+    height: 42px;
+  }
+  .site-brand-college {
+    height: 12.5px;
+  }
+  .site-brand-name {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    margin-right: -0.08em;
   }
 
   .hero-content-stage {

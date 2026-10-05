@@ -24,6 +24,20 @@ export function BlogSection({ onNavigate, onNextSection }: BlogSectionProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  // 抽屉打开时锁定 body 滚动并暂停 Lenis，防止背景页面穿透联动
+  useEffect(() => {
+    if (selectedPost) {
+      const originalOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      const lenis = (window as unknown as { __lenis?: { stop: () => void; start: () => void } }).__lenis
+      lenis?.stop?.()
+      return () => {
+        document.body.style.overflow = originalOverflow
+        lenis?.start?.()
+      }
+    }
+  }, [selectedPost])
+
   // 4 篇真实文章
   const featuredPost = blogPosts[0]
   const secondPost = blogPosts[1]
@@ -330,6 +344,7 @@ export function BlogSection({ onNavigate, onNextSection }: BlogSectionProps) {
               role="dialog"
               aria-modal="true"
               aria-labelledby="drawer-title"
+              data-lenis-prevent
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
@@ -352,7 +367,7 @@ export function BlogSection({ onNavigate, onNextSection }: BlogSectionProps) {
               </div>
 
               {/* 抽屉文章主体 */}
-              <div className="drawer-content-scroll">
+              <div className="drawer-content-scroll" data-lenis-prevent>
                 <header className="drawer-article-header">
                   <h1 id="drawer-title" className="drawer-title">
                     {selectedPost.title}
