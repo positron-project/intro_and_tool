@@ -37,8 +37,8 @@ export function HeroSection({ onJoinClick, onToolsClick }: HeroSectionProps) {
         transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
       >
         <h1 className="hero-main-title">
-          <span className="hero-title-line">让知识</span>
-          <span className="hero-title-line">持续发生</span>
+          <span className="hero-title-line">学点技术</span>
+          <span className="hero-title-line">做点东西</span>
         </h1>
       </motion.div>
 
@@ -102,12 +102,12 @@ export function HeroSection({ onJoinClick, onToolsClick }: HeroSectionProps) {
         <div className="hero-stat-divider" aria-hidden="true" />
         <div className="hero-stat-item">
           <span className="hero-stat-number">5届</span>
-          <span className="hero-stat-label">传承沉淀</span>
+          <span className="hero-stat-label">从没断过</span>
         </div>
         <div className="hero-stat-divider" aria-hidden="true" />
         <div className="hero-stat-item">
           <span className="hero-stat-number">60+</span>
-          <span className="hero-stat-label">沉淀项目</span>
+          <span className="hero-stat-label">项目存档</span>
         </div>
       </motion.div>
     </div>

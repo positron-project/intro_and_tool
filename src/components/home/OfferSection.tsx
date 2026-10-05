@@ -19,26 +19,26 @@ const OFFER_ROWS: OfferRow[] = [
   {
     index: '01',
     enTag: 'ENVIRONMENT & SPACE',
-    headline: '专属实验室 · 随时自习，不受打扰',
+    headline: '实验楼有间自己的屋子，没课就能来',
     description:
-      '我们在实验楼有一间属于自己的实验室。你可以随时过来安静自习、专心做项目，不怕外部打扰；也可以叫上组员一起讨论交流、动手开发。',
-    chips: ['INDEPENDENT LAB', 'QUIET STUDY', 'TEAM WORK'],
+      '我们在实验楼有一间自己的屋子，没课的时候可以过来写代码、自习，或者叫上组员一起讨论。平时【待补：实验室的开放时间】。',
+    chips: ['LAB', 'STUDY', 'TEAMWORK'],
   },
   {
     index: '02',
     enTag: 'PROJECT & CREATIVITY',
-    headline: '动手做项目 · 只要你有想法，大家都会响应',
+    headline: '有想法就说出来，一般会有人一起做',
     description:
-      '组里有很多经验丰富又热爱技术的伙伴。如果你想做项目，只要把点子提出来，大家都会积极响应，陪你一起把想法落地变成真实作品。',
-    chips: ['IDEA TO LAUNCH', 'HANDS-ON', 'PEER SUPPORT'],
+      '组里有人做前端、后端，也有人管部署和测试。你想做什么，在群里说一声，通常会有几个人感兴趣，一起做出来。',
+    chips: ['IDEA', 'BUILD', 'ASK AROUND'],
   },
   {
     index: '03',
     enTag: 'COMPETITION & CAREER',
-    headline: '组队打比赛 · 实战拿奖，为简历锦上添花',
+    headline: '组队打比赛，练手顺便攒简历',
     description:
-      '我们会不定期组织大家组队参加各类比赛。和队友一起实战练手、积累经验；在比赛中收获成果与奖项，让你的个人简历更加出彩。',
-    chips: ['TEAM CONTESTS', 'AWARDS', 'RESUME BOOST'],
+      '比赛的消息一般发在群里，想去的自己组队。赛前会一起看点往年的题，赛后把踩过的坑记下来。获奖情况【待补：近年比赛与名次】。',
+    chips: ['CONTESTS', 'PRACTICE', 'RESUME'],
   },
 ]
 
@@ -62,7 +62,7 @@ export function OfferSection({ onNavigate, onNextSection }: OfferSectionProps) {
     <section
       id="story-offer"
       className="offer-section-viewport"
-      aria-label="03 · 我们可以给你带来什么"
+      aria-label="03 · 能带来什么"
     >
       {/* ============================================================
           Layer 1 & 2: 背景工程蓝图层 (坐标网格、超大背景字、坐标十字标)
@@ -127,9 +127,9 @@ export function OfferSection({ onNavigate, onNextSection }: OfferSectionProps) {
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.7, delay: 0.1, ease: easeCurve }}
             >
-              我们可以
+              来了以后
               <br />
-              给你带来什么？
+              能得到什么？
             </motion.h2>
 
             <motion.div
@@ -159,7 +159,7 @@ export function OfferSection({ onNavigate, onNextSection }: OfferSectionProps) {
           transition={{ duration: 0.7, delay: 0.18, ease: easeCurve }}
         >
           <div className="offer-focal-quote">
-            <span>「学到的，要有地方去。」</span>
+            <span>学了的东西，得有地方用。</span>
             <span className="offer-focal-tag">● CONTINUUM</span>
           </div>
         </motion.div>
@@ -211,7 +211,7 @@ export function OfferSection({ onNavigate, onNextSection }: OfferSectionProps) {
               type="button"
               className="offer-footer-target"
               onClick={onNextSection}
-              aria-label="前往 04 小组力荐"
+              aria-label="前往 04 小组推荐"
             >
               <span>04 OUR PICKS · WHAT WE&apos;RE BUILDING &amp; USING</span>
               <ArrowDown size={14} className="offer-footer-arrow" />

@@ -64,7 +64,7 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
     <section
       id="story-picks"
       className="picks-section-viewport"
-      aria-label="04 · 小组力荐"
+      aria-label="04 · 小组推荐"
     >
       {/* ============================================================
           Layer 1 & 2: 背景工程蓝图层 (延续 03 坐标网格、轨迹虚线与超大水印)
@@ -125,7 +125,7 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.7, delay: 0.08, ease: easeCurve }}
             >
-              小组力荐
+              小组推荐
             </motion.h2>
 
             <motion.p
@@ -135,9 +135,9 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.7, delay: 0.16, ease: easeCurve }}
             >
-              一些我们正在维护，
+              一些我们在维护，
               <br />
-              也真正会用到的东西。
+              自己也一直在用的东西。
             </motion.p>
           </div>
         </div>
@@ -221,8 +221,8 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
                 <h3 className="sketch-item-title">属于小组自己的世界</h3>
 
                 <p className="sketch-item-desc">
-                  在写代码之外，这里也是大家一起建造、探索，
-                  以及单纯放松的地方。
+                  写代码写累了，可以上去盖房子、挖矿，
+                  或者随便走走。
                 </p>
 
                 {/* 蓝图式规格元信息 */}
@@ -335,7 +335,7 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
           <div className="inter-line" />
           <div className="inter-badge">
             <span className="inter-dot" />
-            <span>FROM PLAY TO UTILITY</span>
+            <span>FROM SERVER TO TOOLS</span>
             <span className="inter-dot" />
           </div>
           <div className="inter-line" />
@@ -417,9 +417,8 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
                 <p className="sketch-item-sub">把常用的小东西，放在一个地方。</p>
 
                 <p className="sketch-item-desc">
-                  我们把学习、开发和日常使用中
-                  经常需要的小工具整理到了一起。
-                  减少重复操作，也让一些事情简单一点。
+                  把平时学习和开发时常用的小工具
+                  放在一起，省得每次到处找。
                 </p>
 
                 {/* 蓝图式规格元信息 */}
@@ -523,7 +522,7 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
             type="button"
             className="picks-next-hint"
             onClick={onNextSection}
-            aria-label="向下滑动至博客"
+            aria-label="向下滑动至小组博客"
           >
             <span className="picks-hint-num">05</span>
             <span className="picks-hint-title">BLOG // LATEST ARTICLES</span>

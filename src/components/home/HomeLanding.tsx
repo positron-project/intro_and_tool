@@ -18,7 +18,7 @@ export function HomeLanding({
   onNavigate,
 }: HomeLandingProps) {
   return (
-    <section id="story-hero" className="home-hero-viewport" aria-label="计算机小组 · 品牌首页">
+    <section id="story-hero" className="home-hero-viewport" aria-label="01 · 首页">
       {/* Layer 1: 暖白背景色（由 .home-hero-viewport 样式提供） */}
 
       {/* Layer 2: 建筑线稿背景 */}

@@ -16,8 +16,8 @@ interface SiteHeaderProps {
 const DEFAULT_SECTIONS: StorySectionItem[] = [
   { id: 'story-hero', label: '01 / 首页' },
   { id: 'story-about', label: '02 / 关于我们' },
-  { id: 'story-offer', label: '03 / 带来什么' },
-  { id: 'story-picks', label: '04 / 小组力荐' },
+  { id: 'story-offer', label: '03 / 能带来什么' },
+  { id: 'story-picks', label: '04 / 小组推荐' },
   { id: 'story-blog', label: '05 / 小组博客' },
   { id: 'story-join', label: '06 / 加入我们' },
 ]

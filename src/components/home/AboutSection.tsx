@@ -147,7 +147,7 @@ export function AboutSection({
       className="about-section-viewport"
       /* 已经没有「悬念字 / 选择器 / 内容」三段式了，固定为 content */
       data-entrance-state="content"
-      aria-label={`02 · 我们是谁 · ${group.name}`}
+      aria-label={`02 · 关于我们 · ${group.name}`}
     >
       {/* ============================================================
           Layer 1 & 2: 背景装饰层 (坐标网格、建筑线稿底纹、延续轨迹线、超大水印)
@@ -394,7 +394,7 @@ export function AboutSection({
               onNavigate('#story-offer')
             }
           }}
-          aria-label="继续向下浏览：03 / 我们能提供什么"
+          aria-label="继续向下浏览：03 / 能带来什么"
         >
           <span className="about-footer-preview-num">03</span>
           <span className="about-footer-preview-label">WHAT WE OFFER</span>

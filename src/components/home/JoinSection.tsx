@@ -204,19 +204,19 @@ export function JoinSection({
               </h2>
 
               <p className="join-lead-copy">
-                如果你也喜欢技术，
+                如果你想学点技术，
                 <br />
-                愿意学习、分享，
+                想找人一起做东西，
                 <br />
-                或者只是想把一个想法真正做出来，
+                或者有个想法一直放着，
                 <br />
-                欢迎来和我们一起。
+                都可以来群里看看。
               </p>
 
               <div className="join-threshold-note">
                 <span className="threshold-prefix">—</span>
                 <p className="threshold-text">
-                  无论你刚开始学习，还是已经有自己的方向，都欢迎来认识我们。
+                  刚开始学也行，已经有方向也行，先来认识一下。
                 </p>
               </div>
             </motion.div>
@@ -290,7 +290,7 @@ export function JoinSection({
                   {qrCodeSrc ? (
                     <img
                       src={qrCodeSrc}
-                      alt="计算机小组项目组 QQ 群二维码"
+                      alt="科技小组项目组 QQ 群二维码"
                       className="blueprint-qr-image"
                     />
                   ) : (
@@ -379,14 +379,14 @@ export function JoinSection({
           {/* 左侧：品牌与组织定位 */}
           <div className="footer-brand-col">
             <div className="footer-brand-header">
-              <span className="footer-brand-title">计算机小组 · 项目组</span>
-              <span className="footer-brand-en">COMPUTER GROUP // PROJECT TEAM</span>
+              <span className="footer-brand-title">计算机科技小组</span>
+              <span className="footer-brand-en">COMPUTER SCIENCE &amp; TECHNOLOGY GROUP</span>
             </div>
             <p className="footer-brand-school">
               南昌航空大学科技学院 · 计算机科技小组
             </p>
             <p className="footer-brand-motto">
-              学习 · 实践 · 传承 — 让每一届的知识都留下来。
+              做过的东西都留着，下一届接着用。
             </p>
           </div>
 
@@ -422,7 +422,7 @@ export function JoinSection({
                   handleNavClick('story-offer', '#/home')
                 }}
               >
-                带来什么
+                能带来什么
               </a>
               <a
                 href="#story-picks"
@@ -432,7 +432,7 @@ export function JoinSection({
                   handleNavClick('story-picks', '#/home')
                 }}
               >
-                小组力荐
+                小组推荐
               </a>
               <a
                 href="#story-blog"
