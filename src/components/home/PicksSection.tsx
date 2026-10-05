@@ -272,40 +272,60 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
                       onNavigate?.('#/projects')
                     }}
                   >
-                    <span>查看服务器介绍</span>
-                    <ArrowRight size={14} className="sketch-link-arrow" />
+                    <span>在项目库中查看介绍</span>
+                    <ArrowRight size={14} className="sketch-link-arrow" aria-hidden="true" />
                   </a>
                 </div>
               </div>
             </div>
 
-            {/* 右侧分栏：视频/图片手绘取景框占位视窗 (移除无意义的 tabIndex，避免干扰键盘导航) */}
+            {/* 右侧分栏：Minecraft 实景展示视窗（保留展示设备外壳与播放器外观，装饰符号不冒充假按钮） */}
             <div className="sketch-card-right">
-              <div className="sketch-media-viewport" aria-label="Minecraft 服务器实景占位视窗">
+              <div className="sketch-media-viewport sketch-media-viewport-minecraft" aria-label="Minecraft 服务器实景展示视窗">
                 {/* 顶部工程图纸取景框栏 */}
                 <div className="sketch-viewport-topbar">
-                  <div className="viewport-status-dot" />
+                  <div className="viewport-status-dot" aria-hidden="true" />
                   <span className="viewport-code-label">VIEWPORT // MC_SURVIVAL_FRAME_01.RAW</span>
                   <span className="viewport-dim-label">16:9 REC</span>
                 </div>
 
-                {/* 画面中央手绘占位构图 */}
+                {/* 画面中央手绘体素工程构图 */}
                 <div className="sketch-viewport-stage">
                   {/* 对焦准星标与十字网格 */}
-                  <div className="viewport-crosshairs top-left" />
-                  <div className="viewport-crosshairs top-right" />
-                  <div className="viewport-crosshairs bottom-left" />
-                  <div className="viewport-crosshairs bottom-right" />
-                  <div className="viewport-center-target" />
+                  <div className="viewport-crosshairs top-left" aria-hidden="true" />
+                  <div className="viewport-crosshairs top-right" aria-hidden="true" />
+                  <div className="viewport-crosshairs bottom-left" aria-hidden="true" />
+                  <div className="viewport-crosshairs bottom-right" aria-hidden="true" />
+                  <div className="viewport-center-target" aria-hidden="true" />
 
-                  {/* 占位中心徽标与说明 */}
-                  <div className="viewport-placeholder-content">
-                    <div className="viewport-play-indicator">
+                  {/* Minecraft 专属体素地形等高线拓扑背景 */}
+                  <div className="mc-voxel-telemetry" aria-hidden="true">
+                    <svg className="mc-topology-svg" viewBox="0 0 400 240" fill="none">
+                      <g stroke="#073F73" strokeWidth="0.8" opacity="0.28" strokeDasharray="3 3">
+                        <path d="M40 180 L120 140 L200 160 L280 110 L360 130" />
+                        <path d="M40 140 L120 100 L200 120 L280 70 L360 90" />
+                        <path d="M40 100 L120 60 L200 80 L280 30 L360 50" />
+                      </g>
+                      <g fill="#9FD1DE" opacity="0.6">
+                        <circle cx="120" cy="100" r="2.5" />
+                        <circle cx="200" cy="120" r="2.5" />
+                        <circle cx="280" cy="70" r="2.5" />
+                      </g>
+                    </svg>
+                    <div className="mc-coords-hud">
+                      <span>POS: X:1240 Y:64 Z:-380</span>
+                      <span>BIOME: CAMPUS_PLAINS</span>
+                    </div>
+                  </div>
+
+                  {/* 视窗播放器外观中心图腾（仅作为构图，不使用按钮语义，不进入 Tab 顺序） */}
+                  <div className="viewport-placeholder-content" aria-hidden="true">
+                    <div className="viewport-play-indicator" aria-hidden="true">
                       <Play size={24} strokeWidth={1.4} className="viewport-play-icon" />
                     </div>
-                    <span className="viewport-placeholder-title">MEDIA PLACEHOLDER</span>
+                    <span className="viewport-placeholder-title">SURVIVAL WORLD VIEWPORT</span>
                     <span className="viewport-placeholder-desc">
-                      [ MINECRAFT IN-GAME SCREENSHOT / VIDEO ]
+                      [ MINECRAFT IN-GAME SCREENSHOT / VIDEO PREVIEW ]
                     </span>
                     <span className="viewport-placeholder-spec">
                       1920 × 1080 · ARCHITECTURAL CAPTURE
@@ -313,7 +333,7 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
                   </div>
 
                   {/* 融入全站色系的浅青蓝/米白淡透蒙版 */}
-                  <div className="viewport-color-veil" />
+                  <div className="viewport-color-veil" aria-hidden="true" />
                 </div>
 
                 {/* 底部参数刻度栏 */}
@@ -321,7 +341,7 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
                   <span>SCALE: 1.0</span>
                   <span>GRID: 16PX VOXEL</span>
                   <span>FPS: SYNC</span>
-                  <Maximize2 size={12} className="viewport-expand-icon" />
+                  <Maximize2 size={12} className="viewport-expand-icon" aria-hidden="true" />
                 </div>
               </div>
             </div>
@@ -441,72 +461,101 @@ export function PicksSection({ onNavigate, onNextSection }: PicksSectionProps) {
                     className="sketch-text-link"
                     onClick={() => onNavigate?.('#/tools')}
                   >
-                    <span>打开工具页</span>
-                    <ArrowRight size={14} className="sketch-link-arrow" />
+                    <span>打开工作台</span>
+                    <ArrowRight size={14} className="sketch-link-arrow" aria-hidden="true" />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* 右侧分栏：视频/图片手绘取景框占位视窗 (移除无意义的 tabIndex) */}
+            {/* 右侧分栏：工作台实用工具视窗（专属界面蓝图布局，展示工具生态矩阵） */}
             <div className="sketch-card-right">
-              <div className="sketch-media-viewport" aria-label="小组工具页实景占位视窗">
+              <div className="sketch-media-viewport sketch-media-viewport-tools" aria-label="小组工作台实用工具展示视窗">
                 {/* 顶部工程图纸取景框栏 */}
                 <div className="sketch-viewport-topbar">
-                  <div className="viewport-status-dot" />
-                  <span className="viewport-code-label">VIEWPORT // TOOLS_INTERFACE_FRAME_02.RAW</span>
-                  <span className="viewport-dim-label">16:9 UI</span>
+                  <div className="viewport-status-dot tools-dot" aria-hidden="true" />
+                  <span className="viewport-code-label">VIEWPORT // WORKBENCH_SUITE_FRAME_02.RAW</span>
+                  <span className="viewport-dim-label">CONSOLE UI</span>
                 </div>
 
-                {/* 画面中央手绘占位构图 */}
+                {/* 画面中央专属技术工作台界面结构排版 */}
                 <div className="sketch-viewport-stage">
                   {/* 对焦准星标与十字网格 */}
-                  <div className="viewport-crosshairs top-left" />
-                  <div className="viewport-crosshairs top-right" />
-                  <div className="viewport-crosshairs bottom-left" />
-                  <div className="viewport-crosshairs bottom-right" />
-                  <div className="viewport-center-target" />
+                  <div className="viewport-crosshairs top-left" aria-hidden="true" />
+                  <div className="viewport-crosshairs top-right" aria-hidden="true" />
+                  <div className="viewport-crosshairs bottom-left" aria-hidden="true" />
+                  <div className="viewport-crosshairs bottom-right" aria-hidden="true" />
 
-                  {/* 错位技术界面框架底纹 (模拟 2~3 个精细窗口拼贴) */}
-                  <div className="tools-wireframe-collage" aria-hidden="true">
-                    <div className="wireframe-window-back" />
-                    <div className="wireframe-window-front">
-                      <div className="wireframe-row">
-                        <span className="wireframe-pill" />
-                        <span className="wireframe-line w-40" />
-                        <span className="wireframe-line w-20" />
+                  {/* 工作台专属界面拼贴与微型工具卡片线框 */}
+                  <div className="workbench-telemetry-suite" aria-hidden="true">
+                    {/* 模拟顶栏控制台指令流 */}
+                    <div className="workbench-cli-stream">
+                      <span className="cli-prompt">&gt;_</span>
+                      <span className="cli-command">nchu-workbench --status active</span>
+                      <span className="cli-badge">READY</span>
+                    </div>
+
+                    {/* 3 列实用工具微型模块蓝图 */}
+                    <div className="workbench-modules-grid">
+                      <div className="workbench-module-box">
+                        <div className="module-box-header">
+                          <span className="module-box-dot" />
+                          <span className="module-box-code">01. FORMATTER</span>
+                        </div>
+                        <div className="module-box-lines">
+                          <span className="m-line w-80" />
+                          <span className="m-line w-50" />
+                        </div>
                       </div>
-                      <div className="wireframe-row">
-                        <span className="wireframe-line w-60" />
-                        <span className="wireframe-line w-30" />
+
+                      <div className="workbench-module-box">
+                        <div className="module-box-header">
+                          <span className="module-box-dot" />
+                          <span className="module-box-code">02. NETWORK</span>
+                        </div>
+                        <div className="module-box-lines">
+                          <span className="m-line w-60" />
+                          <span className="m-line w-70" />
+                        </div>
+                      </div>
+
+                      <div className="workbench-module-box">
+                        <div className="module-box-header">
+                          <span className="module-box-dot" />
+                          <span className="module-box-code">03. ACADEMIC</span>
+                        </div>
+                        <div className="module-box-lines">
+                          <span className="m-line w-90" />
+                          <span className="m-line w-40" />
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* 占位中心徽标与说明 */}
-                  <div className="viewport-placeholder-content">
-                    <div className="viewport-play-indicator">
+                  {/* 视窗播放器外观中心图腾（仅作为构图展示设备，不冒充可点击按钮） */}
+                  <div className="viewport-placeholder-content" aria-hidden="true">
+                    <div className="viewport-play-indicator" aria-hidden="true">
                       <Play size={24} strokeWidth={1.4} className="viewport-play-icon" />
                     </div>
-                    <span className="viewport-placeholder-title">MEDIA PLACEHOLDER</span>
+                    <span className="viewport-placeholder-title">WORKBENCH CONSOLE VIEWPORT</span>
                     <span className="viewport-placeholder-desc">
-                      [ TOOLS UI SCREENSHOT / DEMO VIDEO ]
+                      [ UTILITIES SUITE &amp; DEVELOPER TOOLBOX ]
                     </span>
                     <span className="viewport-placeholder-spec">
-                      1920 × 1080 · PRODUCT SHOWCASE
+                      1920 × 1080 · INTERFACE SHOWCASE
                     </span>
                   </div>
 
                   {/* 融入全站色系的浅青蓝/米白淡透蒙版 */}
-                  <div className="viewport-color-veil" />
+                  <div className="viewport-color-veil" aria-hidden="true" />
                 </div>
 
                 {/* 底部参数刻度栏 */}
                 <div className="sketch-viewport-footer">
                   <span>LAYOUT: COMPACT</span>
                   <span>ROUTE: #/TOOLS</span>
-                  <span>THEME: WARM NAVY</span>
-                  <Maximize2 size={12} className="viewport-expand-icon" />
+                  <span>SUITE: 12+ UTILITIES</span>
+                  <Maximize2 size={12} className="viewport-expand-icon" aria-hidden="true" />
                 </div>
               </div>
             </div>

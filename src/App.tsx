@@ -2158,10 +2158,12 @@ function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }
       const vh = window.innerHeight || 800
       const frame = heroFrameRef.current
       if (frame) {
-        if (scroll <= vh * 1.3) {
-          const progress = Math.min(1, Math.max(0, scroll / vh))
-          frame.style.transform = `translate3d(0, ${scroll * 0.18}px, 0) scale(${1 - progress * 0.02})`
-          frame.style.opacity = String(1 - progress * 0.4)
+        if (scroll <= vh * 1.4) {
+          // 在 0 ~ 0.6vh 保持高清晰度可读，0.6vh ~ 1.3vh 平滑视差淡出离场
+          const exitProgress = Math.min(1, Math.max(0, (scroll - vh * 0.6) / (vh * 0.7)))
+          const scaleProgress = Math.min(1, Math.max(0, scroll / (vh * 1.2)))
+          frame.style.transform = `translate3d(0, ${scroll * 0.16}px, 0) scale(${1 - scaleProgress * 0.03})`
+          frame.style.opacity = String(Math.max(0, 1 - exitProgress))
           frame.style.visibility = 'visible'
         } else {
           frame.style.visibility = 'hidden'

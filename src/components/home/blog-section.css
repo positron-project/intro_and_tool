@@ -885,8 +885,16 @@
     padding: 80px 0 44px;
   }
 
+  /* 移动端保留巨型水印：有意裁切局部，严禁简单隐藏或横向溢出 */
   .blog-watermark {
-    display: none;
+    display: block;
+    font-size: clamp(96px, 26vw, 160px);
+    right: -8vw;
+    bottom: 4vh;
+    -webkit-text-stroke: 1.2px rgba(7, 63, 115, 0.035);
+    opacity: 0.85;
+    pointer-events: none;
+    user-select: none;
   }
 
   .blog-colophon-mark {

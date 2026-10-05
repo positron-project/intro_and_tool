@@ -83,7 +83,7 @@ export function HeroSection({ onJoinClick, onToolsClick }: HeroSectionProps) {
           className="hero-btn-secondary"
           onClick={handleTools}
         >
-          <span>进入工具站</span>
+          <span>打开工作台</span>
           <span className="hero-btn-arrow" aria-hidden="true">→</span>
         </a>
       </motion.div>

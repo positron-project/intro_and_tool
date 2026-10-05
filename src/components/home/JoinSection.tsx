@@ -454,6 +454,43 @@ export function JoinSection({
               >
                 加入我们
               </a>
+              <span className="footer-nav-divider" aria-hidden="true">/</span>
+              <a
+                href="#/projects"
+                className="footer-nav-link"
+                onClick={(e) => {
+                  if (onNavigate) {
+                    e.preventDefault()
+                    onNavigate('#/projects')
+                  }
+                }}
+              >
+                浏览项目库
+              </a>
+              <a
+                href="#/resources"
+                className="footer-nav-link"
+                onClick={(e) => {
+                  if (onNavigate) {
+                    e.preventDefault()
+                    onNavigate('#/resources')
+                  }
+                }}
+              >
+                浏览资源库
+              </a>
+              <a
+                href="#/tools"
+                className="footer-nav-link"
+                onClick={(e) => {
+                  if (onNavigate) {
+                    e.preventDefault()
+                    onNavigate('#/tools')
+                  }
+                }}
+              >
+                工作台
+              </a>
             </nav>
           </div>
 

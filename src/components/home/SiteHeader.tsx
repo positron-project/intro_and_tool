@@ -116,7 +116,7 @@ export function SiteHeader({
               }
             }}
           >
-            <span>进入工具站</span>
+            <span>进入工作台</span>
             <span className="site-tools-arrow" aria-hidden="true">→</span>
           </a>
 
@@ -159,7 +159,7 @@ export function SiteHeader({
                   }
                 }}
               >
-                进入工具站 →
+                进入工作台 →
               </a>
             </div>
           </div>

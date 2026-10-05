@@ -710,6 +710,14 @@
   outline-offset: 4px;
 }
 
+.footer-nav-divider {
+  color: var(--home-navy, #073F73);
+  opacity: 0.3;
+  user-select: none;
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+}
+
 /* 右侧：真实外部连接 */
 .footer-connect-list {
   display: flex;

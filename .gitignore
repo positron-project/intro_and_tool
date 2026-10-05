@@ -5,3 +5,8 @@ dist/
 
 # CodeGraph 本地数据库与临时文件
 .codegraph/
+
+# 临时与备份目录
+backups/
+viz/
+.workbuddy/

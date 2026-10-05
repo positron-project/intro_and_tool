@@ -643,8 +643,16 @@
     display: none;
   }
 
+  /* 移动端保留巨型水印：有意裁切局部，严禁简单隐藏或横向溢出 */
   .about-bg-watermark {
-    display: none; /* 移动端隐藏巨大 ABOUT 背景字，保证清爽 */
+    display: block;
+    font-size: clamp(96px, 26vw, 160px);
+    right: -8vw;
+    top: 6vh;
+    -webkit-text-stroke: 1.2px rgba(7, 63, 115, 0.038);
+    opacity: 0.85;
+    pointer-events: none;
+    user-select: none;
   }
 
   .about-sketch-svg {
