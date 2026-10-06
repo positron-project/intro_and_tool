@@ -5,6 +5,8 @@
 
 现有 `api-contract-v1.md` 和 `openapi.yaml` 保留基础内容接口；本文补齐管理后台实际需要的组织结构、成员、照片、主题、审计和比赛届次项目接口。浏览器只访问 Node.js Gateway，Java Core 是业务数据与权限的唯一写入方。
 
+当前工作区的 FastAPI 只实现认证、账号状态和邀请码子集；真实缺口与源码核对结果见 [`implementation-gap-analysis.md`](./implementation-gap-analysis.md)。
+
 ## 1. 环境与统一约定
 
 前端生产配置：
@@ -272,9 +274,11 @@ DELETE /api/{resource}/{id}
 
 项目额外字段：`slug`、`githubUrl`、`docsUrl`、`demoUrl`、`issueUrl`、`coverAssetId`、`milestones`、`logs`、`memberIds`、`joinEnabled`。
 
+内容分类接口：`GET /api/categories?resource=projects|resources|interviews`、`POST /api/categories`、`PATCH /api/categories/{categoryId}`、`DELETE /api/categories/{categoryId}`。分类字段为 `resource`、`key`、`label`、`description`、`accent`、`icon`、`order`、`enabled`、`builtIn`。Java Core 负责按内容模块隔离、唯一标识校验、排序和权限；修改 `key` 时必须在事务内迁移对应的项目、资源或面经记录，内置分类只能停用，仍有内容使用的分类不能直接删除。
+
 资源额外字段：`category`、`type`、`tags`、`author`、`views`、`assetId`。
 
-面经额外字段：`company`、`role`、`author`、`cohortId`、`date`、`difficulty`、`rounds`、`tags`、`summary`。
+面经额外字段：`company`、`role`、`author`、`cohortId`、`category`、`date`、`difficulty`、`rounds`、`tags`、`summary`。
 
 公告额外字段：`category`、`title`、`detail`、`scope`、`published`、`publishAt`、`isTop`。
 
@@ -302,7 +306,11 @@ PATCH  /api/competitions/{competitionId}/cohort-projects/{itemId}
 DELETE /api/competitions/{competitionId}/cohort-projects/{itemId}
 ```
 
-关联项目字段：`cohortId`、`title`、`description`、`imageAssetId`、`projectUrl`、`sortOrder`。
+往届项目字段：`cohort`、可选 `cohortId`、`title`、`description`、`imageUrl`、`imageAssetId`、`projectUrl`、`sortOrder`。
+
+比赛详情响应内包含 `projects` 数组。赛事创建、编辑、删除和往届项目维护只允许组长；普通读取按 `lifecycle` 和 `visibility` 过滤。提醒接口要求登录，按用户和赛事保存开关；该设置目前只记录偏好，不发送邮件或站内推送。
+
+已存在的 `competitions` 表需要先执行 `backend/OS_club/migrations/20260928_extend_competitions.sql`，再运行 `init_db.py` 创建往届项目表和提醒表。全新数据库只需运行 `init_db.py`。
 
 ## 8. 站点设置与个人偏好
 
@@ -342,14 +350,16 @@ GET    /api/uploads/files/{assetId}/{fileName}
 
 图片建议限制 `jpg/jpeg/png/webp`，单文件不超过 `10MB`，头像不超过 `5MB`。Node 负责上传适配，生产存储使用 MinIO/S3。
 
-审计日志：
+操作日志（当前记录关键成功操作，不记录普通页面访问或失败请求）：
 
 ```text
-GET /api/admin/audit-logs?page=&pageSize=&actorId=&action=&resourceType=&from=&to=
-GET /api/admin/audit-logs/{logId}
+GET    /api/admin/audit-logs?page=&pageSize=&actorId=&action=&resourceType=&from=&to=
+GET    /api/admin/audit-logs/{logId}
+DELETE /api/admin/audit-logs/{logId}
+DELETE /api/admin/audit-logs
 ```
 
-每个后台写操作至少记录：操作者、动作、资源类型、资源 ID、变更前后摘要、IP、请求 ID、时间。
+组长和管理员可以直接删除单条日志或清空全部日志；删除不可恢复，删除操作本身不会另外写入日志。操作日志表不需要回收站字段或额外迁移。当前记录字段：操作者 ID/姓名、动作、资源类型、资源 ID、对象名称、结果和发生时间。已接入公告操作、投稿审核、邀请码生命周期、账号状态和全站外观设置；密码、验证码、Token 和邀请码明文不会写入日志。IP、请求 ID、变更前后内容摘要及其他普通内容编辑暂未纳入。
 
 ## 10. AI 接口
 

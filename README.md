@@ -41,7 +41,7 @@ npm run build:standalone
 
 ## 后端接口预留
 
-页面通过 `src/services/content.service.ts` 和 `src/services/api-client.ts` 读取内容，默认使用 Mock 数据；配置 `VITE_API_BASE_URL` 后即可切换到真实 API。学习路线、项目库、资源库、面经墙和比赛中心均已预留列表、新增、编辑、删除接口，登录、权限和文件上传也有独立服务边界。
+页面通过 `src/services/content.service.ts` 和 `src/services/api-client.ts` 读取内容。`VITE_CONTENT_SOURCE=api` 时只显示后端真实数据，接口不可用会显示错误或空状态，不会静默回退到演示目录；只有明确设置 `VITE_CONTENT_SOURCE=mock` 时才启用浏览器本地演示数据。学习路线、项目库、资源库、面经墙和比赛中心均已预留列表、新增、编辑、删除接口，登录、权限和文件上传也有独立服务边界。
 
 环境变量示例见 [.env.example](./.env.example)，三端职责见 [docs/backend-architecture.md](./docs/backend-architecture.md)，开发任务见 [docs/backend-tasks.md](./docs/backend-tasks.md)，Node.js/Java/Python 具体开发文档见 [docs/backend-nodejs.md](./docs/backend-nodejs.md)、[docs/backend-java.md](./docs/backend-java.md)、[docs/backend-python.md](./docs/backend-python.md)，接口路径、字段和角色规则见 [docs/api-contract-v1.md](./docs/api-contract-v1.md)，也可直接导入 [docs/openapi.yaml](./docs/openapi.yaml) 到 Swagger/Insomnia。
 

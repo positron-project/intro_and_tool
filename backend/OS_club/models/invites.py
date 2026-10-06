@@ -40,6 +40,17 @@ class InviteCode(Base):
         nullable=False,
     )
 
+    # 兑换后写入成员所属届次和方向，便于自动归组。
+    cohort: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+    )
+
+    direction: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
     # 邀请码失效时间
     expires_at: Mapped[datetime] = mapped_column(
         DateTime,

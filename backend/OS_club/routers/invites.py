@@ -5,12 +5,13 @@
 """
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.db_conf import get_database
 from crud.invites import (
     create_invite_code as create_invite_code_record,
+    delete_invite_code as delete_invite_code_record,
     list_invite_codes as list_invite_code_records,
     revoke_invite_code as revoke_invite_code_record,
 )
@@ -81,7 +82,10 @@ async def create_invite(
         expires_at=expires_at,
         max_uses=invite_data.max_uses,
         created_by=current_admin.id,
+        created_by_name=current_admin.nickname or current_admin.username,
         role=invite_data.role,
+        cohort=invite_data.cohort,
+        direction=invite_data.direction,
     )
 
 
@@ -103,6 +107,8 @@ async def revoke_invite(
     invite_code = await revoke_invite_code_record(
         db=db,
         invite_id=invite_id,
+        actor_id=current_admin.id,
+        actor_name=current_admin.nickname or current_admin.username,
     )
 
     if invite_code is None:
@@ -112,3 +118,40 @@ async def revoke_invite(
         )
 
     return invite_code
+
+
+@router.delete(
+    "/{invite_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_invite(
+    invite_id: int,
+    current_admin: User = Depends(require_leader_or_admin),
+    db: AsyncSession = Depends(get_database),
+):
+    """
+    永久删除已经失效的邀请码。
+
+    有效邀请码需要先调用撤销接口，撤销后才允许清理记录。
+    """
+
+    try:
+        deleted = await delete_invite_code_record(
+            db=db,
+            invite_id=invite_id,
+            actor_id=current_admin.id,
+            actor_name=current_admin.nickname or current_admin.username,
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error),
+        ) from error
+
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="邀请码不存在",
+        )
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

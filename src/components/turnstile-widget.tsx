@@ -27,7 +27,7 @@ function loadTurnstile() {
   })
 }
 
-export function TurnstileWidget({ value, onChange }: { value: string; onChange: (token: string) => void }) {
+export function TurnstileWidget({ value, onChange, allowFallback = true }: { value: string; onChange: (token: string) => void; allowFallback?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<string | undefined>(undefined)
   const [scriptError, setScriptError] = useState(false)
@@ -50,6 +50,7 @@ export function TurnstileWidget({ value, onChange }: { value: string; onChange: 
     return () => { cancelled = true }
   }, [onChange, siteKey])
 
-  if (!siteKey) return <button type="button" className={`turnstile-fallback ${value ? 'verified' : ''}`} onClick={() => onChange(value ? '' : 'demo-turnstile-token')}><span className="turnstile-check" aria-hidden="true">{value ? '✓' : ''}</span><span>{value ? '验证码已通过（本地测试）' : '点击完成验证码校验'}</span><small>配置 VITE_TURNSTILE_SITE_KEY 后启用 Cloudflare Turnstile</small></button>
+  if (!siteKey && allowFallback) return <button type="button" className={`turnstile-fallback ${value ? 'verified' : ''}`} onClick={() => onChange(value ? '' : 'demo-turnstile-token')}><span className="turnstile-check" aria-hidden="true">{value ? '✓' : ''}</span><span>{value ? '验证码已通过（本地测试）' : '点击完成验证码校验'}</span><small>配置 VITE_TURNSTILE_SITE_KEY 后启用 Cloudflare Turnstile</small></button>
+  if (!siteKey) return <div className="turnstile-fallback turnstile-unconfigured" role="status"><span className="turnstile-check" aria-hidden="true">!</span><span>暂未配置 Cloudflare Turnstile</span><small>API 模式需要配置 VITE_TURNSTILE_SITE_KEY 后才能登录或注册</small></div>
   return <div className="turnstile-wrap"><div ref={containerRef} />{scriptError && <small className="turnstile-error">验证码加载失败，请刷新后重试。</small>}</div>
 }

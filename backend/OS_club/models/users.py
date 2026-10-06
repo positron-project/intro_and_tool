@@ -49,8 +49,9 @@ class User(Base):
     # 用户角色：
     # Member      普通成员
     # Contributor 组员
+    # CohortLeader 届次负责人，只管理所负责届次
     # Leader      组长
-    # Admin       管理员
+    # Admin       旧版组长别名，保留用于兼容已有账号
     role: Mapped[str] = mapped_column(  #判断用户能访问和管理什么内容。
         String(20),
         default="Member",
@@ -73,6 +74,12 @@ class User(Base):
     # 刚注册但还没有分配届次时允许为空。
     cohort: Mapped[str | None] = mapped_column(     #判断用户属于哪一届，方便管理员按届次管理。
         String(20),
+        nullable=True,
+    )
+
+    # 所属方向，例如“算法组”“项目组”“网安组”。
+    direction: Mapped[str | None] = mapped_column(
+        String(50),
         nullable=True,
     )
 
