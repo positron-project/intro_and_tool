@@ -17,6 +17,37 @@ class LoginRequest(BaseModel): #前端提交邮箱和密码
         max_length=128,
     )
 
+    turnstile_token: str = Field(alias="turnstileToken", min_length=1)
+
+    remember_me: bool = Field(default=True, alias="rememberMe")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class EmailCodeSendRequest(BaseModel):
+    email: EmailStr
+    turnstile_token: str = Field(alias="turnstileToken", min_length=1)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class LoginCodeRequest(BaseModel):
+    email: EmailStr
+    verification_code: str = Field(
+        alias="verificationCode",
+        pattern=r"^[0-9]{6}$",
+    )
+    turnstile_token: str = Field(alias="turnstileToken", min_length=1)
+    remember_me: bool = Field(default=True, alias="rememberMe")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class RegistrationCodeResult(BaseModel):
+    expires_in_seconds: int = Field(alias="expiresInSeconds")
+
+    model_config = ConfigDict(populate_by_name=True)
+
 
 class LoginResponse(BaseModel): #后端返回 Token 和用户信息
     access_token: str = Field(

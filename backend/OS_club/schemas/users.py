@@ -41,10 +41,19 @@ class RegisterRequest(BaseModel):    #UserCreate：只用于接收注册数据�
 
     email: EmailStr #email：EmailStr 会检查邮箱格式；
 
+    verification_code: str = Field(
+        alias="verificationCode",
+        pattern=r"^[0-9]{6}$",
+    )
+
+    turnstile_token: str = Field(alias="turnstileToken", min_length=1)
+
     password: str = Field(  #password：接收用户输入的密码，长度限制为 8 到 128 个字符；
         min_length=8,
         max_length=128,
     )
+
+    model_config = ConfigDict(populate_by_name=True)
 
 """修改资料时接收昵称、头像、简介"""
 class ProfileUpdateRequest(UserInfoBase):
