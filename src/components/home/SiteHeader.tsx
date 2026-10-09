@@ -13,13 +13,14 @@ interface SiteHeaderProps {
   onNavigate?: (path: string) => void
 }
 
+/* 导航去掉「01 /」式编号：编号是给目录用的，读者在首屏只需要知道自己能去哪 */
 const DEFAULT_SECTIONS: StorySectionItem[] = [
-  { id: 'story-hero', label: '01 / 首页' },
-  { id: 'story-about', label: '02 / 关于我们' },
-  { id: 'story-offer', label: '03 / 能带来什么' },
-  { id: 'story-picks', label: '04 / 小组推荐' },
-  { id: 'story-blog', label: '05 / 小组博客' },
-  { id: 'story-join', label: '06 / 加入我们' },
+  { id: 'story-hero', label: '首页' },
+  { id: 'story-about', label: '关于我们' },
+  { id: 'story-offer', label: '能带来什么' },
+  { id: 'story-picks', label: '小组推荐' },
+  { id: 'story-blog', label: '小组博客' },
+  { id: 'story-join', label: '加入我们' },
 ]
 
 export function SiteHeader({
@@ -116,7 +117,7 @@ export function SiteHeader({
               }
             }}
           >
-            <span>进入工作台</span>
+            <span>工作台</span>
             <span className="site-tools-arrow" aria-hidden="true">→</span>
           </a>
 
@@ -159,7 +160,7 @@ export function SiteHeader({
                   }
                 }}
               >
-                进入工作台 →
+                工作台 →
               </a>
             </div>
           </div>

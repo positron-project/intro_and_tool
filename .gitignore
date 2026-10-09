@@ -10,3 +10,25 @@ dist/
 backups/
 viz/
 .workbuddy/
+
+# 本地环境
+.env
+.env.local
+
+# Python 后端（backend/OS_club）
+__pycache__/
+*.py[cod]
+backend/OS_club/.venv/
+backend/OS_club/uploads/
+backend/OS_club/*.log
+
+# 日志
+*.log
+
+# 编辑器原子写临时目录（Vite watcher 也在忽略它）
+*.tmpdir/
+
+# Playwright 产物
+playwright-report/
+test-results/
+e2e/.artifacts/

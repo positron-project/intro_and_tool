@@ -138,7 +138,7 @@ function routeFromMock(): LearningRoute {
   }
 }
 
-let mockLearningRoutes: LearningRoute[] = [routeFromMock()]
+const mockLearningRoutes: LearningRoute[] = [routeFromMock()]
 hydrateMockCollection(mockLearningRoutes, 'learningRoutes')
 if (!mockLearningRoutes.some((route) => route.id === 'pyagent')) mockLearningRoutes.unshift(routeFromMock())
 hydrateMockCollection(mockAnnouncements, 'announcements')

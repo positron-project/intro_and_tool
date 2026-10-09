@@ -1,0 +1,335 @@
+/* ============================================================
+   入口页首屏 · 方向 C「克制」
+   ------------------------------------------------------------
+   纯白画布 + 墨黑排版，整屏唯一的彩色是导航当前项下面那 2px 红线。
+   本文件在 home-redesign.css 之后加载，用同等特异性覆盖旧色板；
+   旧的暖白/浅蓝/网格装饰规则仍留在原文件里，其他区段还在用那些变量。
+
+   原则：不靠装饰靠留白——去掉辐射渐变、几何色块、流动线、点阵徽标，
+   只留右下角一处圆形裁切的校园线稿作配图。
+   ============================================================ */
+
+/* token 挂在入口页根节点上：顶部导航是首屏的兄弟节点，
+   若只把变量定义在 .home-hero-viewport 里，导航取不到值会回落到
+   styles.css:4846 给 .home-story-scroll 的暖棕色 #3b2c24。 */
+.home-story-scroll {
+  --poster-paper: #ffffff;
+  --poster-ink: #111111;
+  --poster-ink-2: #4a4a4a;
+  --poster-ink-3: #8a8a8a;
+  --poster-line: rgba(17, 17, 17, 0.12);
+  --poster-accent: #e8442a;
+}
+
+/* 首屏：暖白纸底 + 四层大地色光斑换成纯白；
+   .home-story-scroll 自己的暖色纸底留着不动，下面几个区段还在用它。 */
+.home-hero-viewport {
+  background-color: var(--poster-paper);
+  background-image: none;
+  color: var(--poster-ink);
+}
+
+/* ------------------------------------------------------------
+   顶部导航：去掉浮岛与实心胶囊，回到「一根细线 + 一个箭头」
+   ------------------------------------------------------------ */
+.site-header {
+  padding: 0 clamp(24px, 5vw, 76px);
+}
+
+.site-header.is-scrolled {
+  background: rgba(255, 255, 255, 0.86);
+  /* 用 box-shadow 画线而不是 border：切换时不会产生 1px 位移 */
+  box-shadow: 0 1px 0 var(--poster-line);
+}
+
+/* 品牌图形是深蓝色矢量，灰度化后与墨黑排版同调 */
+.site-brand-mark,
+.site-brand-college {
+  filter: grayscale(1) contrast(1.05);
+}
+
+.site-brand-name {
+  color: var(--poster-ink);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-right: -0.06em;
+}
+
+.site-brand-rule {
+  background: linear-gradient(90deg, rgba(17, 17, 17, 0.34), rgba(17, 17, 17, 0.12) 55%, rgba(17, 17, 17, 0.02));
+}
+
+.site-nav {
+  gap: clamp(18px, 2vw, 34px);
+}
+
+.site-nav-item {
+  color: var(--poster-ink);
+  opacity: 0.5;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding-bottom: 6px;
+}
+
+.site-nav-item:hover {
+  opacity: 0.8;
+  color: var(--poster-ink);
+}
+
+/* 当前项：不再换色，只加一条红线——整屏唯一的彩色 */
+.site-nav-item.is-active {
+  opacity: 1;
+  color: var(--poster-ink);
+  font-weight: 600;
+}
+
+.site-nav-item.is-active::after {
+  background: var(--poster-accent);
+  height: 2px;
+  left: 4px;
+  right: 4px;
+}
+
+/* 单一 CTA：文字 + 箭头，不要实心胶囊 */
+.site-tools-btn {
+  background: none;
+  color: var(--poster-ink);
+  border-radius: 0;
+  padding: 6px 0;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: none;
+}
+
+.site-tools-btn:hover {
+  background: none;
+  opacity: 0.72;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------
+   首屏文字：左列一块，标题大到能当图形看
+   ------------------------------------------------------------ */
+.hero-content-stage {
+  max-width: 54vw;
+}
+
+.hero-main-title {
+  color: var(--poster-ink);
+  font-size: clamp(76px, 8.6vw, 140px);
+  font-weight: 800;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+}
+
+.hero-subtitle-group {
+  margin-top: clamp(22px, 3vh, 36px);
+}
+
+.hero-sub-title {
+  color: var(--poster-ink);
+  font-size: clamp(22px, 1.9vw, 30px);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+
+
+.hero-value-desc {
+  color: var(--poster-ink-2);
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 34em;
+  margin-top: clamp(14px, 1.8vh, 22px);
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------
+   按钮：一个实心（加入我们）+ 一个安静的文字链
+   ------------------------------------------------------------ */
+.hero-cta-group {
+  gap: clamp(22px, 2.2vw, 32px);
+  align-items: center;
+}
+
+.hero-btn-primary {
+  background: var(--poster-ink);
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 11px 24px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: none;
+}
+
+.hero-btn-primary:hover {
+  background: #000000;
+  /* 克制版不加位移与阴影，只换底色 */
+  transform: none;
+  box-shadow: none;
+}
+
+.hero-btn-secondary {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--poster-line);
+  border-radius: 0;
+  color: var(--poster-ink-2);
+  padding: 8px 0;
+  font-weight: 500;
+}
+
+.hero-btn-secondary:hover {
+  background: none;
+  border-bottom-color: var(--poster-ink);
+  color: var(--poster-ink);
+}
+
+.hero-btn-secondary:hover .hero-btn-arrow {
+  transform: none;
+}
+
+/* 指标行已从 DOM 移除；这里只留一道保险，避免旧样式复活 */
+
+
+/* ------------------------------------------------------------
+   右下角唯一配图：圆形裁切的校园线稿
+   ------------------------------------------------------------ */
+.hero-corner-art {
+  position: absolute;
+  right: clamp(24px, 4.4vw, 76px);
+  bottom: clamp(28px, 6vh, 64px);
+  width: clamp(180px, 17vw, 250px);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--poster-line);
+  background: var(--poster-paper);
+  z-index: 50;
+  pointer-events: none;
+}
+
+.hero-corner-art .campus-visual-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-corner-art .campus-sketch-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* 线稿是 1440×900 位图，主体（图书馆 + 校训石）在中下部；
+   圆形窗口靠 object-position 取景，灰度化与墨黑排版同调 */
+.hero-corner-art .campus-sketch-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 44% 90%;
+  opacity: 1;
+  filter: grayscale(1) contrast(1.08);
+  /* 取景对准建筑与校训石：微微放大填满圆形，同时不把石刻上的字裁断 */
+  transform: scale(1.18);
+  transform-origin: 44% 90%;
+}
+
+/* ------------------------------------------------------------
+   向下提示：一条细线 + 一个词
+   ------------------------------------------------------------ */
+.scroll-indicator {
+  gap: 0;
+  color: var(--poster-ink-3);
+}
+
+.scroll-indicator:hover {
+  opacity: 0.7;
+}
+
+.scroll-mouse-icon {
+  display: none;
+}
+
+.scroll-stem-line {
+  width: 1px;
+  height: 44px;
+  background-color: var(--poster-line);
+}
+
+.scroll-stem-pulse {
+  background-color: var(--poster-ink);
+}
+
+.scroll-text {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: var(--poster-ink-3);
+  margin-top: 10px;
+}
+
+/* ------------------------------------------------------------
+   断点：本文件在旧样式之后加载，所以旧文件里的媒体查询不再生效，
+   凡是我改过的属性都在这里重新给一遍响应式值。
+   ------------------------------------------------------------ */
+@media (max-width: 1200px) {
+  .hero-main-title {
+    font-size: clamp(56px, 7.2vw, 92px);
+  }
+
+  .hero-corner-art {
+    width: clamp(160px, 20vw, 220px);
+  }
+}
+
+@media (max-width: 900px) {
+  .hero-content-stage {
+    max-width: 68vw;
+  }
+
+  .hero-corner-art {
+    width: clamp(140px, 26vw, 190px);
+    right: clamp(20px, 4vw, 40px);
+  }
+}
+
+@media (max-width: 600px) {
+  .hero-main-title {
+    font-size: clamp(38px, 11vw, 56px);
+    line-height: 1.04;
+  }
+
+  .hero-sub-title {
+    font-size: 19px;
+  }
+
+  .hero-value-desc {
+    font-size: 13.5px;
+    max-width: 30em;
+  }
+
+  .hero-cta-group {
+    gap: 16px;
+  }
+
+  .hero-corner-art {
+    width: clamp(110px, 32vw, 150px);
+    bottom: 20px;
+  }
+}
+
+@media (max-height: 680px) {
+  .hero-main-title {
+    font-size: clamp(34px, 7vw, 48px);
+  }
+
+  .hero-corner-art {
+    display: none;
+  }
+}

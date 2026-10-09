@@ -526,7 +526,7 @@ export interface CompetitionEvent extends ContentMeta {
 
 export interface BlogPost {
   id: string
-  category: '活动记录' | '技术文章' | '周报' | '获奖快讯'
+  category: '活动记录' | '技术文章' | '周报' | '比赛'
   title: string
   excerpt: string
   date: string

@@ -1,0 +1,53 @@
+/*
+ * Tailwind 骨架（v4，utility-only）
+ *
+ * 这里刻意**不导入 preflight**（tailwindcss/preflight.css）：
+ * 本站已有 8000+ 行手写样式（src/styles.css + 各页面 css）自带 reset 与基础排版，
+ * 引入 preflight 会重置按钮、标题、列表等元素样式并把旧页面打乱。
+ *
+ * utilities 放在 layer(utilities) 里 —— 未分层的既有 CSS 在层叠中优先于任何 @layer 规则，
+ * 所以即使出现同名类（例如 picks-section.css 里的 .m-line.w-80），旧样式依旧胜出。
+ *
+ * 用法：新页面可以直接写工具类；既有页面继续沿用手写类名。
+ */
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/*
+ * 用 @theme inline 把 styles.css 里已有的设计变量映射成 Tailwind token：
+ * 因为输出的是 var(--blue) 这类引用而不是硬编码色值，工具类会自动跟随
+ * html[data-theme='dark'] 的切换，不会出现"深色模式下工具类还是浅色"的问题。
+ */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-muted: var(--surface-muted);
+
+  --color-ink: var(--text);
+  --color-ink-2: var(--text-secondary);
+  --color-ink-3: var(--text-muted);
+
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+
+  --color-brand: var(--blue);
+  --color-brand-soft: var(--blue-soft);
+  --color-brand-deep: var(--blue-deep);
+  --color-mint: var(--mint);
+  --color-violet: var(--violet);
+  --color-orange: var(--orange);
+  --color-rose: var(--rose);
+
+  --font-sans: var(--sans);
+  --font-mono: var(--mono);
+
+  /*
+   * 刻意不映射 --radius-* 与 --shadow-*：Tailwind 的圆角/阴影 token 与本文件
+   * 用同名命名空间，写成 --radius-sm: var(--radius-sm) 会形成自引用循环，
+   * 反而把 styles.css 里 10px/14px/18px 的取值打坏。
+   * 需要圆角时写 rounded-[var(--radius-md)]，或直接沿用既有类名。
+   */
+}

@@ -7,10 +7,17 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:static": "npm run build && node scripts/prepare-static.mjs",
-    "build:standalone": "npm run build:static && node scripts/create-standalone.mjs",
+    "build:standalone": "tsc -b && vite build --mode standalone && node scripts/prepare-static.mjs && node scripts/create-standalone.mjs",
     "preview": "vite preview",
-    "codegraph:sync": "codegraph sync",
-    "codegraph:status": "codegraph status"
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "verify:standalone": "node scripts/verify-standalone.mjs"
   },
   "dependencies": {
     "framer-motion": "^12.23.12",
@@ -20,10 +27,24 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.4",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "jsdom": "^30.1.2",
+    "prettier": "^3.9.9",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.9.2",
-    "vite": "^7.1.5"
+    "typescript-eslint": "^8.71.1",
+    "vite": "^7.1.5",
+    "vitest": "^5.0.3"
   }
 }

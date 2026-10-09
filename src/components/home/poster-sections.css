@@ -1,0 +1,80 @@
+/* ============================================================
+   入口页 02–06 · 与首屏同一套「克制」语言的共用件
+   ------------------------------------------------------------
+   这里只放五节共用的原子件：小标（整节唯一的彩色是那条红杠）、
+   区段标题、正文、分隔线、下一节引导。
+   每节自己的留白与栅格仍在各自的 *-section.css 里调。
+
+   由 ExpandedHomePage 在五个区段之后导入，所以能覆盖旧规则；
+   凡是在这里改过的响应式属性，本文件末尾都重新给一遍断点
+   （旧文件里的媒体查询对本文件的声明不再生效）。
+   ============================================================ */
+
+.poster-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  text-transform: uppercase;
+  /* 眉标永远一行：窄列里宁可溢出，也不要折成「WHAT WE / OFFER」两行顶乱左对齐线 */
+  white-space: nowrap;
+  color: var(--poster-ink-3);
+}
+
+.poster-eyebrow::before {
+  content: '';
+  width: 18px;
+  height: 2px;
+  background: var(--poster-accent);
+}
+
+/* 不需要红杠的地方（例如卡片内部的小标） */
+.poster-eyebrow--plain::before {
+  display: none;
+}
+
+.poster-section-title {
+  color: var(--poster-ink);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.06;
+}
+
+
+
+
+
+/* 区段末尾「继续往下」的引导：一个词 + 一个箭头，不要编号 */
+.poster-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--poster-ink-2);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.poster-next:hover {
+  color: var(--poster-ink);
+}
+
+/* ------------------------------------------------------------
+   断点：本文件晚于各区段样式表加载
+   ------------------------------------------------------------ */
+@media (max-width: 900px) {
+  .poster-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+  }
+}

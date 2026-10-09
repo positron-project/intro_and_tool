@@ -1,46 +1,11 @@
-# Codebase exploration rules
+# 项目指令（Gemini CLI）
 
-## Code exploration
+本仓库的指令真源是 [AGENTS.md](./AGENTS.md)：命令表、目录地图、硬约束、代码约定、已知债务都在那里，开工前先读它。下面只补 Gemini CLI 侧的两条。
 
-Use CodeGraph as the primary tool for understanding the codebase.
+## 代码探索
 
-For questions involving:
-- symbol relationships
-- callers / callees
-- dependencies
-- request flows
-- change impact
-- locating implementations
-
-use CodeGraph before reading source files.
-
-When investigating the codebase:
-
-1. Search before reading.
-   Always use CodeGraph, grep_search, find_by_name, or symbol search
-   to locate relevant definitions and references before opening files.
-   - Use grep_search for exact string searches.
-   - Avoid using view_file for repository exploration.
-
-2. Never sequentially scan large files with view_file.
-
-3. After CodeGraph or search identifies the relevant symbols and files:
-   - For files larger than 300 lines, determine the approximate line range and read only the minimum source range necessary for the task.
-
-4. Prefer shell range extraction over view_file for large files.
-   Examples:
-   - Linux/macOS: `sed -n '120,200p' path/to/file`
-   - Use `grep_search` with line matching to locate line numbers
-
-5. Do not read an entire large file merely to understand its structure.
-   First inspect:
-   - imports
-   - class/function names
-   - references/call sites
-   - relevant symbols
-
-6. When enough context has been collected to make the requested change,
-   stop exploring unrelated files.
+1. 用本机真实存在的工具探索：`read`（支持 `:N-M` 行区间选择器）/ `grep` / `glob` / `bash`。不要指望 CodeGraph —— 本机没有该 CLI，仓库根的 `.codegraph/` 只是历史残留数据。
+2. 大文件先定位再读：先用 `grep` 拿到行号，再用 `read` 只读需要的那段；不要为了解结构把大文件整份顺序读一遍。
 
 ## Language
 

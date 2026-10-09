@@ -4,6 +4,16 @@ description: Guidance for distinctive, intentional visual design when building n
 license: Complete terms in LICENSE.txt
 ---
 
+## 本项目约定（Club OS · 先读这一段）
+
+本技能在本仓库的落地口径写在 `AGENTS.md` 的《设计工作流（入口页）》一节，动手前先读那一节。要点：
+
+- **范围**：只覆盖入口页 `#/home`（首屏 + 02–06 + 页脚）。`#/tools` 与业务页仍是旧视觉（暖纸 + 海军蓝 `#073f73`），不要顺手改。
+- **分级**：新视觉方向 / 新页面 / 整节改版 → 全套（先出 token 表 + 一张待确认的 `visualize` 卡片）；文案、间距、错字、bug → 只跑验收闸门。
+- **现行视觉语言**：纯白 `#ffffff` + 墨黑 `#111111` + 唯一红 `#e8442a`；`--poster-*` 变量定义在 `.home-story-scroll` 上（`src/components/home/hero-poster.css`），装饰性元素一律不加。
+- **验收**：`node scripts/snap-sections.mjs 1440x900`（必须 `errors: none`）+ 肉眼复核截图 + `pnpm lint && pnpm test && pnpm e2e`；断点只验 1440×900 一档。
+- **产物位置**：过程稿落 `viz/`（已 gitignore），定稿方向落 `design-demos/`，token 表落 `docs/homepage-design-style.md`。
+
 # Frontend Design
 
 Approach this as the design lead at a small studio known for giving every client a visual identity that could not be mistaken for anyone else's. This client has already rejected proposals that felt templated, and is paying for a distinctive point of view: make deliberate, opinionated choices about palette, typography, and layout that are specific to this brief, and take one real aesthetic risk you can justify.

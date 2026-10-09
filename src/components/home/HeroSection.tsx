@@ -42,7 +42,7 @@ export function HeroSection({ onJoinClick, onToolsClick }: HeroSectionProps) {
         </h1>
       </motion.div>
 
-      {/* 副标题与收尾短横线 */}
+      {/* 副标题 */}
       <motion.div
         className="hero-subtitle-group"
         initial={{ opacity: 0, y: 18 }}
@@ -50,17 +50,16 @@ export function HeroSection({ onJoinClick, onToolsClick }: HeroSectionProps) {
         transition={{ duration: 0.85, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="hero-sub-title">计算机科技小组</div>
-        <div className="hero-sub-rule" aria-hidden="true" />
       </motion.div>
 
-      {/* 核心价值说明 */}
+      {/* 一句话说明 */}
       <motion.p
         className="hero-value-desc"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.85, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
       >
-        南昌航空大学科技学院计算机科技小组：一起学技术、做项目，把经验传给下一届。
+        学技术、做项目，把经验传给下一届。
       </motion.p>
 
       {/* 行动按钮群 */}
@@ -88,28 +87,6 @@ export function HeroSection({ onJoinClick, onToolsClick }: HeroSectionProps) {
         </a>
       </motion.div>
 
-      {/* 事实数据指标 */}
-      <motion.div
-        className="hero-stats-row"
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.85, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <div className="hero-stat-item">
-          <span className="hero-stat-number">280+</span>
-          <span className="hero-stat-label">历届成员</span>
-        </div>
-        <div className="hero-stat-divider" aria-hidden="true" />
-        <div className="hero-stat-item">
-          <span className="hero-stat-number">5届</span>
-          <span className="hero-stat-label">从没断过</span>
-        </div>
-        <div className="hero-stat-divider" aria-hidden="true" />
-        <div className="hero-stat-item">
-          <span className="hero-stat-number">60+</span>
-          <span className="hero-stat-label">项目存档</span>
-        </div>
-      </motion.div>
     </div>
   )
 }
