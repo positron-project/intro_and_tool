@@ -42,7 +42,7 @@ async def create_login_token(
         )
     )
 
-    user_token = result.scalar_one_or_none()
+    user_token = result.scalar_one_or_none()        #查到就返回这条 ORM 对象，查不到就返回 None
 
     if user_token:
         user_token.token = token_value
@@ -61,7 +61,7 @@ async def create_login_token(
 
 
 
-async def authenticate_user( # 验证用户
+async def authenticate_user( # 验证用户 用于密码登入 验证通过就返回用户对象 验证失败就返回
     db: AsyncSession,
     email: str,
     password: str,
@@ -70,7 +70,7 @@ async def authenticate_user( # 验证用户
 
     user = await get_user_by_email(db, email)
 
-    if user is None:
+    if user is None:    #数据库里查不到这个邮箱，直接返回 `None`，验证失败
         return None
 
     if not verify_password(
@@ -83,7 +83,7 @@ async def authenticate_user( # 验证用户
 
 
 
-async def get_user_by_token(
+async def get_user_by_token( # 登入后的权限验证 比如去访问「个人资料」「修改信息」这类需要登录权限的接口
     db: AsyncSession,
     token: str,
 ) -> User | None:
@@ -119,7 +119,7 @@ async def get_user_by_token(
 
 
 
-async def revoke_login_token(
+async def revoke_login_token(   # 退出登录    从数据库中删除指定的令牌记录
     db: AsyncSession,
     token: str,
 ) -> bool:

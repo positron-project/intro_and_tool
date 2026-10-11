@@ -83,7 +83,7 @@ import { useContent } from './services/content.context'
 import { apiConfig } from './services/api-client'
 import { isCoreTeam, useClubConfig } from './services/club-config.context'
 import { askAssistant } from './services/ai.service'
-import { canAccessAdmin, canManageContent, canManageGlobalContent, canManageInvites, canViewContent, demoCredentials, demoOwnerCredentials, isDemoAuth, isLocalPasswordLoginBypass, listManagedAccounts, updateManagedAccountRole, updateManagedAccountStatus } from './services/auth.service'
+import { canAccessAdmin, canManageContent, canManageGlobalContent, canManageInvites, canViewContent, demoCredentials, demoOwnerCredentials, isDemoAuth, listManagedAccounts, updateManagedAccountRole, updateManagedAccountStatus } from './services/auth.service'
 import { createInviteCode, deleteInviteCode, listInviteCodes, revokeInviteCode } from './services/invite.service'
 import { createContributionSubmission, deleteContributionSubmission, listContributionSubmissions, requestContributionChanges, reviewContributionSubmission } from './services/contribution.service'
 import { createFeedbackMessage, deleteFeedbackMessage, listFeedbackMessages, updateFeedbackMessage } from './services/feedback.service'
@@ -1665,8 +1665,6 @@ function LoginPage({ initialMode = 'login' }: { initialMode?: 'login' | 'registe
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
-  const localPasswordLoginBypass = mode === 'login' && loginMethod === 'password' && isLocalPasswordLoginBypass()
-
   useEffect(() => {
     if (!codeCooldown) return
     const timer = window.setInterval(() => setCodeCooldown((value) => Math.max(0, value - 1)), 1000)
@@ -1681,6 +1679,11 @@ function LoginPage({ initialMode = 'login' }: { initialMode?: 'login' | 'registe
 
   const handleTurnstileChange = useCallback((token: string) => setTurnstileToken(token), [])
 
+  const resetTurnstile = () => {
+    setTurnstileToken('')
+    setCaptchaNonce((value) => value + 1)
+  }
+
   const fillDemoAccount = (account: { email: string; password: string }) => {
     setEmail(account.email)
     setPassword(account.password)
@@ -1694,8 +1697,7 @@ function LoginPage({ initialMode = 'login' }: { initialMode?: 'login' | 'registe
     setNotice(null)
     setDemoCode(null)
     setLoginDemoCode(null)
-    setTurnstileToken('')
-    setCaptchaNonce((value) => value + 1)
+    resetTurnstile()
   }
 
   const sendRegistrationCode = async () => {
@@ -1713,12 +1715,10 @@ function LoginPage({ initialMode = 'login' }: { initialMode?: 'login' | 'registe
       const result = await requestRegistrationCode(email, turnstileToken)
       setCodeCooldown(60)
       setDemoCode(result.demoCode ?? null)
-      // Turnstile tokens are single-use; registration needs a fresh token.
-      setTurnstileToken('')
-      setCaptchaNonce((value) => value + 1)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '验证码发送失败，请稍后再试')
     } finally {
+      resetTurnstile()
       setSubmitting(false)
     }
   }
@@ -1738,11 +1738,10 @@ function LoginPage({ initialMode = 'login' }: { initialMode?: 'login' | 'registe
       const result = await requestLoginCode(email, turnstileToken)
       setLoginCodeCooldown(60)
       setLoginDemoCode(result.demoCode ?? null)
-      setTurnstileToken('')
-      setCaptchaNonce((value) => value + 1)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '验证码发送失败，请稍后再试')
     } finally {
+      resetTurnstile()
       setSubmitting(false)
     }
   }
@@ -1753,7 +1752,7 @@ function LoginPage({ initialMode = 'login' }: { initialMode?: 'login' | 'registe
       setError('请输入合法的邮箱地址')
       return
     }
-    if (!isDemo && !localPasswordLoginBypass && !turnstileToken) {
+    if (!isDemo && !turnstileToken) {
       setError('请先完成验证码校验')
       return
     }
@@ -1776,9 +1775,13 @@ function LoginPage({ initialMode = 'login' }: { initialMode?: 'login' | 'registe
     setSubmitting(true)
     setError(null)
     setNotice(null)
+    let authenticationSucceeded = false
+    // API 模式下任一登录/注册请求都会核验并消耗一次性 token；失败后需重新验证再试。
+    const needsFreshTurnstile = !isDemo
     try {
       if (mode === 'register') {
         await register({ username, email, verificationCode, password, turnstileToken })
+        authenticationSucceeded = true
         setPassword('')
         setConfirmPassword('')
         setVerificationCode('')
@@ -1787,11 +1790,13 @@ function LoginPage({ initialMode = 'login' }: { initialMode?: 'login' | 'registe
       } else {
         if (loginMethod === 'code') await signInWithCode({ email, verificationCode, turnstileToken, rememberMe })
         else await signIn({ email, password, turnstileToken, rememberMe })
+        authenticationSucceeded = true
         navigate('#/tools')
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '登录失败，请稍后再试')
     } finally {
+      if (needsFreshTurnstile && !authenticationSucceeded) resetTurnstile()
       setSubmitting(false)
     }
   }
@@ -1824,9 +1829,8 @@ function LoginPage({ initialMode = 'login' }: { initialMode?: 'login' | 'registe
           <label className="login-field"><span>邮箱</span><div className="login-input-wrap"><Mail size={16} /><input value={email} onChange={(event) => setEmail(event.target.value)} onBlur={() => { if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email.trim())) setError('请输入合法的邮箱地址') }} aria-invalid={Boolean(email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email.trim()))} autoComplete="email" type="email" placeholder="name@example.com" /></div></label>
           {(mode === 'register' || (mode === 'login' && loginMethod === 'password')) && <label className="login-field"><span>密码</span><div className="login-input-wrap"><KeyRound size={16} /><input value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} type={showPassword ? 'text' : 'password'} placeholder={mode === 'login' ? '输入密码' : '至少 8 位密码'} /><button type="button" className="login-password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? '隐藏密码' : '显示密码'}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div></label>}
           {mode === 'register' && <label className="login-field"><span>确认密码</span><div className="login-input-wrap"><KeyRound size={16} /><input value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" type={showPassword ? 'text' : 'password'} placeholder="再次输入密码" /></div></label>}
-          {(mode === 'register' || (mode === 'login' && loginMethod === 'code')) && <div className="login-code-row"><label className="login-field"><span>邮箱验证码</span><div className="login-input-wrap"><Mail size={16} /><input value={verificationCode} onChange={(event) => setVerificationCode(event.target.value)} inputMode="numeric" placeholder="6 位验证码" /></div></label><button type="button" className="secondary-button login-code-button" disabled={submitting || (mode === 'register' ? codeCooldown > 0 : loginCodeCooldown > 0)} onClick={() => void (mode === 'register' ? sendRegistrationCode() : sendLoginCode())}>{mode === 'register' ? (codeCooldown > 0 ? `${codeCooldown}s 后重发` : '获取验证码') : (loginCodeCooldown > 0 ? `${loginCodeCooldown}s 后重发` : '获取验证码')}</button></div>}
-          {!isDemo && !localPasswordLoginBypass && <div className="login-captcha"><TurnstileWidget key={captchaNonce} value={turnstileToken} onChange={handleTurnstileChange} allowFallback={false} /></div>}
-          {localPasswordLoginBypass && <p className="login-demo-hint" role="status">本机开发模式：暂未配置 Turnstile，密码登录将直接请求后端。</p>}
+          {(mode === 'register' || (mode === 'login' && loginMethod === 'code')) && <div className="login-code-row"><label className="login-field"><span>邮箱验证码</span><div className="login-input-wrap"><Mail size={16} /><input name="one-time-code" autoComplete="one-time-code" maxLength={6} value={verificationCode} onChange={(event) => setVerificationCode(event.target.value)} inputMode="numeric" placeholder="6 位验证码" /></div></label><button type="button" className="secondary-button login-code-button" disabled={submitting || (mode === 'register' ? codeCooldown > 0 : loginCodeCooldown > 0)} onClick={() => void (mode === 'register' ? sendRegistrationCode() : sendLoginCode())}>{mode === 'register' ? (codeCooldown > 0 ? `${codeCooldown}s 后重发` : '获取验证码') : (loginCodeCooldown > 0 ? `${loginCodeCooldown}s 后重发` : '获取验证码')}</button></div>}
+          {!isDemo && <div className="login-captcha"><TurnstileWidget key={captchaNonce} value={turnstileToken} onChange={handleTurnstileChange} allowFallback={false} /></div>}
           {mode === 'login' && <label className="login-remember"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} /><span>记住登录状态</span></label>}
           {error && <p className="login-error" role="alert">{error}</p>}
           {notice && <p className="login-success" role="status">{notice}</p>}

@@ -3,3 +3,4 @@ dist/
 .npm-cache/
 *.tsbuildinfo
 .env.local
+/backend/OS_club/.env

@@ -7,7 +7,7 @@
 - 从当前工作区的 `backend/OS_club/main.py` 导入 FastAPI 应用，并由 `app.openapi()` 生成路由清单；同时对照前端 service 中调用的接口。
 - 本文中的“已实现”仅表示当前源码已注册对应路由，不代表线上/本地运行中的服务、数据库结构或整条业务流程已经验收。
 - 本次没有启动服务、连接或修改数据库，也没有重做你此前已经确认通过的模块测试。
-- 后端目前使用 Python 标准库 `unittest` 做自动化测试；本次新增了届次默认小组和资源投稿届次权限的隔离测试。`backend/OS_club/test_main.http` 仍是手动发送请求的示例。
+- 后端目前使用 Python 标准库 `unittest` 做自动化测试；本次新增了届次默认小组和资源投稿届次权限的隔离测试。`backend/OS_club/tests/manual_api_requests.http` 是手动发送请求的示例。
 
 ## 当前源码已有的接口
 

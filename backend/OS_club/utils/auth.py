@@ -1,7 +1,7 @@
 """
  @File : auth.py
  @Author : 加个真朋友
-@Description : 
+@Description : 认证模型文件
 """
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
