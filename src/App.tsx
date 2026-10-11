@@ -235,9 +235,9 @@ function getStoredTheme(): Theme {
 function getStoredBackgroundPreference(): BackgroundPreference {
   try {
     const stored = localStorage.getItem('club-background-preference') as BackgroundPreference | null
-    return stored === 'follow' || stored === 'campus' || stored === 'mist' || stored === 'paper' || stored === 'custom' ? stored : 'follow'
+    return stored === 'follow' || stored === 'campus' || stored === 'mist' || stored === 'paper' || stored === 'custom' ? stored : 'paper'
   } catch {
-    return 'follow'
+    return 'paper'
   }
 }
 

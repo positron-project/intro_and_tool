@@ -22,8 +22,8 @@ class SiteSettings(Base):
     )
     school_background_enabled: Mapped[bool] = mapped_column(
         Boolean,
-        default=True,
-        server_default="1",
+        default=False,
+        server_default="0",
         nullable=False,
     )
 
