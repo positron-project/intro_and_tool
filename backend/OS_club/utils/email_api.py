@@ -66,6 +66,6 @@ async def send_verification_email(email: str, code: str, purpose: str) -> dict:
         "text": text,
         "html": html,
         "fromName": "南航计算机科技小组",
-        "fromEmail": "nanhang@twoword.cfd",
+        "fromEmail": "no_reply@stcnchu.com",
     }
     return await asyncio.to_thread(_post_email, payload)
