@@ -1847,10 +1847,10 @@ html[data-theme='dark'] .app-shell:not(.landing-shell) {
     box-shadow: 0 8px 18px rgba(42, 91, 146, .09);
   }
 
-  .app-shell:not(.landing-shell) :is(.track-button, .filter-pill, .filter-sort, .prompt-categories button, .project-entry, .suggestion-row button, .drawer-suggestions button, .history-item, .new-chat, .school-service-grid button, .icon-button) {
+  .app-shell:not(.landing-shell) :is(.track-button, .filter-pill, .filter-sort, .prompt-categories button, .project-entry, .learning-link-chip, .suggestion-row button, .drawer-suggestions button, .history-item, .new-chat, .school-service-grid button, .icon-button) {
     transition: transform .18s cubic-bezier(.22, .8, .28, 1), color .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
   }
-  .app-shell:not(.landing-shell) :is(.track-button, .filter-pill, .filter-sort, .prompt-categories button, .project-entry, .suggestion-row button, .drawer-suggestions button, .history-item, .new-chat, .school-service-grid button, .icon-button):is(:hover, :focus-visible) {
+  .app-shell:not(.landing-shell) :is(.track-button, .filter-pill, .filter-sort, .prompt-categories button, .project-entry, .learning-link-chip, .suggestion-row button, .drawer-suggestions button, .history-item, .new-chat, .school-service-grid button, .icon-button):is(:hover, :focus-visible) {
     transform: translateY(-2px);
     box-shadow: 0 7px 16px rgba(42, 91, 146, .1);
   }
@@ -7385,10 +7385,10 @@ html[data-theme='dark'] .app-shell:not(.landing-shell) {
     box-shadow: 0 8px 18px rgba(42, 91, 146, .09);
   }
 
-  .app-shell:not(.landing-shell) :is(.track-button, .filter-pill, .filter-sort, .prompt-categories button, .project-entry, .suggestion-row button, .drawer-suggestions button, .history-item, .new-chat, .school-service-grid button, .icon-button) {
+  .app-shell:not(.landing-shell) :is(.track-button, .filter-pill, .filter-sort, .prompt-categories button, .project-entry, .learning-link-chip, .suggestion-row button, .drawer-suggestions button, .history-item, .new-chat, .school-service-grid button, .icon-button) {
     transition: transform .18s cubic-bezier(.22, .8, .28, 1), color .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
   }
-  .app-shell:not(.landing-shell) :is(.track-button, .filter-pill, .filter-sort, .prompt-categories button, .project-entry, .suggestion-row button, .drawer-suggestions button, .history-item, .new-chat, .school-service-grid button, .icon-button):is(:hover, :focus-visible) {
+  .app-shell:not(.landing-shell) :is(.track-button, .filter-pill, .filter-sort, .prompt-categories button, .project-entry, .learning-link-chip, .suggestion-row button, .drawer-suggestions button, .history-item, .new-chat, .school-service-grid button, .icon-button):is(:hover, :focus-visible) {
     transform: translateY(-2px);
     box-shadow: 0 7px 16px rgba(42, 91, 146, .1);
   }
