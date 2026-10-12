@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
-import { DUR, EASE_OUT } from './motion'
+import { DUR, EASE_OUT, HERO_ENTER_DELAY } from './motion'
 
 interface HeroSectionProps {
   onJoinClick?: () => void
@@ -36,7 +36,7 @@ export function HeroSection({ onJoinClick, onToolsClick, isHeroActive = true }: 
         className="hero-heading-group"
         initial={{ opacity: 0, x: -48 }}
         animate={isHeroActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -48 }}
-        transition={{ duration: DUR.scene, ease: EASE_OUT }}
+        transition={{ duration: DUR.scene, delay: HERO_ENTER_DELAY, ease: EASE_OUT }}
       >
         <h1 className="hero-main-title">
           <span className="hero-title-line">学点技术</span>
@@ -50,7 +50,7 @@ export function HeroSection({ onJoinClick, onToolsClick, isHeroActive = true }: 
         className="hero-subtitle-group"
         initial={{ opacity: 0, y: -24 }}
         animate={isHeroActive ? { opacity: 1, y: 0 } : { opacity: 0, y: -24 }}
-        transition={{ duration: DUR.block, delay: 0.18, ease: EASE_OUT }}
+        transition={{ duration: DUR.block, delay: HERO_ENTER_DELAY + 0.18, ease: EASE_OUT }}
       >
         <div className="hero-sub-title">计算机科技小组</div>
       </motion.div>
@@ -60,7 +60,7 @@ export function HeroSection({ onJoinClick, onToolsClick, isHeroActive = true }: 
         className="hero-value-desc"
         initial={{ opacity: 0, y: -20 }}
         animate={isHeroActive ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-        transition={{ duration: DUR.block, delay: 0.34, ease: EASE_OUT }}
+        transition={{ duration: DUR.block, delay: HERO_ENTER_DELAY + 0.34, ease: EASE_OUT }}
       >
         学技术、做项目，把经验传给下一届。
       </motion.p>
@@ -70,7 +70,7 @@ export function HeroSection({ onJoinClick, onToolsClick, isHeroActive = true }: 
         className="hero-cta-group"
         initial={{ opacity: 0, y: -20 }}
         animate={isHeroActive ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-        transition={{ duration: DUR.block, delay: 0.5, ease: EASE_OUT }}
+        transition={{ duration: DUR.block, delay: HERO_ENTER_DELAY + 0.5, ease: EASE_OUT }}
       >
         <a
           href="#story-join"

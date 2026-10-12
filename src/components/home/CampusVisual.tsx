@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { HERO_ENTER_DELAY } from './motion'
 
 interface CampusVisualProps {
   sketchSrc?: string
@@ -20,7 +21,7 @@ export function CampusVisual({
         className="campus-sketch-container"
         initial={{ opacity: 0 }}
         animate={isHeroActive ? { opacity: 1 } : { opacity: 0 }}
-        transition={{ duration: 1.0, delay: 0.25, ease: 'easeOut' }}
+        transition={{ duration: 1.0, delay: HERO_ENTER_DELAY + 0.25, ease: 'easeOut' }}
       >
         {sketchLoaded && (
           <picture>
