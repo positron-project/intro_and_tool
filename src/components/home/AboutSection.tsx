@@ -179,15 +179,66 @@ const CAPABILITY_ICONS: Record<AboutCapabilityId, ReactNode> = {
       <path d="M12 14.4v2.4" />
     </>
   ),
+  /* 申请教室：登记板 + 日历页（借教室） */
+  'apply-room': (
+    <>
+      <rect x="3.6" y="4.4" width="9.6" height="15.2" rx="1.8" />
+      <rect x="6.8" y="2.8" width="3.2" height="3.2" rx="1.2" />
+      <path d="M6.2 9.6h4.4M6.2 12.4h4.4M6.2 15.2h2.8" />
+      <rect x="14.6" y="9.4" width="6.4" height="6.6" rx="1.4" />
+      <path d="M16.2 9.4v1.8M19.4 9.4v1.8" />
+      <path d="M16.3 12.8h.01M18.6 12.8h.01M16.3 14.6h.01M18.6 14.6h.01" />
+    </>
+  ),
+  /* 批经费：一叠硬币 + 印章 */
+  'apply-budget': (
+    <>
+      <ellipse cx="7.4" cy="9" rx="4.2" ry="1.8" />
+      <path d="M3.2 11.2c0 1 1.9 1.8 4.2 1.8s4.2-.8 4.2-1.8" />
+      <path d="M3.2 13.3c0 1 1.9 1.8 4.2 1.8s4.2-.8 4.2-1.8" />
+      <circle cx="16.8" cy="15.4" r="5" />
+      <path d="M14.7 14.2l1.2 1.1 2.7-2" />
+      <path d="M16 10.2V8.6h1.6v1.6" />
+    </>
+  ),
+  /* 申请批假：日历 + 纸飞机 */
+  'apply-leave': (
+    <>
+      <rect x="3.4" y="6.4" width="12.6" height="13.2" rx="1.8" />
+      <path d="M3.4 10h12.6" />
+      <path d="M6.6 4.6v3.4M12.8 4.6v3.4" />
+      <path d="M6.4 13h.01M9 13h.01M11.6 13h.01M6.4 15.6h.01M11.6 15.6h.01M9 18h.01" />
+      <circle cx="7.6" cy="16.8" r="1.2" />
+      <circle cx="11.4" cy="14.6" r="1.2" />
+      <path d="M8.7 16l1.7-.9" />
+      <path d="M13.4 6.6c1.8-1.6 4.2-2.4 6.6-2.4-1.4 2-3.2 3.4-5.4 4.2z" />
+      <path d="M14.6 8.4l1.4 1.4" />
+    </>
+  ),
+  /* 管理考核：列图 + 对钩 */
+  'apply-review': (
+    <>
+      <rect x="3.6" y="7.4" width="11.4" height="12.4" rx="1.8" />
+      <path d="M6.6 17h5.4" />
+      <path d="M6.6 17v-3.2M9.8 17V9.8M13 17v-4.4" />
+      <circle cx="16.8" cy="15.8" r="4.6" />
+      <path d="M14.9 15.8l1.4 1.4 2.4-2.6" />
+    </>
+  ),
 }
 
-/* 一格：图标 → 特性名，两行，入场按阅读顺序逐格跟进 */
+/* 一格：插画层（默认全透明）→ 图标 → 特性名，入场按阅读顺序逐格跟进。
+   插画层写在最前面：两者都是定位元素，DOM 顺序就是它们的压叠顺序。 */
 function CapabilityCell({ item, delay }: { item: AboutCapability; delay: number }) {
   return (
     <motion.li
       className="about-capability-cell"
       {...fadeUp({ delay, distance: SHIFT.text, amount: 0.2 })}
     >
+      {/* 悬停淡入：整张插画按 contain 缩放，压在图标与特性名下面（装饰层，不进无障碍树） */}
+      <span className="about-capability-media" aria-hidden="true">
+        <img src={item.image} alt="" loading="lazy" decoding="async" />
+      </span>
       <span className="about-capability-glyph" aria-hidden="true">
         <svg
           viewBox="0 0 24 24"

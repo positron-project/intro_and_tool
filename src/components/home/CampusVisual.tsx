@@ -4,11 +4,13 @@ import { motion } from 'framer-motion'
 interface CampusVisualProps {
   sketchSrc?: string
   sketchWebpSrc?: string
+  isHeroActive?: boolean
 }
 
 export function CampusVisual({
   sketchSrc = './assets/campus/campus-line-art.png',
   sketchWebpSrc = './assets/campus/campus-line-art.webp',
+  isHeroActive = true,
 }: CampusVisualProps) {
   const [sketchLoaded, setSketchLoaded] = useState(true)
 
@@ -17,8 +19,8 @@ export function CampusVisual({
       <motion.div
         className="campus-sketch-container"
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.0, delay: 0.1, ease: 'easeOut' }}
+        animate={isHeroActive ? { opacity: 1 } : { opacity: 0 }}
+        transition={{ duration: 1.0, delay: 0.25, ease: 'easeOut' }}
       >
         {sketchLoaded && (
           <picture>

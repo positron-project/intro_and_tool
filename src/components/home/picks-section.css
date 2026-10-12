@@ -251,6 +251,16 @@
   border-bottom-color: currentColor;
 }
 
+/* 预热中：只展示不可跳转。用暖墨阶第三档，不借强调色、不去调透明度 */
+.picks-item-link:disabled {
+  color: var(--poster-ink-3, #857e73);
+  cursor: not-allowed;
+}
+
+.picks-item-link:disabled:hover span {
+  border-bottom-color: transparent;
+}
+
 /* ------------------------------------------------------------
    01 左半纸白 + 右半照片（黄昏的方块基地）
    ------------------------------------------------------------

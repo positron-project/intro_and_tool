@@ -5,6 +5,7 @@ import 'lenis/dist/lenis.css'
 
 import { SiteHeader } from './SiteHeader'
 import { HomeLanding } from './HomeLanding'
+import { HomeLoadingScreen } from './HomeLoadingScreen'
 import { AboutSection } from './AboutSection'
 import { OfferSection } from './OfferSection'
 import { PicksSection } from './PicksSection'
@@ -48,8 +49,13 @@ const MemoPicksSection = memo(PicksSection)
 const MemoBlogSection = memo(BlogSection)
 const MemoJoinSection = memo(JoinSection)
 
+/* 导航区段滚动偏移常量（与 SiteHeader 高度呼应） */
+const HEADER_OFFSET = -70
+
 export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [loadingMounted, setLoadingMounted] = useState(true)
+  const [heroActive, setHeroActive] = useState(false)
   const heroFrameRef = useRef<HTMLDivElement | null>(null)
   const lenisRef = useRef<Lenis | null>(null)
 
@@ -58,9 +64,6 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
   const prefersReducedMotion = useReducedMotion()
   const { scrollYProgress } = useScroll()
   const scrollProgress = useSpring(scrollYProgress, { stiffness: 220, damping: 40, restDelta: 0.001 })
-
-  /* 导航区段滚动偏移常量（与 SiteHeader 高度呼应） */
-  const HEADER_OFFSET = -70
 
   useEffect(() => {
     /* 减少动态效果遵循：系统开启 reduced-motion 时不初始化 Lenis，由原生滚动接管 */
@@ -164,17 +167,6 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
     return () => observer.disconnect()
   }, [])
 
-  /* 初始哈希锚点平滑定位 */
-  useEffect(() => {
-    const rawHash = window.location.hash.replace(/^#/, '')
-    if (rawHash && rawHash !== 'story-hero') {
-      const timer = setTimeout(() => {
-        scrollToSection(rawHash)
-      }, 350)
-      return () => clearTimeout(timer)
-    }
-  }, [])
-
   const scrollToSection = useCallback((target: number | string) => {
     let targetId: string
     if (typeof target === 'number') {
@@ -210,6 +202,17 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
     }
   }, [])
 
+  /* 初始哈希锚点平滑定位 */
+  useEffect(() => {
+    const rawHash = window.location.hash.replace(/^#/, '')
+    if (rawHash && rawHash !== 'story-hero') {
+      const timer = setTimeout(() => {
+        scrollToSection(rawHash)
+      }, 350)
+      return () => clearTimeout(timer)
+    }
+  }, [scrollToSection])
+
   /* 稳定的回调身份：memo 化的区段不会因为父组件重渲染而被连带重渲染 */
   const handleHeaderScrollToSection = useCallback((sectionIndex: number) => scrollToSection(sectionIndex), [scrollToSection])
   const handleHeroScrollDown = useCallback(() => scrollToSection('story-about'), [scrollToSection])
@@ -217,8 +220,25 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
   const handleJoinScrollToTop = useCallback(() => scrollToSection('story-hero'), [scrollToSection])
   const handleJoinScrollToSection = useCallback((sectionId: string) => scrollToSection(sectionId), [scrollToSection])
 
+  /* 加载页完成与卸载回调 */
+  const handleLoadingComplete = useCallback(() => {
+    setHeroActive(true)
+  }, [])
+
+  const handleLoadingUnmount = useCallback(() => {
+    setLoadingMounted(false)
+  }, [])
+
   return (
     <div className="home-story-scroll" data-active-screen={activeIndex}>
+      {/* 首页预加载页 */}
+      {loadingMounted && (
+        <HomeLoadingScreen
+          onComplete={handleLoadingComplete}
+          onUnmount={handleLoadingUnmount}
+        />
+      )}
+
       {/* 顶部 1px 滚动进度线：全页唯一的位置反馈 */}
       {!prefersReducedMotion ? (
         <motion.div className="home-scroll-progress" style={{ scaleX: scrollProgress }} aria-hidden="true" />
@@ -234,7 +254,12 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
 
       <div className="hero-sticky-container">
         <div ref={heroFrameRef} className="hero-sticky-frame">
-          <MemoHomeLanding onScrollDown={handleHeroScrollDown} onJoinClick={handleNextJoin} onNavigate={onNavigate} />
+          <MemoHomeLanding
+            onScrollDown={handleHeroScrollDown}
+            onJoinClick={handleNextJoin}
+            onNavigate={onNavigate}
+            isHeroActive={heroActive}
+          />
         </div>
       </div>
 

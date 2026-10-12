@@ -8,10 +8,10 @@
 
    约定：一个组的四个关键词编号各自从 01 起。keywords / preview
    两个字段目前没有任何渲染点（改版前的排版用过），保留待用。
-   02 现在有三组（项目 / 算法 / 网安），第四格位置留空。
+   02 现在有四组（项目 / 算法 / 网安 / 行政办），两行两格，正好占满。
    ============================================================ */
 
-export type AboutGroupId = 'project' | 'algorithm' | 'security'
+export type AboutGroupId = 'project' | 'algorithm' | 'security' | 'admin'
 
 export interface AboutKeyword {
   /** 英文大词（悬停时被扫入色块压在底层，靠 mix-blend-mode 保持可读） */
@@ -93,22 +93,44 @@ const SECURITY_GROUP: AboutGroupContent = {
   ],
 }
 
+/* 行政办：四个事务方向（申请教室 / 批经费 / 申请批假 / 管理考核）按日常工作顺序排 */
+const ADMIN_GROUP: AboutGroupContent = {
+  id: 'admin',
+  name: '行政办',
+  chapterLabel: 'ADMIN OFFICE',
+  preview: '教室、经费、假条、考核都归它',
+  title: '我们各有特色',
+  quoteLines: ['把杂事接过来，', '让各组只管往前。'],
+  motto: '有求必应，按章办事',
+  keywords: [
+    { en: 'APPLY', num: '01', zh: '申请', hoverText: '教室先约，再动笔' },
+    { en: 'APPROVE', num: '02', zh: '审批', hoverText: '按预算卡着走' },
+    { en: 'COORDINATE', num: '03', zh: '协调', hoverText: '时间冲突提前说' },
+    { en: 'ASSESS', num: '04', zh: '考核', hoverText: '考核结果会留档' },
+  ],
+}
+
 export const ABOUT_GROUPS: Record<AboutGroupId, AboutGroupContent> = {
   project: PROJECT_GROUP,
   algorithm: ALGORITHM_GROUP,
   security: SECURITY_GROUP,
+  admin: ADMIN_GROUP,
 }
 
-/* 栏序：项目组、算法组一行，网安组另起一行占左半栏 */
-export const ABOUT_GROUP_ORDER: AboutGroupId[] = ['project', 'algorithm', 'security']
+/* 栏序：项目组、算法组一行，网安组、行政办另起一行 */
+export const ABOUT_GROUP_ORDER: AboutGroupId[] = ['project', 'algorithm', 'security', 'admin']
 
 /* ------------------------------------------------------------
    栏尾的四格 —— 数据源
    每一组栏尾都挂四格：项目组取项目实训方向的四条主线（前端 / 后端 /
    协作 / 管理），算法组取招新 PPT 的四章（赛事 / 赛制 / 算法 / 训练），
-   网安组取 CTF 的四个方向（PWN / Reverse / Web / Crypto）。
-   格内只有图标 + 特性名，不写说明文字，所以这里也只有这两项。
+   网安组取 CTF 的四个方向（PWN / Reverse / Web / Crypto），
+   行政办取四件日常事务（申请教室 / 批经费 / 申请批假 / 管理考核）。
+   格内只有图标 + 特性名，不写说明文字。
    id 同时是图标键，图标实现在 AboutSection.tsx 的 CAPABILITY_ICONS。
+   image 是悬停时淡入的插画（public/assets/capabilities/），
+   路径必须写成字面量：scripts/create-standalone.mjs 靠扫字面量把
+   资源转成 data URI，模板字符串拼出来的路径它看不见，单文件版会缺图。
    ------------------------------------------------------------ */
 export type AboutCapabilityId =
   | 'frontend'
@@ -123,31 +145,43 @@ export type AboutCapabilityId =
   | 'reverse'
   | 'web'
   | 'crypto'
+  | 'apply-room'
+  | 'apply-budget'
+  | 'apply-leave'
+  | 'apply-review'
 
 export interface AboutCapability {
   id: AboutCapabilityId
   /** 特性名（≤ 14 字）：一格就这一行字 */
   name: string
+  /** 悬停淡入的插画：墨黑单线（纸底已抠成透明），按各自主体外框裁过，整张可见 */
+  image: string
 }
 
 /* 按组分：键就是 AboutGroupId，栏尾四格按自己的组取 */
 export const ABOUT_CAPABILITIES: Record<AboutGroupId, AboutCapability[]> = {
   project: [
-    { id: 'frontend', name: '前端开发' },
-    { id: 'backend', name: '后端开发' },
-    { id: 'teamwork', name: '团队协作' },
-    { id: 'management', name: '项目管理' },
+    { id: 'frontend', name: '前端开发', image: './assets/capabilities/frontend.webp' },
+    { id: 'backend', name: '后端开发', image: './assets/capabilities/backend.webp' },
+    { id: 'teamwork', name: '团队协作', image: './assets/capabilities/teamwork.webp' },
+    { id: 'management', name: '项目管理', image: './assets/capabilities/management.webp' },
   ],
   algorithm: [
-    { id: 'contest', name: '赛事' },
-    { id: 'rules', name: '赛制' },
-    { id: 'algorithm', name: '算法' },
-    { id: 'training', name: '训练' },
+    { id: 'contest', name: '赛事', image: './assets/capabilities/contest.webp' },
+    { id: 'rules', name: '赛制', image: './assets/capabilities/rules.webp' },
+    { id: 'algorithm', name: '算法', image: './assets/capabilities/algorithm.webp' },
+    { id: 'training', name: '训练', image: './assets/capabilities/training.webp' },
   ],
   security: [
-    { id: 'pwn', name: 'PWN' },
-    { id: 'reverse', name: 'Reverse' },
-    { id: 'web', name: 'Web' },
-    { id: 'crypto', name: 'Crypto' },
+    { id: 'pwn', name: 'PWN', image: './assets/capabilities/pwn.webp' },
+    { id: 'reverse', name: 'Reverse', image: './assets/capabilities/reverse.webp' },
+    { id: 'web', name: 'Web', image: './assets/capabilities/web.webp' },
+    { id: 'crypto', name: 'Crypto', image: './assets/capabilities/crypto.webp' },
+  ],
+  admin: [
+    { id: 'apply-room', name: '申请教室', image: './assets/capabilities/apply-room.webp' },
+    { id: 'apply-budget', name: '批经费', image: './assets/capabilities/apply-budget.webp' },
+    { id: 'apply-leave', name: '申请批假', image: './assets/capabilities/apply-leave.webp' },
+    { id: 'apply-review', name: '管理考核', image: './assets/capabilities/apply-review.webp' },
   ],
 }

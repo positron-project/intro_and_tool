@@ -222,6 +222,9 @@
 }
 
 .about-capability-cell {
+  /* 悬停淡入的插画层要贴在这一层上，溢出的裁掉 */
+  position: relative;
+  overflow: hidden;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -268,5 +271,65 @@
   line-height: 1.35;
   letter-spacing: -0.01em;
   color: var(--home-navy, #111111);
+}
+
+/* ============================================================
+   悬停淡入的插画层
+   ------------------------------------------------------------
+   素材见 public/assets/capabilities/（键同 AboutCapabilityId，
+   路径在 about-groups.ts 里写成字面量，单文件版要能扫到它）。
+   默认全透明：指针移上来时插画淡入、线稿图标与特性名同步淡出，
+   视线落到插画上；移开再换回来。
+   插画本身只是墨黑单线：出图时用 colorkey 把暖白纸底整片抠成透明
+   （similarity 0.12 / blend 0.08 / yuva420p 的 webp），所以贴上来只有线条。
+   生成图自带一点暗角（中心比边缘亮），不抠就会看见一块比画布亮的矩形。
+   只绑在能悬停的设备上（hover: hover），触屏保持图标 + 字。
+   ============================================================ */
+.about-capability-media {
+  position: absolute;
+  inset: 0;
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+  /* 移开时：插画先拖一小会儿再退，字这时候才回来 */
+  transition: opacity 320ms ease 100ms;
+}
+
+.about-capability-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* contain：整张插画都看得见，不裁。
+     素材是按各自主体外框定制的窄条，格子比例一变它只整体缩放。
+     多出来的空白直接透出页面画布（webp 带 alpha），没有边界。 */
+  object-fit: contain;
+}
+
+.about-capability-glyph,
+.about-capability-name {
+  position: relative;
+  transition: opacity 220ms ease 140ms;
+}
+
+@media (hover: hover) {
+  .about-capability-cell:hover .about-capability-media {
+    opacity: 1;
+    transition-delay: 60ms;
+  }
+
+  .about-capability-cell:hover .about-capability-glyph,
+  .about-capability-cell:hover .about-capability-name {
+    opacity: 0;
+    transition-delay: 0ms;
+    transition-duration: 160ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-capability-media,
+  .about-capability-glyph,
+  .about-capability-name {
+    transition: none;
+  }
 }
 

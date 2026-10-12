@@ -277,11 +277,11 @@ class AgentState(TypedDict):
 
 
 export const contactInfo = {
-  email: 'contact@stcnchu-cs.club',
-  adminEmail: 'admin@stcnchu-cs.club',
-  github: 'https://github.com/nchu-cs-club',
+  email: 'contact@stcnchu.com',
+  adminEmail: 'admin@stcnchu.com',
+  github: 'https://github.com/positron-project',
   wechatMp: '南航科院计算机科技小组',
-  qqGroup: '869342150',
+  qqGroup: '1074753902',
   qqAdmin: '2893821042',
   location: '南昌航空大学科技学院 实验实训大楼 · 机房 402（科技小组专属基地）',
   openTime: '周一至周日 08:30 - 22:30 (全天候极客研讨空间)',

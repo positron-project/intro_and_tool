@@ -1,0 +1,217 @@
+/* ============================================================
+   首页加载页 · 终端极客海报质感
+   ------------------------------------------------------------
+   暖白纸底（--poster-canvas #f9f5ed）+ 暖墨（--poster-ink #14110c）
+   主色深青蓝（--poster-accent #0f4c5c）+ 强调色琥珀（--poster-amber #b3741a）
+   ============================================================ */
+
+.home-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: var(--poster-canvas, #f9f5ed);
+  color: var(--poster-ink, #14110c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s ease;
+  opacity: 1;
+  visibility: visible;
+  user-select: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.home-loading-overlay.is-exiting {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 居中核心区域（轮播图标 + 纯文字进度条） */
+.home-loading-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transform: translateY(-20px);
+}
+
+/* 居中轮播舞台 */
+.home-loading-carousel-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  min-width: 160px;
+}
+
+.home-loading-carousel-icon-box {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--poster-accent, #0f4c5c);
+  margin-bottom: 10px;
+}
+
+/* 南航科院校徽 SVG（与导航最左侧矢量形状与官方品牌蓝渐变完全一致） */
+.loading-carousel-brand-mark {
+  display: block;
+  width: 48px;
+  height: 48px;
+  background-color: var(--poster-brand, #008cd6);
+  background-image: linear-gradient(225deg, var(--poster-brand-hi, #00a4e1) 0%, var(--poster-brand, #008cd6) 62%);
+  -webkit-mask-image: url('/assets/brand-mark.svg');
+  mask-image: url('/assets/brand-mark.svg');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  aspect-ratio: 1;
+}
+
+.home-loading-carousel-label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--poster-ink-2, #4b443a);
+  text-transform: uppercase;
+}
+
+/* 纯文字进度条 ([\\\\\\\          ]50%) */
+.home-loading-progress-block {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.home-loading-ascii-bar {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: clamp(14px, 1.4vw, 17px);
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: pre;
+  letter-spacing: 0.04em;
+  color: var(--poster-ink, #14110c);
+  padding: 8px 16px;
+  border-radius: 4px;
+  background: rgba(28, 22, 14, 0.03);
+  border: 1px solid var(--poster-line, rgba(28, 22, 14, 0.12));
+}
+
+.home-loading-ascii-bar .ascii-bracket {
+  color: var(--poster-ink-3, #857e73);
+}
+
+.home-loading-ascii-bar .ascii-filled {
+  color: var(--poster-accent, #0f4c5c);
+  font-weight: 700;
+}
+
+.home-loading-ascii-bar .ascii-empty {
+  color: transparent;
+}
+
+.home-loading-ascii-bar .ascii-percent {
+  color: var(--poster-amber-deep, #8f5c10);
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+/* 左下方状态栈区域 */
+.home-loading-stack {
+  position: absolute;
+  left: clamp(24px, 5vw, 64px);
+  bottom: clamp(24px, 4.5vh, 48px);
+  max-width: clamp(320px, 45vw, 560px);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.home-loading-stack-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--poster-ink-3, #857e73);
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed var(--poster-line, rgba(28, 22, 14, 0.14));
+}
+
+.home-loading-stack-badge {
+  color: var(--poster-accent, #0f4c5c);
+  font-weight: 700;
+}
+
+.home-loading-stack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 184px;
+  justify-content: flex-end;
+}
+
+.home-loading-stack-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--poster-ink-2, #4b443a);
+  transition: opacity 0.15s ease;
+}
+
+.home-loading-stack-item.is-latest {
+  color: var(--poster-ink, #14110c);
+  font-weight: 600;
+}
+
+.home-loading-stack-item .stack-item-tag {
+  color: var(--poster-accent, #0f4c5c);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.home-loading-stack-item .stack-item-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-loading-stack-item .stack-item-cursor {
+  display: inline-block;
+  color: var(--poster-amber, #b3741a);
+  font-weight: 700;
+  animation: stackBlink 0.8s infinite;
+  margin-left: 2px;
+}
+
+@keyframes stackBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* 右下方跳过提示 */
+.home-loading-skip-hint {
+  position: absolute;
+  right: clamp(24px, 5vw, 64px);
+  bottom: clamp(24px, 4.5vh, 48px);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--poster-ink-3, #857e73);
+  opacity: 0.65;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}

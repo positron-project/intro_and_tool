@@ -8,12 +8,12 @@ interface PicksSectionProps {
   onNavigate?: (path: string) => void
 }
 
-const serverAddress = 'mc.scse.club'
+const qqServerGroup = '1129087809'
 
 interface PickSpec {
   label: string
   value: string
-  /** 值后面挂一个复制按钮（服务器地址） */
+  /** 值后面挂一个复制按钮（QQ 群号） */
   copyable?: boolean
 }
 
@@ -24,7 +24,7 @@ interface Pick {
   title: string
   desc: string
   specs: PickSpec[]
-  action: { label: string; path: string }
+  action: { label: string; path: string; /** 预热中这类只展示不可跳转的态 */ disabled?: boolean }
   /** public/assets 下的文件名 */
   image: string
   /** 封面贴左缘、正文右移的镜像条目（与上一条交替） */
@@ -39,10 +39,10 @@ const PICKS: Pick[] = [
     title: '属于小组自己的世界',
     desc: '写代码写累了，可以上去盖房子、挖矿，或者随便走走。',
     specs: [
-      { label: '地址', value: serverAddress, copyable: true },
-      { label: '访问', value: '校园网或独立主机' },
+      { label: 'QQ群', value: qqServerGroup, copyable: true },
+      { label: '访问', value: '目前仅校园网用户' },
     ],
-    action: { label: '在项目库中查看介绍', path: '#/projects' },
+    action: { label: '预热中...', path: '#/projects', disabled: true },
     image: 'picks-minecraft-base.webp',
   },
   {
@@ -68,13 +68,13 @@ export function PicksSection({ onNavigate }: PicksSectionProps) {
     setCopyFailed(false)
     try {
       if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(serverAddress)
+        await navigator.clipboard.writeText(qqServerGroup)
         setCopiedAddress(true)
         setTimeout(() => setCopiedAddress(false), 2000)
       } else {
         // 降级使用 textarea 拷贝
         const textArea = document.createElement('textarea')
-        textArea.value = serverAddress
+        textArea.value = qqServerGroup
         textArea.style.position = 'fixed'
         textArea.style.opacity = '0'
         document.body.appendChild(textArea)
@@ -171,7 +171,7 @@ export function PicksSection({ onNavigate }: PicksSectionProps) {
                             type="button"
                             className="picks-copy-btn"
                             onClick={handleCopyAddress}
-                            aria-label="复制服务器地址"
+                            aria-label="复制 QQ 群号"
                           >
                             {copiedAddress ? (
                               <>
@@ -198,7 +198,10 @@ export function PicksSection({ onNavigate }: PicksSectionProps) {
                 <button
                   type="button"
                   className="picks-item-link"
-                  onClick={() => onNavigate?.(pick.action.path)}
+                  disabled={pick.action.disabled}
+                  onClick={() => {
+                    if (!pick.action.disabled) onNavigate?.(pick.action.path)
+                  }}
                 >
                   <span>{pick.action.label}</span>
                   <ArrowRight size={14} aria-hidden="true" />
