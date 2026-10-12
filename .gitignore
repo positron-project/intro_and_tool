@@ -22,6 +22,7 @@ __pycache__/
 backend/OS_club/.venv/
 backend/OS_club/uploads/
 backend/OS_club/*.log
+/backend/OS_club/.env
 
 # 日志
 *.log

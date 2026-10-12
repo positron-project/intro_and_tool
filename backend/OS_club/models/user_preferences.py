@@ -25,14 +25,14 @@ class UserPreferences(Base):
     )
     background_preference: Mapped[str] = mapped_column(
         String(16),
-        default="follow",
-        server_default="follow",
+        default="paper",
+        server_default="paper",
         nullable=False,
     )
     school_background_enabled: Mapped[bool] = mapped_column(
         Boolean,
-        default=True,
-        server_default="1",
+        default=False,
+        server_default="0",
         nullable=False,
     )
     custom_background_asset_id: Mapped[str | None] = mapped_column(String(128), nullable=True)

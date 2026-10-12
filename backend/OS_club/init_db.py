@@ -1,7 +1,7 @@
 """
  @File : init_db.py
  @Author : 加个真朋友
-@Description : 
+@Description : 这个是导入模型并创建尚不存在的数据库表
 """
 import asyncio
 

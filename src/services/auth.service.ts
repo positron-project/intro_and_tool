@@ -100,19 +100,6 @@ export const isDemoAuth = apiConfig.contentSource !== 'api'
 export const demoCredentials = Object.freeze({ email: 'leader@example.com', password: DEMO_PASSWORD })
 export const demoOwnerCredentials = Object.freeze({ email: 'owner2029@example.com', password: DEMO_PASSWORD })
 
-/**
- * Local-only compatibility for an API server that has not configured
- * Turnstile yet. The request still goes to FastAPI; this is never enabled on
- * a deployed host or when a real public site key is configured.
- */
-export function isLocalPasswordLoginBypass() {
-  if (isDemoAuth || !import.meta.env.DEV || typeof window === 'undefined') return false
-  const host = window.location.hostname
-  const localHost = host === 'localhost' || host === '127.0.0.1'
-  const siteKey = String(import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '').trim()
-  return localHost && !siteKey
-}
-
 function readDemoSession(): AuthSession | null {
   try {
     const raw = window.localStorage.getItem(DEMO_SESSION_KEY) ?? window.sessionStorage.getItem(DEMO_SESSION_KEY)
@@ -226,7 +213,7 @@ function normalizeBackendSession(session: BackendAuthResponse): AuthSession {
 export async function login(credentials: LoginCredentials): Promise<AuthSession> {
   const email = credentials.email.trim().toLowerCase()
   if (!isValidEmail(email)) throw new Error('请输入合法的邮箱地址')
-  if (!isDemoAuth && !isLocalPasswordLoginBypass() && !credentials.turnstileToken) throw new Error('请先完成验证码校验')
+  if (!isDemoAuth && !credentials.turnstileToken) throw new Error('请先完成验证码校验')
 
   if (isDemoAuth) {
     const accounts = readDemoAccounts()

@@ -28,6 +28,11 @@ class UserInfoBase(BaseModel):
         default=None,
         max_length=500,
     )
+"""
+**公共基类**，把「用户可编辑的资料字段」抽出来复用，后面修改资料、返回用户信息都会继承它，避免重复写代码
+"""
+
+
 
 
 """注册时接收用户名、邮箱、密码"""
@@ -41,12 +46,25 @@ class RegisterRequest(BaseModel):    #UserCreate：只用于接收注册数据�
 
     email: EmailStr #email：EmailStr 会检查邮箱格式；
 
+    verification_code: str = Field(
+        alias="verificationCode",
+        min_length=6,
+        max_length=6,
+        pattern=r"^[0-9]{6}$",
+    )
+
     password: str = Field(  #password：接收用户输入的密码，长度限制为 8 到 128 个字符；
         min_length=8,
         max_length=128,
     )
 
+    turnstile_token: str = Field(
+        alias="turnstileToken",
+        min_length=1,
+    )
+
 """修改资料时接收昵称、头像、简介"""
+"""修改资料只能改「昵称、头像、简介」这三个字段"""
 class ProfileUpdateRequest(UserInfoBase):
     pass
 

@@ -102,6 +102,98 @@ function unwrapResponse<T>(payload: unknown): T {
   return payload as T
 }
 
+const validationFieldLabels: Record<string, string> = {
+  name: '姓名',
+  nickname: '昵称',
+  username: '账号名',
+  email: '邮箱',
+  password: '密码',
+  current_password: '当前密码',
+  currentPassword: '当前密码',
+  new_password: '新密码',
+  newPassword: '新密码',
+  verification_code: '邮箱验证码',
+  verificationCode: '邮箱验证码',
+  turnstile_token: '安全验证',
+  turnstileToken: '安全验证',
+  title: '标题',
+  description: '说明',
+  summary: '简介',
+  content: '内容',
+  category: '分类',
+  resource_url: '资源链接',
+  resourceUrl: '资源链接',
+  github_url: 'GitHub 地址',
+  githubUrl: 'GitHub 地址',
+  url: '链接',
+  cohort: '届次',
+  direction: '方向',
+}
+
+function formatValidationIssue(issue: unknown): string | null {
+  if (typeof issue === 'string') return issue
+  if (!issue || typeof issue !== 'object') return null
+
+  const value = issue as { type?: unknown; loc?: unknown; msg?: unknown; ctx?: unknown }
+  const type = typeof value.type === 'string' ? value.type : ''
+  const location = Array.isArray(value.loc) ? value.loc : []
+  const field = [...location].reverse().find((part): part is string =>
+    typeof part === 'string' && !['body', 'query', 'path', 'header', 'cookie'].includes(part),
+  )
+  const label = field ? validationFieldLabels[field] ?? '提交内容' : '提交内容'
+  const context = value.ctx && typeof value.ctx === 'object' ? value.ctx as Record<string, unknown> : {}
+  const limit = typeof context.limit_value === 'number' ? context.limit_value : undefined
+  const minLength = typeof context.min_length === 'number' ? context.min_length : undefined
+  const maxLength = typeof context.max_length === 'number' ? context.max_length : undefined
+  const originalMessage = typeof value.msg === 'string' ? value.msg : ''
+
+  if (/[\u3400-\u9fff]/.test(originalMessage)) return originalMessage
+
+  switch (type) {
+    case 'missing':
+      return field === 'turnstile_token' || field === 'turnstileToken'
+        ? '请先完成安全验证'
+        : `请填写${label}`
+    case 'string_too_short':
+      return minLength === undefined ? `${label}长度不符合要求` : `${label}至少需要 ${minLength} 个字符`
+    case 'string_too_long':
+      return maxLength === undefined ? `${label}长度不符合要求` : `${label}不能超过 ${maxLength} 个字符`
+    case 'string_pattern_mismatch':
+      if (field === 'verification_code' || field === 'verificationCode') return '邮箱验证码应为 6 位数字'
+      if (field === 'turnstile_token' || field === 'turnstileToken') return '请重新完成安全验证'
+      return `${label}格式不正确`
+    case 'value_error':
+    case 'value_error.email':
+      return field === 'email' ? '请输入有效的邮箱地址' : `${label}格式不正确`
+    case 'greater_than_equal':
+      return limit === undefined ? `${label}数值过小` : `${label}不能小于 ${limit}`
+    case 'greater_than':
+      return limit === undefined ? `${label}数值过小` : `${label}必须大于 ${limit}`
+    case 'less_than_equal':
+      return limit === undefined ? `${label}数值过大` : `${label}不能大于 ${limit}`
+    case 'less_than':
+      return limit === undefined ? `${label}数值过大` : `${label}必须小于 ${limit}`
+    case 'int_parsing':
+    case 'int_type':
+      return `${label}必须是整数`
+    case 'float_parsing':
+    case 'float_type':
+      return `${label}必须是数字`
+    case 'bool_parsing':
+    case 'bool_type':
+      return `${label}选项无效，请重新选择`
+    case 'list_type':
+      return `${label}内容格式不正确`
+    case 'url_parsing':
+    case 'url_scheme':
+      return `请输入有效的${label}`
+    case 'extra_forbidden':
+      return '提交内容包含不支持的字段，请刷新页面后重试'
+    default:
+      return `${label}不符合要求，请检查后重试`
+  }
+}
+
 function getErrorMessage(payload: unknown, fallback: string) {
   if (payload && typeof payload === 'object') {
     const candidate = payload as { message?: unknown; msg?: unknown; error?: unknown; detail?: unknown }
@@ -114,11 +206,9 @@ function getErrorMessage(payload: unknown, fallback: string) {
     if (typeof candidate.error === 'string') return candidate.error
     if (typeof candidate.detail === 'string') return candidate.detail
     if (Array.isArray(candidate.detail)) {
-      const messages = candidate.detail.map((item) => {
-        if (typeof item === 'string') return item
-        if (item && typeof item === 'object' && typeof (item as { msg?: unknown }).msg === 'string') return (item as { msg: string }).msg
-        return null
-      }).filter((item): item is string => Boolean(item))
+      const messages = candidate.detail
+        .map(formatValidationIssue)
+        .filter((item): item is string => Boolean(item))
       if (messages.length) return messages.join('；')
     }
   }
