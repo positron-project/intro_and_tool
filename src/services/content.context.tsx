@@ -70,6 +70,7 @@ import {
   reviewProject as serviceReviewProject,
   updateResource as serviceUpdateResource,
 } from './content.service'
+import { isBlogSourceEnabled, listBlogPosts } from './blog.service'
 import type {
   Announcement,
   BlogPost,
@@ -203,6 +204,8 @@ function fallbackContent(): ContentSnapshot {
 function emptyContent(): ContentSnapshot {
   return {
     announcements: [],
+    // 唯一例外：博客区按产品决策保留演示数据（见 docs/decisions-blog-platform.md），
+    // 因为博客内容来自独立的 Halo 站点，未接入/不可用时不该把首页这一节留空。
     blogPosts: copy(mockBlogPosts),
     citations: [],
     competitionEvents: [],
@@ -320,6 +323,15 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     setLoading(isRemoteContentEnabled)
     setError(null)
+    // 博客来自独立的 Halo 站点，失败不能拖累官网其他内容，所以单独发、单独提交。
+    // 这里立即接住失败：下面要等 12 个请求全部 settle 之后才 await 它，
+    // 中间这段时间没有 handler，会先触发一次 unhandled rejection。
+    const blogRequest = isBlogSourceEnabled()
+      ? listBlogPosts().then(
+          (posts) => ({ ok: true as const, posts }),
+          () => ({ ok: false as const, posts: [] as BlogPost[] }),
+        )
+      : null
     const results = await Promise.allSettled([
       listLearningRoutes(),
       listProjects(),
@@ -373,6 +385,17 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       ? isRemoteContentEnabled ? `内容服务暂时无法加载：${failures.join('、')}。当前不会显示演示数据，请检查后端接口。` : `部分内容暂时使用本地数据：${failures.join('、')}`
       : null)
     setLoading(false)
+
+    // 博客单独提交：放在最后 await，Halo 慢或连不上都不会拖住上面那批内容的渲染。
+    // 空列表是正常空态（新站还没发文），保留 emptyContent() 塞入的演示数据、不报错。
+    if (blogRequest) {
+      const blog = await blogRequest
+      if (blog.ok) {
+        if (blog.posts.length) setData((current) => ({ ...current, blogPosts: copy(blog.posts) }))
+      } else {
+        setError((current) => `${current ?? ''}博客站暂时连不上，博客区先显示演示数据，其余内容不受影响。`)
+      }
+    }
   }, [])
 
   useEffect(() => { void refresh() }, [refresh])

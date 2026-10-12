@@ -1,139 +1,120 @@
+import { useState, type KeyboardEvent } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowDown } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
+import { projects } from '../../data/mock'
 import './offer-section.css'
 
-interface OfferSectionProps {
-  onNextSection?: () => void
-}
+/* ============================================================
+   03 / OUR PROJECTS（我们做出来的东西）
+   ------------------------------------------------------------
+   形态是「左侧项目切换器 + 右侧单项目封面」：
+   左栏只放序号与项目名，右栏只有封面区 + 一行入口
+   （「在项目库中看这个项目」）。
+   封面以下的元信息行 / 一句说明 / 规格行已按 YG 要求整段删除，
+   info 都收进项目库详情页，这一节只负责「看见东西」与「点进去」。
 
-interface OfferRow {
-  index: string
-  enTag: string
-  headline: string
-  description: string
-}
+   封面区是项目自己的界面截图（Project.coverImage）。宽高比在 figure 上写死
+   （1440/820，绿易坊那张截图的真实比例），img 用 height:100% 填进去 ——
+   不靠元素固有尺寸，截图加载完成时封面不会先矮后高抖一下，换图也不会。
+   没有截图的数据不给占位图、不塞生成图，封面区留空，等真实素材到了再补。
 
-const OFFER_ROWS: OfferRow[] = [
-  {
-    index: '01',
-    enTag: 'ENVIRONMENT & SPACE',
-    headline: '实验楼有间自己的屋子，没课就能来',
-    description:
-      '我们在实验楼有一间自己的屋子，没课的时候可以过来写代码、自习，或者叫上组员一起讨论。',
-  },
-  {
-    index: '02',
-    enTag: 'PROJECT & CREATIVITY',
-    headline: '有想法就说出来，一般会有人一起做',
-    description:
-      '组里有人做前端、后端，也有人管部署和测试。你想做什么，在群里说一声，通常会有几个人感兴趣，一起做出来。',
-  },
-  {
-    index: '03',
-    enTag: 'COMPETITION & CAREER',
-    headline: '组队打比赛，练手顺便攒简历',
-    description:
-      '比赛的消息一般发在群里，想去的自己组队。赛前会一起看点往年的题，赛后把踩过的坑记下来。',
-  },
-]
+   数据来自 data/mock.ts 的 projects（featured 的三条），
+   后端接入后换 service 层即可，组件内不直接 fetch。
+   ============================================================ */
 
-export function OfferSection({ onNextSection }: OfferSectionProps) {
+const FEATURED = projects.filter((project) => project.featured).sort((a, b) => b.year - a.year)
+
+export function OfferSection({ onNavigate }: { onNavigate?: (path: string) => void }) {
+  const [activeIndex, setActiveIndex] = useState(0)
   const easeCurve = [0.16, 1, 0.3, 1] as const
 
-  const rowVariant = {
-    hidden: { opacity: 0, y: 24 },
-    visible: (customDelay: number = 0.15) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.7,
-        delay: customDelay,
-        ease: easeCurve,
-      },
-    }),
+  const active = FEATURED[activeIndex] ?? FEATURED[0]
+
+  const handleSwitchKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+    event.preventDefault()
+    const next = event.key === 'ArrowDown' ? activeIndex + 1 : activeIndex - 1
+    setActiveIndex((next + FEATURED.length) % FEATURED.length)
   }
 
+  if (!active) return null
+
+  const coverSrc = active.coverImage || active.galleryImages?.[0]
+
   return (
-    <section
-      id="story-offer"
-      className="offer-section-viewport"
-      aria-label="能带来什么"
-    >
-      {/* ============================================================
-          主体内容排版层 (单列行状图纸流 · 绝无卡片外框)
-          ============================================================ */}
+    <section id="story-offer" className="offer-section-viewport" aria-label="我们做出来的东西">
       <div className="offer-content-stage">
-        {/* 第一段：区块眉标 + 醒目主标题 */}
-        <div className="offer-header-grid">
-          <span className="poster-eyebrow">What we offer</span>
+        {/* 第一段：眉标 + 主标题 + 一句承接 */}
+        <div className="offer-header-block">
+          <span className="poster-eyebrow">Our projects</span>
 
-          {/* 主标题行 */}
-          <div className="offer-title-wrap">
-            <motion.h2
-              className="offer-main-title poster-section-title"
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.7, delay: 0.1, ease: easeCurve }}
-            >
-              来了以后
-              <br />
-              能得到什么？
-            </motion.h2>
-          </div>
-        </div>
-
-        {/* 杂志式错位第二视觉焦点：醒目辅助短句 */}
-        <motion.div
-          className="offer-focal-row"
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.7, delay: 0.18, ease: easeCurve }}
-        >
-          <div className="offer-focal-quote">
-            <span>学了的东西，得有地方用。</span>
-          </div>
-        </motion.div>
-
-        {/* 第二段：每行一个 (单列 3 大行展开 · 纯蓝图排版架构) */}
-        <div className="offer-rows-container">
-          {OFFER_ROWS.map((row, idx) => (
-            <motion.div
-              key={row.index}
-              className="offer-row-item"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.2 }}
-              variants={rowVariant}
-              custom={0.25 + idx * 0.12}
-            >
-              {/* 左侧标号栏：序号 + 英文小标 */}
-              <div className="offer-row-meta">
-                <span className="offer-row-num">{row.index}</span>
-                <span className="poster-eyebrow poster-eyebrow--plain">{row.enTag}</span>
-              </div>
-
-              {/* 右侧核心内容栏 */}
-              <div className="offer-row-main">
-                <h3 className="offer-row-headline">{row.headline}</h3>
-                <p className="offer-row-desc">{row.description}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* 第三段：底部继续往下的引导 */}
-        <div className="offer-footer-guide">
-          <button
-            type="button"
-            className="offer-footer-target poster-next"
-            onClick={onNextSection}
-            aria-label="继续向下：小组推荐"
+          <motion.h2
+            className="offer-main-title poster-section-title"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.7, delay: 0.08, ease: easeCurve }}
           >
-            <span>小组推荐</span>
-            <ArrowDown size={14} className="offer-footer-arrow" />
-          </button>
+            我们做出来的东西
+          </motion.h2>
+
+          <motion.p
+            className="offer-thesis"
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.7, delay: 0.16, ease: easeCurve }}
+          >
+            做过的东西都留着，下一届接着用。
+          </motion.p>
+        </div>
+
+        {/* 第二段：左切换器 + 右详情 */}
+        <div className="offer-stage">
+          <div
+            className="offer-switch"
+            role="group"
+            aria-label="项目列表"
+            onKeyDown={handleSwitchKeyDown}
+          >
+            {FEATURED.map((project, index) => (
+              <button
+                key={project.id}
+                type="button"
+                className="offer-switch-item"
+                aria-pressed={index === activeIndex}
+                onClick={() => setActiveIndex(index)}
+              >
+                <span className="offer-switch-num">{String(index + 1).padStart(2, '0')}</span>
+                <span className="offer-switch-name">{project.name}</span>
+              </button>
+            ))}
+          </div>
+
+          <motion.article
+            key={active.id}
+            className="offer-detail"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, ease: easeCurve }}
+          >
+            <figure className="offer-cover">
+              {coverSrc ? (
+                <img src={coverSrc} alt={`${active.name} 的界面截图`} />
+              ) : null}
+            </figure>
+
+            {onNavigate ? (
+              <button
+                type="button"
+                className="offer-detail-link"
+                onClick={() => onNavigate(`#/projects/${active.slug}`)}
+              >
+                <span>在项目库中看这个项目</span>
+                <ArrowRight size={14} aria-hidden="true" />
+              </button>
+            ) : null}
+          </motion.article>
         </div>
       </div>
     </section>

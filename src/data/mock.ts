@@ -23,19 +23,32 @@ export const announcements: Announcement[] = [
 
 export const projects: Project[] = [
   {
-    id: 'p1', slug: 'ai-campus', name: '校园 AI 智能助手', description: '基于 RAG 和 Agent 的校园知识问答系统', intro: '把小组历届沉淀的通知、学习路线与项目文档组织成可检索的知识空间，让下一届可以从真实上下文继续前进。', githubUrl: 'https://github.com/example/campus-ai-assistant', docsUrl: '#/resources', demoUrl: '', issueUrl: 'https://github.com/example/campus-ai-assistant/issues', stack: ['Python', 'FastAPI', 'Vue3'], members: 12, stars: 128, status: '招募中', difficulty: 3, year: 2026, category: 'AI', accent: 'blue', icon: 'spark', featured: true, visibility: 'contributors', memberIds: ['m1', 'm2', 'm4'], joinEnabled: true, joinNote: '欢迎熟悉 Python、前端或知识库方向的成员参与。', milestones: [{ id: 'p1-m1', year: '2024', title: '校园问答 v1', summary: '关键词检索 · Vue · Flask', status: '已完成' }, { id: 'p1-m2', year: '2025', title: 'RAG v2', summary: '向量检索 · FastAPI · PostgreSQL', status: '已完成' }, { id: 'p1-m3', year: '2026', title: 'Agent v3', summary: 'LangGraph · 工具调用 · 评测集', status: '进行中' }], logs: [{ id: 'p1-l1', date: '05-16', title: '新增校园地点检索工具', detail: '补充校园地点查询与引用卡片。', author: '何宇辰', authorInitials: 'HY' }, { id: 'p1-l2', date: '05-12', title: '完成回答引用卡片', detail: '让每次回答都能追溯到对应资料来源。', author: '周一帆', authorInitials: 'ZY' }],
+    id: 'p1', slug: 'green-easy-fang', name: '绿易坊', description: '面向校园与社区的绿色生活平台', intro: '把「问、估、找、做、聊」放在一条线上：先弄清楚一件东西值多少、该怎么处理，再就近找到愿意接手的人。', githubUrl: 'https://github.com/example/green-easy-fang', docsUrl: '#/resources', demoUrl: 'http://127.0.0.1:18080', issueUrl: 'https://github.com/example/green-easy-fang/issues', stack: ['Vue3', 'Spring Boot', 'MySQL'], members: 3, stars: 46, status: '维护中', difficulty: 3, year: 2026, category: 'Web', accent: 'mint', icon: 'leaf', featured: true, visibility: 'contributors', memberIds: ['m1', 'm2', 'm4'], joinEnabled: true, joinNote: '欢迎熟悉前端交互或服务端接口的成员参与。', coverImage: '/assets/showcase/shop-01-home.webp', milestones: [{ id: 'p1-m1', year: '2026', title: '咨询与估价', summary: '环保咨询 · 图文估价 · 流式回答', status: '已完成' }, { id: 'p1-m2', year: '2026', title: '附近闲置物', summary: '就近匹配 · 闲置发布 · 收藏', status: '已完成' }, { id: 'p1-m3', year: '2026', title: '行动与社区', summary: '绿色行动 · 绿叶值 · 社区内容', status: '已完成' }], logs: [{ id: 'p1-l1', date: '05-16', title: '列表与详情页对齐后端契约', detail: '按后端 VO 字段调整了闲置物与社区内容的取数口径。', author: '何宇辰', authorInitials: 'HY' }, { id: 'p1-l2', date: '05-12', title: '补上三态与空态文案', detail: '每个数据区都给出加载、空、失败三种可执行提示。', author: '周一帆', authorInitials: 'ZY' }],
   },
   {
-    id: 'p2', slug: 'online-judge', name: '在线题库系统', description: '支持刷题、比赛、评测的在线平台', stack: ['Next.js', 'NestJS', 'MySQL'], members: 8, stars: 86, status: '维护中', difficulty: 4, year: 2025, category: 'Web', accent: 'violet', icon: 'terminal', featured: true, visibility: 'members',
+    id: 'p2', slug: 'lijing', name: '砺境', description: '东方水墨世界里的 AI 学习 RPG', intro: '把一个长期目标拆成今天能做完的一段学习，学完留下证据、写下复盘，再让知识彼此连起来。', githubUrl: 'https://github.com/positron-project/lijing-foundation', demoUrl: 'http://127.0.0.1:4187', stack: ['Node.js', 'PostgreSQL', 'Supabase'], members: 1, stars: 0, status: '维护中', difficulty: 4, year: 2026, category: 'AI', accent: 'blue', icon: 'spark', featured: true, visibility: 'members', coverImage: '/assets/showcase/lijing-01-home.webp', milestones: [{ id: 'p2-m1', year: '2026', title: '水墨世界壳层', summary: '统一视觉与页面转场 · 八卦功能目录', status: '已完成' }, { id: 'p2-m2', year: '2026', title: '学习证据与复盘', summary: '学习证据试点 · 回望复盘 · 知识脉络', status: '已完成' }, { id: 'p2-m3', year: '2026', title: '服务端 AI Gateway', summary: '注册登录 · 配额与审计 · 模板降级', status: '进行中' }],
   },
   {
-    id: 'p3', slug: 'lab-booking', name: '实验室设备预约系统', description: '设备预约、使用管理与数据统计', stack: ['Spring Boot', 'Vue3', 'MySQL'], members: 6, stars: 64, status: '维护中', difficulty: 3, year: 2024, category: 'Backend', accent: 'mint', icon: 'calendar', featured: true,
+    id: 'p3', slug: 'lab-booking', name: '实验室设备预约系统', description: '设备预约、使用管理与数据统计', stack: ['Spring Boot', 'Vue3', 'MySQL'], members: 6, stars: 64, status: '维护中', difficulty: 3, year: 2024, category: 'Backend', accent: 'mint', icon: 'calendar', featured: false,
   },
   {
     id: 'p4', slug: 'campus-map', name: '校园地图导航', description: '面向新生的室内外校园路线与地点图谱', stack: ['React', 'Go', 'PostGIS'], members: 7, stars: 53, status: '招募中', difficulty: 3, year: 2026, category: 'Tools', accent: 'orange', icon: 'map',
   },
   {
     id: 'p5', slug: 'vision-lab', name: '实验室视觉识别', description: '轻量化视觉模型在实验室场景的实践', stack: ['PyTorch', 'ONNX', 'Docker'], members: 5, stars: 41, status: '已归档', difficulty: 5, year: 2023, category: 'Algorithm', accent: 'rose', icon: 'scan',
+  },
+  // 下面四条按 featured + 年份倒序会落在入口页 03 区的 03 / 04 / 05 / 06 位
+  {
+    id: 'p6', slug: 'acg-hut', name: '次元小屋', description: '按元素分类的动画、漫画与游戏索引站', intro: '看过的动画、漫画和游戏按冰火木水土雷暗分好类，站内快讯和一季新番挂在同一页上。', stack: ['Vue3', 'Node.js', 'MySQL'], members: 2, stars: 12, status: '维护中', difficulty: 2, year: 2026, category: 'Web', accent: 'violet', icon: 'spark', featured: true, coverImage: '/assets/showcase/acg-hut-01-home.webp',
+  },
+  {
+    id: 'p7', slug: 'data-board', name: '数据可视化大屏', description: '大区数据、报警风险与链路速率的同屏看板', intro: '把六个大区的数据量、云端报警和上下游同步速率放进同一屏，一屏看完当天的运行状态。', stack: ['ECharts', 'WebSocket', 'FastAPI'], members: 3, stars: 18, status: '维护中', difficulty: 3, year: 2026, category: 'Tools', accent: 'blue', icon: 'scan', featured: true, coverImage: '/assets/showcase/data-board-01-home.webp',
+  },
+  {
+    id: 'p8', slug: 'genshin-concert', name: '原神音乐会首页', description: '照着官方音乐会页面做的整屏练习稿', intro: '乐团人物摆在中间，四个平台的下载入口压在下方，主要练整屏构图和多端入口的对齐。', stack: ['HTML', 'CSS', 'GSAP'], members: 1, stars: 9, status: '已归档', difficulty: 2, year: 2026, category: 'Web', accent: 'orange', icon: 'map', featured: true, coverImage: '/assets/showcase/genshin-concert-01-home.webp',
+  },
+  {
+    id: 'p9', slug: 'music-app', name: '音乐播放器', description: '手机端的歌单与推荐视频界面', intro: '歌手、热门歌单和推荐歌单排在一条竖线上，往右滑是推荐视频，底部在音乐和视频两个频道之间切。', stack: ['Vue3', 'Web Audio', 'Node.js'], members: 2, stars: 14, status: '维护中', difficulty: 2, year: 2026, category: 'Web', accent: 'rose', icon: 'spark', featured: true, coverImage: '/assets/showcase/music-app-01-home.webp',
   },
 ]
 

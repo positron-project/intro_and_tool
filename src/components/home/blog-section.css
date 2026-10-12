@@ -25,7 +25,8 @@
   width: 100%;
   max-width: 1560px;
   margin: 0 auto;
-  padding: 0 clamp(24px, 5.5vw, 84px);
+  /* 与首屏 / 02 / 03 共用同一条左轴（1440 下 86px，原来是 5.5vw = 79px） */
+  padding: 0 var(--poster-gutter);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -33,7 +34,7 @@
 }
 
 /* ------------------------------------------------------------
-   顶部章节引导区 (05 / BLOG · 最近，我们在写什么？)
+   顶部章节引导区 (05 / BLOG · 最近，我们在做什么？)
    ------------------------------------------------------------ */
 .blog-header-block {
   display: flex;
@@ -76,10 +77,19 @@
   letter-spacing: -0.02em;
   text-align: right;
   color: var(--home-navy, #111111);
+  /* 原来是 0.82 / 0.72 两条重复声明（后者胜），去掉重复的那条 */
   opacity: 0.82;
-  opacity: 0.72;
-  border-left: 2px solid rgba(17, 17, 17, 0.22);
-  padding-left: 14px;
+}
+
+/* 副句上方的 18×2 强调色横杠：与眉标、以及 02 / 03 每栏顶上同一根记号。
+   原来是副句左侧一根 2px 中性灰竖线，与全页的记号语言不一致。 */
+.blog-sub-quote::before {
+  content: '';
+  display: block;
+  width: 18px;
+  height: 2px;
+  margin: 0 0 14px auto;
+  background: var(--poster-accent);
 }
 
 /* ============================================================
@@ -122,7 +132,8 @@
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
-  color: var(--home-navy, #111111);
+  /* 大号章节序号恒满色强调色：不靠 hover 提亮，它是这一节的视觉锚点之一 */
+  color: var(--poster-accent);
 }
 
 .blog-item-date {
@@ -289,46 +300,6 @@
 
 
 
-/* ============================================================
-   底部通栏条目：04 横向新闻条目 (Row Article)
-   ============================================================ */
-/* 底部通栏条：一行读完的一条文章 */
-.blog-row-article {
-  position: relative;
-  display: grid;
-  grid-template-columns: clamp(120px, 14vw, 200px) minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: clamp(20px, 3vw, 48px);
-  padding: clamp(20px, 2.6vh, 30px) clamp(8px, 1.5vw, 24px);
-  border-top: 1px solid rgba(17, 17, 17, 0.1);
-  border-bottom: 1px solid rgba(17, 17, 17, 0.08);
-  box-sizing: border-box;
-  cursor: pointer;
-  outline: none;
-  transition: background-color 0.25s ease;
-}
-
-.blog-row-article:hover {
-  background-color: rgba(17, 17, 17, 0.04);
-}
-
-.row-category {
-  font-size: 13px;
-  color: var(--poster-ink-3);
-}
-
-.row-arrow {
-  color: var(--poster-ink-3);
-}
-
-.blog-row-article:hover .row-arrow {
-  color: var(--home-navy, #111111);
-}
-
-.blog-row-article:focus-visible {
-  outline: 1.5px dashed var(--home-navy, #111111);
-  outline-offset: 6px;
-}
 
 
 
@@ -340,18 +311,8 @@
 
 
 
-.row-title {
-  margin: 0;
-  font-size: clamp(15px, 1.15vw, 17.5px);
-  font-weight: 700;
-  line-height: 1.4;
-  color: var(--home-navy, #111111);
-  transition: color 0.2s ease;
-}
 
-.blog-row-article:hover .row-title {
-  color: #111111;
-}
+
 
 
 

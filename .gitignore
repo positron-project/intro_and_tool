@@ -9,6 +9,7 @@ dist/
 # 临时与备份目录
 backups/
 viz/
+dsh-image-gen/
 .workbuddy/
 
 # 本地环境

@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { motion, useReducedMotion, useScroll, useSpring } from 'framer-motion'
 import Lenis from 'lenis'
 import 'lenis/dist/lenis.css'
 
@@ -9,7 +10,7 @@ import { OfferSection } from './OfferSection'
 import { PicksSection } from './PicksSection'
 import { BlogSection } from './BlogSection'
 import { JoinSection } from './JoinSection'
-/* 02–06 五节共用的海报原子件（eyebrow / 节标题 / 正文色 / 分隔线 / 继续往下） */
+/* 02–06 五节共用的海报原子件（eyebrow / 节标题 / 正文色 / 分隔线） */
 import './poster-sections.css'
 
 type StorySection = {
@@ -20,11 +21,16 @@ type StorySection = {
 const STORY_SECTIONS: StorySection[] = [
   { id: 'story-hero', label: '首页' },
   { id: 'story-about', label: '关于我们' },
-  { id: 'story-offer', label: '能带来什么' },
+  { id: 'story-offer', label: '作品展示' },
   { id: 'story-picks', label: '小组推荐' },
   { id: 'story-blog', label: '小组博客' },
   { id: 'story-join', label: '加入我们' },
 ]
+
+/* 首屏离场视差：0.6vh 之前不动，0.6vh~1.3vh 之间淡出离场；
+   帧位移与缩放上限只在这里调，别散到下面去 */
+const HERO_PARALLAX_LIFT = 0.16
+const HERO_PARALLAX_SCALE = 0.03
 
 /* 跳转手感：时长随距离自适应（不再是固定 1.2s），缓动换成无“前冲”的 easeInOutCubic */
 const JUMP_MIN_DURATION = 0.55
@@ -47,6 +53,12 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
   const heroFrameRef = useRef<HTMLDivElement | null>(null)
   const lenisRef = useRef<Lenis | null>(null)
 
+  /* 顶部 1px 进度线：读滚动进度但不进 state（MotionValue 不触发重渲染），
+     用 spring 抹平 Lenis lerp 的抖动；reduced-motion 下整条不渲染。 */
+  const prefersReducedMotion = useReducedMotion()
+  const { scrollYProgress } = useScroll()
+  const scrollProgress = useSpring(scrollYProgress, { stiffness: 220, damping: 40, restDelta: 0.001 })
+
   /* 导航区段滚动偏移常量（与 SiteHeader 高度呼应） */
   const HEADER_OFFSET = -70
 
@@ -63,7 +75,7 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
           // 在 0 ~ 0.6vh 保持高清晰度可读，0.6vh ~ 1.3vh 平滑视差淡出离场
           const exitProgress = Math.min(1, Math.max(0, (scroll - vh * 0.6) / (vh * 0.7)))
           const scaleProgress = Math.min(1, Math.max(0, scroll / (vh * 1.2)))
-          frame.style.transform = `translate3d(0, ${scroll * 0.16}px, 0) scale(${1 - scaleProgress * 0.03})`
+          frame.style.transform = `translate3d(0, ${scroll * HERO_PARALLAX_LIFT}px, 0) scale(${1 - scaleProgress * HERO_PARALLAX_SCALE})`
           frame.style.opacity = String(Math.max(0, 1 - exitProgress))
           frame.style.visibility = 'visible'
         } else {
@@ -201,15 +213,17 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
   /* 稳定的回调身份：memo 化的区段不会因为父组件重渲染而被连带重渲染 */
   const handleHeaderScrollToSection = useCallback((sectionIndex: number) => scrollToSection(sectionIndex), [scrollToSection])
   const handleHeroScrollDown = useCallback(() => scrollToSection('story-about'), [scrollToSection])
-  const handleNextOffer = useCallback(() => scrollToSection('story-offer'), [scrollToSection])
-  const handleNextPicks = useCallback(() => scrollToSection('story-picks'), [scrollToSection])
-  const handleNextBlog = useCallback(() => scrollToSection('story-blog'), [scrollToSection])
   const handleNextJoin = useCallback(() => scrollToSection('story-join'), [scrollToSection])
   const handleJoinScrollToTop = useCallback(() => scrollToSection('story-hero'), [scrollToSection])
   const handleJoinScrollToSection = useCallback((sectionId: string) => scrollToSection(sectionId), [scrollToSection])
 
   return (
     <div className="home-story-scroll" data-active-screen={activeIndex}>
+      {/* 顶部 1px 滚动进度线：全页唯一的位置反馈 */}
+      {!prefersReducedMotion ? (
+        <motion.div className="home-scroll-progress" style={{ scaleX: scrollProgress }} aria-hidden="true" />
+      ) : null}
+
       {/* 顶部全局悬浮导航 */}
       <MemoSiteHeader
         activeIndex={activeIndex}
@@ -225,24 +239,24 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
       </div>
 
       {/* 02 / ABOUT US (项目组介绍) */}
-      <MemoAboutSection onNavigate={onNavigate} onNextSection={handleNextOffer} />
+      <MemoAboutSection />
 
       {/* 03 之后的内容区：始终挂载显示，分组切换只改变 02 正文 */}
-      {/* 03 / WHAT WE OFFER (我们可以给你带来什么) */}
-      <MemoOfferSection onNextSection={handleNextPicks} />
+      {/* 03 / OUR PROJECTS (作品展示) */}
+      <MemoOfferSection onNavigate={onNavigate} />
 
       {/* 04 / OUR PICKS (小组力荐) */}
-      <MemoPicksSection onNavigate={onNavigate} onNextSection={handleNextBlog} />
+      <MemoPicksSection onNavigate={onNavigate} />
 
       {/* 05 / BLOG (小组博客 · 最近文章) */}
-      <MemoBlogSection onNavigate={onNavigate} onNextSection={handleNextJoin} />
+      <MemoBlogSection onNavigate={onNavigate} />
 
       {/* 06 / JOIN US (加入我们 & 整站一体化 Footer) */}
       <MemoJoinSection
         onNavigate={onNavigate}
         onScrollToTop={handleJoinScrollToTop}
         onScrollToSection={handleJoinScrollToSection}
-        qrCodeSrc="./assets/qq-group-qrcode.svg"
+        qrCodeSrc="./assets/project-group-qrcode.png"
       />
     </div>
   )

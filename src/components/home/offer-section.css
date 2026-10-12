@@ -1,7 +1,11 @@
 /* ============================================================
-   03 / WHAT WE OFFER (我们可以给你带来什么) · 视觉样式表
-   Design Language: Pure Architectural Blueprint / Sequential Horizontal Rows / Editorial Poster
-   Palette: Warm Ivory (--home-bg-warm, #ffffff) + Deep Navy (--home-navy, #111111) + Pale Cyan
+   03 / OUR PROJECTS (我们做出来的东西) · 视觉样式表
+   纯白纸 + 墨黑 + 唯一强调色电光蓝；装饰层（网格 / 斜带 / 十字标 /
+   假仪表 / 巨型英文轮廓字）已全部撤掉，海报感靠留白与字号层级。
+
+   形态：左栏是项目切换器（只有序号与项目名，唯一强调色落点是选中项
+   那条 2px 竖杠），右栏是封面区 + 元信息行 + 一句说明 + 规格行。
+   这一节靠「切换」而不是靠滚动阅读。
    ============================================================ */
 
 .offer-section-viewport {
@@ -9,8 +13,8 @@
   width: 100%;
   min-height: 100vh;
   min-height: 100svh;
-  background-color: var(--home-bg-warm, #ffffff);
-  color: var(--home-navy, #111111);
+  background-color: var(--poster-paper, #ffffff);
+  color: var(--poster-ink, #111111);
   font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
   overflow: hidden;
   box-sizing: border-box;
@@ -20,20 +24,6 @@
   justify-content: space-between;
 }
 
-
-
-
-
-
-
-
-
-/* 背景十字标符号 (+) */
-
-
-/* ============================================================
-   主体内容排版层 (单列行状图纸流 · 绝无卡片外框)
-   ============================================================ */
 .offer-content-stage {
   position: relative;
   z-index: 10;
@@ -44,243 +34,188 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: clamp(36px, 4.5vh, 52px);
+  gap: clamp(32px, 4vh, 48px);
 }
 
 /* ------------------------------------------------------------
-   第一段：顶部信息行 (左侧 03 章节标 + 右侧主标题行)
+   第一段：眉标 + 主标题 + 一句承接
    ------------------------------------------------------------ */
-.offer-header-grid {
-  display: grid;
-  grid-template-columns: clamp(90px, 9vw, 150px) 1fr;
-  gap: clamp(32px, 4.5vw, 84px);
-  align-items: flex-start;
-}
-
-
-
-
-
-
-
-
-
-/* 主标题行 + 极小英文辅助 */
-.offer-title-wrap {
+.offer-header-block {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 32px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .offer-main-title {
   margin: 0;
   padding: 0;
   font-family: "MiSans", "Noto Sans SC", sans-serif;
-  font-size: clamp(36px, 4.2vw, 68px);
+  font-size: clamp(34px, 4vw, 64px);
   font-weight: 900;
   line-height: 1.08;
   letter-spacing: -0.035em;
-  color: var(--home-navy, #111111);
+  color: var(--poster-ink, #111111);
 }
 
-
-
-
-
-
+.offer-thesis {
+  margin: 0;
+  padding: 0;
+  font-size: clamp(15px, 1.15vw, 19px);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--poster-ink-3, #8a8a8a);
+}
 
 /* ------------------------------------------------------------
-   第二视觉焦点：醒目辅助短句「学到的，要有地方去。」
+   第二段：左切换器 + 右详情
    ------------------------------------------------------------ */
-.offer-focal-row {
-  display: flex;
-  justify-content: flex-end;
-  padding-right: clamp(24px, 10vw, 180px);
-  margin-top: -12px;
-}
-
-.offer-focal-quote {
-  font-family: "MiSans", "Noto Sans SC", sans-serif;
-  font-size: clamp(20px, 2.2vw, 32px);
-  font-weight: 800;
-  line-height: 1.3;
-  color: var(--home-navy, #111111);
-  letter-spacing: -0.025em;
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-
-
-
-/* ------------------------------------------------------------
-   第二段：每行一个 (单列 3 大行展开 · 纯蓝图排版架构)
-   ------------------------------------------------------------ */
-.offer-rows-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  width: 100%;
-  border-top: 1px solid rgba(17, 17, 17, 0.1);
-}
-
-/* 单行条目：宽屏双栏不对称（左规格标号 + 右正文叙述） */
-.offer-row-item {
-  position: relative;
+.offer-stage {
   display: grid;
-  grid-template-columns: clamp(140px, 16vw, 240px) 1fr;
-  gap: clamp(28px, 4vw, 72px);
-  align-items: flex-start;
-  padding: clamp(28px, 3.8vh, 44px) clamp(8px, 1.5vw, 24px);
-  border-bottom: 1px solid rgba(17, 17, 17, 0.08);
-  box-sizing: border-box;
-  transition: background-color 0.25s ease;
-  user-select: none;
+  grid-template-columns: clamp(180px, 15vw, 240px) minmax(0, 1fr);
+  gap: clamp(28px, 3.5vw, 64px);
+  align-items: start;
 }
 
-.offer-row-item:hover {
-  background-color: rgba(17, 17, 17, 0.04);
-}
-
-/* 左侧规格标号栏 */
-.offer-row-meta {
+/* 切换器：无卡片、无底色，只有每条左侧的选中竖杠与 hover 换色 */
+.offer-switch {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  border-right: 1px solid var(--poster-line, rgba(17, 17, 17, 0.12));
 }
 
-.offer-row-num {
-  font-family: "DM Mono", "SF Mono", monospace;
-  font-size: clamp(34px, 3.8vw, 54px);
-  font-weight: 800;
-  line-height: 0.9;
-  letter-spacing: -0.04em;
-  color: var(--home-navy, #111111);
-  opacity: 0.85;
-  transition: color 0.2s ease, opacity 0.2s ease;
-}
-
-.offer-row-item:hover .offer-row-num {
-  opacity: 1;
-}
-
-
-
-
-
-
-
-/* 右侧核心内容栏 */
-.offer-row-main {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(10px, 1.4vh, 16px);
-}
-
-.offer-row-headline {
+.offer-switch-item {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
   margin: 0;
-  padding: 0;
-  font-family: "MiSans", "Noto Sans SC", sans-serif;
-  font-size: clamp(20px, 1.8vw, 28px);
-  font-weight: 800;
-  line-height: 1.28;
-  letter-spacing: -0.025em;
-  color: var(--home-navy, #111111);
+  padding: 13px 16px 13px 12px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--poster-ink-3, #8a8a8a);
+  cursor: pointer;
+  transition: color 160ms ease-out, border-color 160ms ease-out;
 }
 
-.offer-row-desc {
-  margin: 0;
-  padding: 0;
-  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
-  font-size: clamp(14px, 0.98vw, 16px);
-  font-weight: 400;
-  line-height: 1.86;
-  color: var(--home-navy, #111111);
-  opacity: 0.82;
-  max-width: 960px;
+.offer-switch-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
 }
 
+.offer-switch-name {
+  font-size: clamp(14px, 1.05vw, 16px);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
 
+.offer-switch-item:hover {
+  color: var(--poster-ink, #111111);
+}
 
+.offer-switch-item[aria-pressed='true'] {
+  color: var(--poster-ink, #111111);
+  border-left-color: var(--poster-accent);
+}
 
+.offer-switch-item:focus-visible {
+  outline: 1px solid var(--poster-accent);
+  outline-offset: -1px;
+}
 
 /* ------------------------------------------------------------
-   第三段：底部微引导与 04 / OUR PICKS 视觉预埋框架
+   详情：封面区 + 一行项目库入口
    ------------------------------------------------------------ */
-.offer-footer-guide {
-  width: 100%;
+.offer-detail {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding-top: clamp(16px, 2vh, 28px);
-  border-top: 1px solid rgba(17, 17, 17, 0.08);
-  box-sizing: border-box;
+  flex-direction: column;
+  gap: clamp(14px, 1.8vh, 20px);
+  min-width: 0;
 }
 
+.offer-cover {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 1440 / 820;
+  border: 1px solid var(--poster-line, rgba(17, 17, 17, 0.12));
+  background: var(--poster-paper, #ffffff);
+  overflow: hidden;
+}
 
+/* 比例写在 figure 上（绿易坊截图 1440×820 的真实比例），img 填满它。
+   1440 实测图 1000.8×570.8：首屏内能看完截图与入口行。
+   object-position 顶对齐：站内标题与导航永远不会被裁掉。 */
+.offer-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
 
-.offer-footer-target {
+.offer-detail-link {
+  align-self: flex-start;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  background: transparent;
-  border: none;
-  padding: 6px 12px;
-  font-family: "DM Mono", "SF Mono", monospace;
-  font-size: clamp(10.5px, 0.78vw, 12px);
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--home-navy, #111111);
-  opacity: 0.6;
+  gap: 8px;
+  margin: 0;
+  padding: 0 0 2px;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--poster-ink, #111111);
   cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: color 160ms ease-out;
 }
 
-.offer-footer-target:hover {
-  opacity: 1;
-  transform: translateY(2px);
+.offer-detail-link:hover {
+  color: var(--poster-accent);
 }
-
-.offer-footer-arrow {
-  transition: transform 0.25s ease;
-}
-
-.offer-footer-target:hover .offer-footer-arrow {
-  transform: translateY(3px);
-}
-
-
-
-
-
-
 
 /* ============================================================
    响应式断点控制
    ============================================================ */
+@media (max-width: 1024px) {
+  .offer-stage {
+    grid-template-columns: clamp(160px, 22vw, 200px) minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 860px) {
-  .offer-row-item {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    padding: 24px 0;
+  /* 单列：切换器变成横向排的项目名条，不再占右侧竖栏 */
+  .offer-stage {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
   }
 
-  .offer-row-meta {
+  .offer-switch {
     flex-direction: row;
-    align-items: baseline;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 0 22px;
+    border-right: 0;
+    border-bottom: 1px solid var(--poster-line, rgba(17, 17, 17, 0.12));
   }
 
-  
+  .offer-switch-item {
+    width: auto;
+    grid-template-columns: 22px auto;
+    padding: 12px 0;
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+  }
 
-  .offer-focal-row {
-    justify-content: flex-start;
-    padding-right: 0;
+  .offer-switch-item[aria-pressed='true'] {
+    border-bottom-color: var(--poster-accent);
   }
 }
 
@@ -289,25 +224,7 @@
     padding: 84px 0 40px;
   }
 
-  .offer-header-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  
-
-  
-
-  .offer-focal-quote {
-    font-size: 19px;
-  }
-
-  /* 移动端保留巨型水印：有意裁切局部，严禁简单隐藏或横向溢出 */
-  
-
-  .offer-footer-guide {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+  .offer-main-title {
+    font-size: 34px;
   }
 }

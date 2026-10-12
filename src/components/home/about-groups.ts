@@ -1,13 +1,17 @@
 /* ============================================================
-   02 / 我们是谁 —— 分组内容数据源
+   02 / 我们各有特色 —— 分组内容数据源
    ------------------------------------------------------------
-   首屏下滑越过触发线后，先出现「项目组 / 算法组」二选一选择器；
-   选定后由本文件的数据驱动 02 正文区的全部文案。
+   2026-10 起 02 改成多组并置，本文件的数据同时驱动各栏：
+   栏头（name）→ 组标（chapterLabel）→ 两行短句（quoteLines）
+   → 一句短语（motto）→ 栏尾四格（ABOUT_CAPABILITIES）；
+   ABOUT_GROUP_ORDER 决定顺序，两个一行的顺序即从左到右。
 
-   约定：一个组的四个关键词编号各自从 01 起，与选择器里的 01 / 02 无关。
+   约定：一个组的四个关键词编号各自从 01 起。keywords / preview
+   两个字段目前没有任何渲染点（改版前的排版用过），保留待用。
+   02 现在有三组（项目 / 算法 / 网安），第四格位置留空。
    ============================================================ */
 
-export type AboutGroupId = 'project' | 'algorithm'
+export type AboutGroupId = 'project' | 'algorithm' | 'security'
 
 export interface AboutKeyword {
   /** 英文大词（悬停时被扫入色块压在底层，靠 mix-blend-mode 保持可读） */
@@ -28,14 +32,12 @@ export interface AboutGroupContent {
   chapterLabel: string
   /** 选择器悬浮/聚焦时显示的预览短句 */
   preview: string
-  /** 选择器里的方向与规模 */
-  meta: string
   /** 正文区主标题 */
   title: string
   /** 第二视觉焦点：两行醒目短句 */
   quoteLines: [string, string]
-  /** 正文段落（两段） */
-  paragraphs: [string, string]
+  /** 栏内唯一一句短语（4+4 字，逗号分隔），替掉了原来的两段正文 */
+  motto: string
   /** 四个关键词 */
   keywords: AboutKeyword[]
 }
@@ -46,13 +48,9 @@ const PROJECT_GROUP: AboutGroupContent = {
   name: '项目组',
   chapterLabel: 'PROJECT TEAM',
   preview: '做项目，从写代码到部署',
-  meta: '7 人 · 前端 / 后端 / 测试 / 部署',
   title: '我们各有特色',
   quoteLines: ['从学习一门技术，', '到做出一个东西。'],
-  paragraphs: [
-    '项目组是科技小组里一群喜欢技术、也喜欢把想法做出来的同学。',
-    '组里的人一起做项目，前端后端都有人碰。做完之后把代码和踩过的坑整理出来，下一届接手的时候不用从头翻。',
-  ],
+  motto: '热爱技术，创新革新',
   keywords: [
     { en: 'LEARN', num: '01', zh: '学习', hoverText: '不会就问，问完记下来' },
     { en: 'BUILD', num: '02', zh: '创造', hoverText: '先写个能跑的版本' },
@@ -67,13 +65,9 @@ const ALGORITHM_GROUP: AboutGroupContent = {
   name: '算法组',
   chapterLabel: 'ALGORITHM TEAM',
   preview: '一起打比赛，平时也跑模型',
-  meta: '6 人 · 数据结构 / 机器学习 / Agent',
   title: '我们各有特色',
   quoteLines: ['把问题拆开，', '再一个个验证。'],
-  paragraphs: [
-    '算法组是科技小组里一群愿意为一道题反复推敲、也愿意把思路讲给别人听的同学。',
-    '平时一起刷题，遇到不会的先自己想，再拿去问人。有人打比赛，有人复现论文跑模型，做完都会把过程和代码写下来，下一届接着往下做。',
-  ],
+  motto: '以赛代练，稳扎稳打',
   keywords: [
     { en: 'THINK', num: '01', zh: '思考', hoverText: '先在纸上推一遍样例' },
     { en: 'SOLVE', num: '02', zh: '求解', hoverText: '想清楚再上手写代码' },
@@ -82,10 +76,78 @@ const ALGORITHM_GROUP: AboutGroupContent = {
   ],
 }
 
+/* 网安组：栏内短语与大标题按招新 PPT（2019 成立 / CTF 攻防方向）提炼 */
+const SECURITY_GROUP: AboutGroupContent = {
+  id: 'security',
+  name: '网安组',
+  chapterLabel: 'SECURITY TEAM',
+  preview: '打 CTF，从找洞到拿旗',
+  title: '我们各有特色',
+  quoteLines: ['找到那个缺口，', '再拿到 flag。'],
+  motto: '攻防兼备，见招拆招',
+  keywords: [
+    { en: 'FIND', num: '01', zh: '发现', hoverText: '先看它哪里不对劲' },
+    { en: 'BREAK', num: '02', zh: '利用', hoverText: '把洞变成一条路' },
+    { en: 'FIX', num: '03', zh: '修复', hoverText: '知道怎么坏，才知道怎么修' },
+    { en: 'REPORT', num: '04', zh: '复盘', hoverText: '打完写一份 writeup' },
+  ],
+}
+
 export const ABOUT_GROUPS: Record<AboutGroupId, AboutGroupContent> = {
   project: PROJECT_GROUP,
   algorithm: ALGORITHM_GROUP,
+  security: SECURITY_GROUP,
 }
 
-/* 选择器里的左右顺序：左项目组、右算法组 */
-export const ABOUT_GROUP_ORDER: AboutGroupId[] = ['project', 'algorithm']
+/* 栏序：项目组、算法组一行，网安组另起一行占左半栏 */
+export const ABOUT_GROUP_ORDER: AboutGroupId[] = ['project', 'algorithm', 'security']
+
+/* ------------------------------------------------------------
+   栏尾的四格 —— 数据源
+   每一组栏尾都挂四格：项目组取项目实训方向的四条主线（前端 / 后端 /
+   协作 / 管理），算法组取招新 PPT 的四章（赛事 / 赛制 / 算法 / 训练），
+   网安组取 CTF 的四个方向（PWN / Reverse / Web / Crypto）。
+   格内只有图标 + 特性名，不写说明文字，所以这里也只有这两项。
+   id 同时是图标键，图标实现在 AboutSection.tsx 的 CAPABILITY_ICONS。
+   ------------------------------------------------------------ */
+export type AboutCapabilityId =
+  | 'frontend'
+  | 'backend'
+  | 'teamwork'
+  | 'management'
+  | 'contest'
+  | 'rules'
+  | 'algorithm'
+  | 'training'
+  | 'pwn'
+  | 'reverse'
+  | 'web'
+  | 'crypto'
+
+export interface AboutCapability {
+  id: AboutCapabilityId
+  /** 特性名（≤ 14 字）：一格就这一行字 */
+  name: string
+}
+
+/* 按组分：键就是 AboutGroupId，栏尾四格按自己的组取 */
+export const ABOUT_CAPABILITIES: Record<AboutGroupId, AboutCapability[]> = {
+  project: [
+    { id: 'frontend', name: '前端开发' },
+    { id: 'backend', name: '后端开发' },
+    { id: 'teamwork', name: '团队协作' },
+    { id: 'management', name: '项目管理' },
+  ],
+  algorithm: [
+    { id: 'contest', name: '赛事' },
+    { id: 'rules', name: '赛制' },
+    { id: 'algorithm', name: '算法' },
+    { id: 'training', name: '训练' },
+  ],
+  security: [
+    { id: 'pwn', name: 'PWN' },
+    { id: 'reverse', name: 'Reverse' },
+    { id: 'web', name: 'Web' },
+    { id: 'crypto', name: 'Crypto' },
+  ],
+}

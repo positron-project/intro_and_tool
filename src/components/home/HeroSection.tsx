@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { ArrowUpRight } from 'lucide-react'
+import { DUR, EASE_OUT, SHIFT } from './motion'
 
 interface HeroSectionProps {
   onJoinClick?: () => void
@@ -32,9 +33,9 @@ export function HeroSection({ onJoinClick, onToolsClick }: HeroSectionProps) {
       {/* 主标题入场动画 */}
       <motion.div
         className="hero-heading-group"
-        initial={{ opacity: 0, y: 22 }}
+        initial={{ opacity: 0, y: SHIFT.block }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: DUR.scene, ease: EASE_OUT }}
       >
         <h1 className="hero-main-title">
           <span className="hero-title-line">学点技术</span>
@@ -45,9 +46,9 @@ export function HeroSection({ onJoinClick, onToolsClick }: HeroSectionProps) {
       {/* 副标题 */}
       <motion.div
         className="hero-subtitle-group"
-        initial={{ opacity: 0, y: 18 }}
+        initial={{ opacity: 0, y: SHIFT.text }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.85, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: DUR.scene, delay: 0.15, ease: EASE_OUT }}
       >
         <div className="hero-sub-title">计算机科技小组</div>
       </motion.div>
@@ -55,9 +56,9 @@ export function HeroSection({ onJoinClick, onToolsClick }: HeroSectionProps) {
       {/* 一句话说明 */}
       <motion.p
         className="hero-value-desc"
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: SHIFT.text }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.85, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: DUR.scene, delay: 0.25, ease: EASE_OUT }}
       >
         学技术、做项目，把经验传给下一届。
       </motion.p>
@@ -65,9 +66,9 @@ export function HeroSection({ onJoinClick, onToolsClick }: HeroSectionProps) {
       {/* 行动按钮群 */}
       <motion.div
         className="hero-cta-group"
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: SHIFT.text }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.85, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: DUR.scene, delay: 0.35, ease: EASE_OUT }}
       >
         <a
           href="#story-join"

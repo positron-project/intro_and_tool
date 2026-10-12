@@ -1,7 +1,13 @@
 /* ============================================================
-   02 / ABOUT US (项目组介绍) · 视觉样式表
-   Design Language: Minimalist / Architectural Blueprint / Editorial Poster
-   Palette: Warm Ivory (--home-bg-warm) + Deep Navy (--home-navy) + Pale Cyan
+   02 / ABOUT US（我们各有特色）· 视觉样式表
+   纯白纸 + 墨黑 + 唯一强调色电光蓝。
+
+   2026-10 改版：从「左侧切换栏 + 右侧规格卡」的两栏 tab 结构改成
+   两组并置——项目组与算法组同时可读。tablist / roving tabindex /
+   layoutId 指示块 / AnimatePresence 面板切换 / 高度锚点层整套已删除；
+   两栏等高起头（曾经让右栏下移 --poster-offset 错位，YG 看过觉得
+   右栏凭空多一段留白，已去掉），栏与栏之间只有一条到内容底就终止的
+   1px 竖线。
    ============================================================ */
 
 .about-section-viewport {
@@ -12,9 +18,8 @@
   background-color: var(--home-bg-warm, #ffffff);
   color: var(--home-navy, #111111);
   font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
-  /* 用 clip 而不是 hidden：hidden 会让本 section 成为滚动容器，
-     内部的 position: sticky（左侧分组栏）就永远粘不住；
-     clip 以同样方式裁掉溢出装饰，但不创建滚动容器。 */
+  /* 用 clip 而不是 hidden：hidden 会让本 section 成为滚动容器，内部的
+     position: sticky 就永远粘不住；clip 同样裁掉溢出装饰，但不创建滚动容器。 */
   overflow: hidden; /* 旧内核兜底 */
   overflow: clip;
   box-sizing: border-box;
@@ -24,23 +29,8 @@
   justify-content: space-between;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-/* 极淡建筑线稿图纸 */
-
-
 /* ============================================================
-   主体内容排版层 (版块标题 + 左分组栏 / 右组特性卡)
+   主体内容排版层（版块标题 + 两组并置）
    ============================================================ */
 .about-content-stage {
   position: relative;
@@ -48,218 +38,14 @@
   width: 100%;
   max-width: 1680px;
   margin: 0 auto;
-  padding: 0 clamp(24px, 6vw, 92px);
+  padding: 0 var(--poster-gutter);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: clamp(40px, 6vh, 64px);
 }
 
-/* ============================================================
-   两栏骨架：左分组栏 + 右组特性卡
-   ------------------------------------------------------------
-   左栏固定窄轨道 clamp(220px,18vw,280px)，右栏自适应（约到 920px），
-   两栏顶部对齐，栏间距 clamp(24px,3vw,56px)。
-   ============================================================ */
-.about-layout {
-  display: grid;
-  grid-template-columns: clamp(220px, 18vw, 280px) minmax(0, 1fr);
-  gap: clamp(24px, 3vw, 56px);
-  align-items: start;
-}
-
-/* ------------------------------------------------------------
-   左侧：悬浮分组栏
-   · 浮层质感：1px 细边 + 半透明纸面 + blur + 极浅投影
-   · 桌面端 sticky 吸顶；≤768px 变横向分段控件（见媒体查询）
-   · 只在点击 / 键盘操作时切换组，hover 只提亮文字，不换内容
-   ------------------------------------------------------------ */
-.about-group-rail {
-  position: sticky;
-  top: clamp(96px, 14vh, 140px);
-  align-self: start;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 16px;
-  border: 1px solid rgba(17, 17, 17, 0.14);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.72);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 8px 24px rgba(17, 17, 17, 0.06);
-  user-select: none;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(14px, 1.8vh, 20px);
-}
-
-/* 栏顶：章节号 02 / 短横线 / ABOUT US —— 代替原来的 about-chapter-column
-   （三条基础规则沿用原样，见下方「章节编号基础样式」） */
-
-
-/* 分组列表：竖向 tablist */
-.about-group-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 100%;
-}
-
-/* 一个组 = 一枚 tab。
-   未选中：透明底 + 深蓝 0.6；hover 提到 0.9；选中：深蓝块 + 纸面色。 */
-.about-group-tab {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  text-align: left;
-  font-family: inherit;
-  color: rgba(17, 17, 17, 0.6);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: color 0.22s ease;
-}
-
-.about-group-tab:hover {
-  color: rgba(17, 17, 17, 0.9);
-}
-
-.about-group-tab[data-active='true'] {
-  color: var(--home-bg-warm, #ffffff);
-}
-
-/* 键盘焦点环：2px 次级蓝，offset 2px */
-.about-group-tab:focus-visible {
-  outline: 2px solid #111111;
-  outline-offset: 2px;
-}
-
-/* 选中态的背景块：独立一层，交给 Framer 的 layoutId 在各项之间滑动 */
-.about-group-indicator {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-radius: 4px;
-  background-color: var(--home-navy, #111111);
-}
-
-/* 文字层抬到背景块之上 */
-.about-group-tab > .about-tab-body{
-  position: relative;
-  z-index: 1;
-}
-
-
-
-.about-tab-body {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
-}
-
-.about-tab-name {
-  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
-  font-size: clamp(15px, 1.15vw, 17px);
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  line-height: 1.3;
-}
-
-
-
-.about-tab-meta {
-  margin-top: 4px;
-  font-size: clamp(10.5px, 0.8vw, 12px);
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  line-height: 1.5;
-  opacity: 0.65;
-}
-
-/* ------------------------------------------------------------
-   右侧：正文栏（无边框的编辑式文字栏）
-   · 海报语言不画框：靠 eyebrow 的红杠 + 一条贯通细线立住结构，
-     文字量度由 .about-body-narrative 自己的 620px 上限控制，
-     这样外框右缘能与标题行、底部导航对齐，不会在内侧留死白
-   · 高度稳定（方案 A）：所有组的面板叠在同一格里，
-     不可见的那一份只承担高度 —— 栏高恒等于最高的一组
-   ------------------------------------------------------------ */
-.about-spec-card {
-  position: relative;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* 方案 A：所有组的面板叠在同一格里 */
-.about-spec-stack {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.about-spec-stack > * {
-  grid-area: 1 / 1;
-}
-
-/* 高度锚点层：每一组各一份，隐藏但保留布局 —— 外框高度由它决定。
-   visibility:hidden 让它既不显示、也不进无障碍树与 Tab 序列。 */
-.about-spec-anchors {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  visibility: hidden;
-}
-
-.about-spec-anchors > * {
-  grid-area: 1 / 1;
-}
-
-/* 卡片内容柱：元信息条 → 主文案 → 正文 */
-.about-spec-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 100%;
-}
-
-/* 顶部元信息条：SPEC · 组标 · 规模 */
-
-
-.about-spec-rule {
-  width: 100%;
-  height: 1px;
-  background-color: rgba(17, 17, 17, 0.14);
-  margin: 10px 0 clamp(20px, 2.6vh, 30px);
-}
-
-
-
-
-
-
-
-/* 主标题行：组标题（现为「我们各有特色」）+ 侧边英文 WHO WE ARE */
+/* 版块标题行：眉标 + 「我们各有特色」 */
 .about-title-row {
   display: flex;
   align-items: flex-start;
@@ -277,18 +63,79 @@
   color: var(--home-navy, #111111);
 }
 
+/* ------------------------------------------------------------
+   分组并置
+   ------------------------------------------------------------
+   一行两个位置，两栏顶对齐；竖线画在两栏空隙的正中，高度跟着该栏
+   （top/bottom: 0），到行底就终止。
+   ------------------------------------------------------------ */
+.about-pair {
+  --pair-gap: clamp(48px, 6vw, 104px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--pair-gap);
+  row-gap: clamp(56px, 8vh, 96px);
+  align-items: start;
+}
 
+.about-pair-col {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
 
+/* 一行只有一组时补的占位：撑满整行高，字落在正中，竖线跟别的栏一样长 */
+.about-pair-col--pending {
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+}
 
+.about-pending {
+  font-family: "MiSans", "PingFang SC", "Source Han Sans SC", "Noto Sans SC", sans-serif;
+  font-size: clamp(15px, 1.1vw, 17px);
+  letter-spacing: 0.08em;
+  color: rgba(17, 17, 17, 0.28);
+}
 
+.about-pair-col:nth-child(even)::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--pair-gap) / -2);
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--poster-line);
+}
 
-
-/* 第二视觉焦点：醒目短句 */
-/* 第二视觉焦点：两行醒目短句（第二行用次级蓝 #111111） */
-.about-focal-quote {
+/* 栏头：组名 */
+.about-pair-name {
   margin: 0;
   padding: 0;
-  font-size: clamp(28px, 3.2vw, 48px);
+  font-size: clamp(20px, 1.8vw, 28px);
+  font-weight: 800;
+  line-height: 1.28;
+  letter-spacing: -0.025em;
+  color: var(--home-navy, #111111);
+}
+
+/* 栏内唯一的强调色落点：与眉标同一根 18×2 横杠。
+   它下面的组标用 --plain（不自带杠），所以一栏里只出现一根。 */
+.about-pair-rule {
+  width: 18px;
+  height: 2px;
+  background: var(--poster-accent);
+  margin: clamp(22px, 2.8vh, 32px) 0 clamp(14px, 1.8vh, 20px);
+}
+
+/* 第二视觉焦点：两行醒目短句。
+   两栏并置后栏宽减半，字号比原来降一档——否则一屏里会同时出现四行巨字。 */
+.about-focal-quote {
+  margin: clamp(18px, 2.4vh, 26px) 0 0;
+  padding: 0;
+  font-size: clamp(24px, 2.6vw, 36px);
   font-weight: 800;
   line-height: 1.24;
   letter-spacing: -0.02em;
@@ -301,18 +148,18 @@
   display: block;
 }
 
+/* 第二行只用上下各一档间距与第一行拉开（按 YG 要求，原来的 1px 发丝灰短横线已删掉），
+   不做下划线、不加记号，两行读起来是连续的一句。 */
 .about-quote-line--sub {
+  width: fit-content;
+  margin-top: clamp(12px, 1.5vh, 16px);
+  padding-top: clamp(12px, 1.5vh, 16px);
   color: #111111;
 }
 
-/* 卡片内的段落间距（不改动 .about-body-narrative 本体） */
-.about-spec-panel .about-body-narrative {
-  margin-top: clamp(18px, 2.4vh, 28px);
-}
-
-/* 正文段落：编辑式排版、深灰蓝、大行距、约100字 */
+/* 栏内唯一一句短语：编辑式排版、深灰、大行距 */
 .about-body-narrative {
-  margin: 0;
+  margin: clamp(18px, 2.4vh, 28px) 0 0;
   padding: 0;
   max-width: 620px;
   font-size: clamp(15px, 1.1vw, 17px);
@@ -323,77 +170,20 @@
   font-family: "MiSans", "PingFang SC", "Source Han Sans SC", "Noto Sans SC", sans-serif;
 }
 
-.about-body-narrative p {
-  margin: 0 0 12px 0;
-}
-
-.about-body-narrative p:last-child {
-  margin-bottom: 0;
-}
-
 /* ============================================================
-   底部衔接微引导 (引向下一屏 03 / WHAT WE OFFER)
-
-   z-index 50：浮在分组栏与规格卡之上，任何布局下都点得到。
+   响应式
    ============================================================ */
-.about-footer-nav {
-  position: relative;
-  z-index: 50;
-  width: 100%;
-  max-width: 1680px;
-  margin: 0 auto;
-  padding: clamp(24px, 3vh, 40px) clamp(24px, 6vw, 92px) 0;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+@media (max-width: 860px) {
+  /* 两栏回单列：去掉栏间竖线，两组靠间距分组 */
+  .about-pair {
+    grid-template-columns: 1fr;
+    row-gap: clamp(36px, 5vh, 52px);
+  }
+
+  .about-pair-col:nth-child(even)::before {
+    display: none;
+  }
 }
-
-
-
-
-
-.about-footer-preview {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  color: var(--home-navy, #111111);
-  opacity: 0.6;
-  transition: opacity 0.25s ease, transform 0.25s ease;
-  user-select: none;
-}
-
-.about-footer-preview:hover {
-  opacity: 1;
-  transform: translateY(2px);
-}
-
-
-
-.about-footer-preview-label {
-  font-family: "DM Mono", "SF Mono", monospace;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.about-footer-arrow {
-  width: 14px;
-  height: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ============================================================
-   响应式媒体查询 (Responsive)
-   ============================================================ */
 
 @media (max-width: 768px) {
   .about-section-viewport {
@@ -405,78 +195,78 @@
     gap: 36px;
   }
 
-  /* 两栏改一栏：分组栏变成卡片上方的横向分段控件 */
-  .about-layout {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .about-group-rail {
-    position: static;
-    padding: 6px;
-    gap: 0;
-  }
-
-  /* 隐藏章节号与规则线，只留分段控件 */
-  
-
-  .about-group-list {
-    flex-direction: row;
-    gap: 4px;
-  }
-
-  .about-group-tab {
-    flex: 1 1 0;
-    min-width: 0;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 9px 6px;
-  }
-
-  .about-tab-body {
-    align-items: center;
-  }
-
-  /* 分段控件只显示编号与组名 */
-  .about-tab-meta{
-    display: none;
-  }
-
-  
-
-  
-
   .about-title-row {
     flex-direction: column;
     gap: 12px;
   }
-
-  
-
-  
-
-  .about-footer-nav {
-    margin-top: 24px;
-  }
 }
-
-
-
-
-
-
 
 /* ============================================================
-   无障碍 (prefers-reduced-motion)
+   栏尾四格（每组一份）
    ------------------------------------------------------------
-   只把过渡时长归零：切换组依旧是瞬时的状态变化，不产生位移或模糊。
-   （组件内的 Framer Motion 时长已在 JS 侧一并归零）
+   挂在每个组栏的末尾，数据按组取（project / algorithm / security）。
+   无外框：只有中间一横一竖 —— 第 2/4 格给左边线、第 3/4 格给
+   上边线，2×2 时正好拼成一个「十」字，四边开口。
+   格内只有墨黑描边图标 + 特性名：不填底色、不加蓝。
+   图标与特性名在格子里水平、垂直都居中，靠 min-height 留出四周呼吸。
    ============================================================ */
-@media (prefers-reduced-motion: reduce) {
-  .about-group-tab,
-  .about-group-indicator {
-    transition: none !important;
-  }
+.about-capability-grid {
+  /* 父栏是 align-items: flex-start 的纵列，短内容会被收缩到 fit-content，
+     这里显式撑满栏宽，四格才各占一半 */
+  width: 100%;
+  margin: clamp(30px, 4vh, 46px) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+
+.about-capability-cell {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  /* 水平居中 */
+  align-items: center;
+  /* 垂直居中 */
+  justify-content: center;
+  gap: clamp(12px, 1.5vh, 16px);
+  /* 格子比内容高，内容才是真的落在正中 */
+  min-height: clamp(120px, 15vh, 156px);
+  /* 上 右 下 左：四边对称，去掉靠边对齐的旧写法 */
+  padding: clamp(20px, 2.6vh, 28px) clamp(16px, 2vw, 26px);
+  text-align: center;
+}
+
+/* 右列：给竖线 */
+.about-capability-cell:nth-child(even) {
+  border-left: 1px solid var(--poster-line);
+}
+
+/* 第二行起给上边线：两条相接成一横，与竖线交在中心 */
+.about-capability-cell:nth-child(n + 3) {
+  border-top: 1px solid var(--poster-line);
+}
+
+.about-capability-glyph {
+  display: block;
+  width: 26px;
+  height: 26px;
+  color: var(--home-navy, #111111);
+}
+
+.about-capability-glyph svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.about-capability-name {
+  margin: 0;
+  padding: 0;
+  font-size: clamp(16px, 1.25vw, 19px);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--home-navy, #111111);
+}
+

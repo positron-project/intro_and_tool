@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowUp, ArrowUpRight, Check, Copy } from 'lucide-react'
 import { useContent } from '../../services/content.context'
+import { fadeUp, SHIFT, STAGGER, useRuleIn } from './motion'
 import './join-section.css'
 
 interface JoinSectionProps {
@@ -22,7 +23,7 @@ export function JoinSection({
   onNavigate,
   onScrollToTop,
   onScrollToSection,
-  qrCodeSrc = './assets/qq-group-qrcode.svg',
+  qrCodeSrc = './assets/project-group-qrcode.png',
 }: JoinSectionProps) {
   const {
     data: { contactInfo },
@@ -66,36 +67,41 @@ export function JoinSection({
     }
   }
 
-  const easeCurve = [0.16, 1, 0.3, 1] as const
-  const enter = {
-    initial: { opacity: 0, y: 22 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, amount: 0.25 },
-  }
+  const rule = useRuleIn()
 
   return (
     <section id="story-join" className="join-section-viewport" aria-label="加入我们">
       <div className="join-content-stage">
         {/* 头部：眉标 + 大字标题与右对齐说明 */}
         <div className="join-header-block">
-          <span className="poster-eyebrow">Join us</span>
+          {/* 眉标那条 2px 杠先进场（线先落），标题与说明再按 STAGGER 跟上 */}
+          <motion.span
+            className={`poster-eyebrow${rule.shown ? ' is-rule-in' : ''}`}
+            onViewportEnter={rule.onViewportEnter}
+            viewport={{ once: true, amount: 0.6 }}
+          >
+            Join us
+          </motion.span>
           <div className="join-heading-row">
-            <h2 className="join-main-title poster-section-title">
+            <motion.h2
+              className="join-main-title poster-section-title"
+              {...fadeUp({ delay: STAGGER, distance: SHIFT.block, amount: 0.2 })}
+            >
               一起，
               <br />
               做点有意思的东西。
-            </h2>
-            <p className="join-sub-quote">
+            </motion.h2>
+            <motion.p className="join-sub-quote" {...fadeUp({ delay: STAGGER * 2, amount: 0.2 })}>
               刚开始学也行，
               <br />
               已经有方向也行，先来认识一下。
-            </p>
+            </motion.p>
           </div>
         </div>
 
         {/* 主体：左侧一句说明 + 三步，右侧二维码与群号 */}
         <div className="join-main-grid">
-          <motion.div className="join-copy-column" {...enter} transition={{ duration: 0.75, ease: easeCurve }}>
+          <motion.div className="join-copy-column" {...fadeUp({ distance: SHIFT.block, amount: 0.25 })}>
             <p className="join-lead-copy">如果你想学点技术，想找人一起做东西，或者有个想法一直放着，都可以来群里看看。</p>
 
             <div className="join-steps" aria-label="加入步骤：01 加入 QQ 群，02 认识大家，03 一起做东西">
@@ -108,11 +114,14 @@ export function JoinSection({
             </div>
           </motion.div>
 
-          <motion.div className="join-action-column" {...enter} transition={{ duration: 0.75, delay: 0.12, ease: easeCurve }}>
+          <motion.div
+            className="join-action-column"
+            {...fadeUp({ delay: STAGGER * 2, distance: SHIFT.block, amount: 0.25 })}
+          >
             <figure className="join-qr-card">
               <div className="join-qr-frame">
                 {qrCodeSrc ? (
-                  <img src={qrCodeSrc} alt="科技小组项目组 QQ 群二维码" className="join-qr-image" />
+                  <img src={qrCodeSrc} alt="科技小组项目组群二维码" className="join-qr-image" />
                 ) : (
                   <div className="join-qr-placeholder">二维码待补充</div>
                 )}
@@ -161,7 +170,7 @@ export function JoinSection({
             <span className="footer-brand-title">计算机科技小组</span>
             <span className="footer-brand-en">COMPUTER SCIENCE &amp; TECHNOLOGY GROUP</span>
             <p className="footer-brand-school">南昌航空大学科技学院 · 计算机科技小组</p>
-            <p className="footer-brand-motto">做过的东西都留着，下一届接着用。</p>
+            <p className="footer-brand-motto">看看我们之前的成果</p>
           </div>
 
           {/* 中间：站内真实导航锚点 */}
@@ -196,7 +205,7 @@ export function JoinSection({
                   handleNavClick('story-offer', '#/home')
                 }}
               >
-                能带来什么
+                作品展示
               </a>
               <a
                 href="#story-picks"

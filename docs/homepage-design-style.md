@@ -4,7 +4,7 @@
 
 | 档                          | 覆盖路由                               | 现行视觉                                      | 真源文件                                                                                                     |
 | --------------------------- | -------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| 入口页档（生效中）          | `#/home`（首屏 + 02–06 + 页脚）        | 纯白 + 墨黑 + 唯一红 `#e8442a` 的克制海报语言 | `src/components/home/hero-poster.css`（首屏）、`src/components/home/poster-sections.css`（02–06 共用原子件） |
+| 入口页档（生效中）          | `#/home`（首屏 + 02–06 + 页脚）        | 纯白 + 墨黑 + 一套电光蓝 + 首屏一片柔光的克制海报语言 | `src/components/home/hero-poster.css`（首屏）、`src/components/home/poster-sections.css`（02–06 共用原子件） |
 | 工具页 / 业务页档（未改版） | `#/tools`、`#/learning`、`#/projects`… | 暖白纸面 + 深蓝图纸 / 浅色半透明高密度工作台  | `src/components/home/home-redesign.css`（旧长卷）、`src/styles.css` 的 `:root`                               |
 
 动手前先读 `AGENTS.md` 的《设计工作流（入口页）》：范围、触发分级、必用技能、验收闸门都写在那里。本文档只负责 token 与视觉规则。
@@ -21,18 +21,126 @@
 
 ### 设计令牌
 
-定义位置：`src/components/home/hero-poster.css:16-21`，挂在 **`.home-story-scroll`** 上（首屏与顶部导航是兄弟节点，只挂在 `.home-hero-viewport` 里导航会取不到值、回落到 `styles.css` 给根节点的暖棕 `#3b2c24`；详见 AGENTS.md 约束 7）。
+定义位置：`src/components/home/hero-poster.css:16-69`，挂在 **`.home-story-scroll`** 上（首屏与顶部导航是兄弟节点，只挂在 `.home-hero-viewport` 里导航会取不到值、回落到 `styles.css` 给根节点的暖棕 `#3b2c24`；详见 AGENTS.md 约束 7）。
 
 | 用途     | 令牌              | 色值                     | 说明                                                                      |
 | -------- | ----------------- | ------------------------ | ------------------------------------------------------------------------- |
-| 纸底     | `--poster-paper`  | `#ffffff`                | 纯白，不用暖白纸                                                          |
+| 纸（面） | `--poster-paper`  | `#ffffff`                | 卡片 / 浮层这类「浮起来的白面」                              |
+| 画布（底） | `--poster-canvas` | `#f2f3f5` | **整页纸底**（首屏 / 02–06 / 页脚）：2026-10 由纯白改淡灰，卡片不动 |
 | 主墨色   | `--poster-ink`    | `#111111`                | 主标题、区段标题、主按钮底、CTA 文字                                      |
-| 次级墨色 | `--poster-ink-2`  | `#4a4a4a`                | 说明段、`.poster-next`                                                    |
+| 次级墨色 | `--poster-ink-2`  | `#4a4a4a`                | 说明段、行条目副文案                                                      |
 | 弱化墨色 | `--poster-ink-3`  | `#8a8a8a`                | eyebrow                                                                   |
-| 分隔线   | `--poster-line`   | `rgba(17, 17, 17, 0.12)` | 贯通细线、行分隔                                                          |
-| 唯一强调 | `--poster-accent` | `#e8442a`                | **只用于** `.poster-eyebrow::before` 的那条 2×18px 红杠，以及复制失败提示 |
+| 分隔线   | `--poster-line`   | `rgba(17, 17, 17, 0.12)` | 局部线：02 两栏之间的竖线、首屏圆形线稿的描边等              |
+| 唯一强调 | `--poster-accent`      | `#2b5cff`                | 文字 / 1px 线 / 小面积描边（12 处落点见下节）                             |
+| 强调加深 | `--poster-accent-deep` | `#1e43cc`                | **只给** `.hero-btn-primary:hover`                                        |
+| 蓝面文字 | `--poster-accent-on`   | `#ffffff`                | **只给**蓝面上的字（全站唯一蓝面 = 主 CTA）                              |
+| 强调淡描边 | `--poster-accent-tint` | `rgba(43, 92, 255, 0.14)` | **只做** `.picks-item::after` 那条局部分隔线的 hover 色，不做填充底 |
+| 柔光洗色 | `--poster-accent-wash` | `rgba(43, 92, 255, 0.18)` | **只给**首屏背景的柔光渐变（见下节），不是面、不填任何元素 |
+| 品牌蓝 | `--poster-brand` | `#008cd6` | **只给**圆形标记 `.site-brand-mark`：院校官方 logo 的蓝，2026-10 按 YG 给的参考图实测取色（院校名矢量已改回墨黑，不吃这个 token） |
+| 品牌亮青 | `--poster-brand-hi` | `#00a4e1` | **只给**圆形标记那层 225° 渐变的起点（官方图标本体是青 → 蓝过渡），别处不用 |
+| 内容左轴 | `--poster-gutter` | `clamp(24px, 6vw, 92px)` | **全页唯一左轴**（1440 下 86px）：导航、首屏、02–06 的正文列、06 的页脚都从这条起算。原先 04–06 是 `clamp(24px, 5.5vw, 84px)`（79px），两者差 7px，2026-10 已统一 |
+| 编号栏宽 | `--poster-index-w` | `clamp(56px, 6vw, 88px)` | **只给** 04 行列表的编号栏；原来是 `clamp(140px, 16vw, 240px)` |
+| 错位量   | `--poster-offset` | `24px` | **只给**并置块：05 的右列整体下移这一档，让两列错开一个台阶而不是一刀切平（02 曾用它让算法组下移，已按 YG 意见去掉） |
 
-用色规则：白 / 墨黑 / 灰阶 + `var(--poster-accent)`，没有第四种颜色。品牌图形（`.site-brand-mark`、`.site-brand-college`）走 `filter: grayscale(1) contrast(1.05)`，不另给彩色。
+上面最后三个是尺寸量，不参与「没有第五种颜色」的色板约束。
+
+用色规则：白 / 墨黑 / 灰阶 + 一套电光蓝 token，再加一组**只属于校徽圆形标记的品牌蓝**（`--poster-brand` / `--poster-brand-hi`），没有别的颜色。品牌图形（`.site-brand-mark` 圆形标记、`.site-brand-college` 院校名矢量）**不再灰度化**：SVG 只当 CSS `mask`，颜色由 CSS 的 `background-color` 给——圆形标记取 `var(--poster-brand)`，院校名取 `var(--poster-ink)` 墨黑，因此图形永远不会再自带一份蓝。
+
+> **2026-10：品牌图形由电光蓝改为院校官方 logo 的蓝。** YG 给了院校官徽参考图，实测主蓝 `#008cd6`、图标本体另有一档亮青 `#00a4e1`，于是抽成 `--poster-brand` / `--poster-brand-hi`；圆形标记吃一层 `225deg` 的青→蓝渐变复刻官方稿图标本体的过渡。代价要知道：校徽蓝比电光蓝浅，对淡灰画布只有约 **3.3:1**（电光蓝 4.6:1），按无障碍的 logotype 例外处理，所以**除圆形标记以外的任何元素都不许借用这两个 token**。
+>
+> **同轮追加（YG 当场反馈）：院校名矢量改回墨黑 `--poster-ink`。** 参考图里院校名确实是蓝的，但 YG 要求站内品牌区只留圆形标记是蓝的、院校名回到黑；于是 `.site-brand-college` 单独覆一层 `background-color: var(--poster-ink)`，实测该区域蓝调像素归 0、最暗像素 `#111111`，同时圆形标记的蓝仍为 `#008cd6` 一系（顶带均值 `#1ea0dc`、底带 `#0990d7`）。
+
+> **2026 改版：强调色由暖红 `#e8442a` 换成电光蓝 `#2b5cff`。** 退役理由是红同时兼任「强调」与「复制失败」，两义合一既让错误态抢眼，也让强调色失去专属性。现在错误态只走墨黑 + 文案。
+
+### 强调色落点（共 12 处，别处一律不得再出现蓝）
+
+| 落点类型                 | 位置                                                                                                                                                                                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 文字                     | `.blog-item-num` / `.offer-col-num` / `.picks-item-num`（大号章节序号，恒满色；03 的编号在每栏底部 54px，04 的在左侧 38px）；`.blog-featured-article:hover .blog-read-more`；`.hero-btn-secondary:hover`；`.footer-nav-link:hover` / `.footer-connect-item:hover` / `.footer-back-to-top:hover`；`.scroll-indicator:hover .scroll-text`；`.join-copy-btn.is-copied` |
+| 1px 线                   | `.poster-eyebrow::before`（2×18px 杠）；`.site-nav-item.is-active::after`（2px）；`.scroll-stem-pulse`；`.offer-col-rule`（03 每栏顶上）；`.about-pair-rule`（02 每栏栏头）；`.blog-sub-quote::before`（05 副句上方）——这三处是同一根 18×2 杠在不同节里的复用；`.home-scroll-progress`（顶部滚动进度线，固定 1px，见「动效与交互」）；`.picks-item::after` 的 hover 色（`--poster-accent-tint`）                                                          |
+| 实心面（全站唯一）       | `.hero-btn-primary`（底色 `--poster-accent`，`:hover` 用 `--poster-accent-deep`，字用 `--poster-accent-on`）                                                                                                                               |
+| 品牌图形（2026-10 新增） | `.site-brand-mark` 圆形标记：图形作 `mask`、颜色取 `--poster-brand` `#008cd6`，并叠一层 `--poster-brand-hi` → `--poster-brand` 的 `225deg` 渐变（`.site-brand:hover` 用换色而不是父级 `opacity`，否则蓝会被洗成另一种蓝）。院校名 `.site-brand-college` 同一套 mask 手法但取墨黑 `--poster-ink`，不占蓝 |
+
+**禁令**：蓝只允许落在上面四类。不许大面积蓝底、不许蓝渐变、不许新增第五种蓝、不许多出一个靠近电光蓝的浅蓝 —— 父级 `opacity` 会把 `#2b5cff` 洗成第二种蓝，所以这类 hover 一律改成换色，而不是调透明度。行条目的 hover 底色永远是中性灰 `rgba(17, 17, 17, 0.04)`。
+
+两个例外：**首屏背景那片柔光**（本档唯一允许的强调色渐变，只许出现在 `.home-hero-viewport` 的背景层，径向、单层蓝、峰值 ≤20%、与纹理同层相乘）与**圆形标记那层品牌渐变**（225°、两站、只在 `.site-brand-mark` 的 mask 上，见上表），除此之外入口页不许再出现任何渐变蓝。
+
+入口页不许再出现任何渐变蓝（首屏柔光与圆形标记的品牌渐变除外，见上）。
+
+**颜色那一轮只动颜色，不做形态学**：2026 换色时字号 / 圆角 / 间距 / 卡片形态 / 动效时长一律没动（唯一例外是删掉 `.offer-row-item:hover .offer-row-num` 那条 `opacity` 规则）。
+
+> **2026-10 形态改版（首屏 + 02–05）**：这一轮动的是形态，色板一个字没改。
+>
+> - **02**：从「左侧切换栏 + 右侧规格卡」的 tab 结构改成**两组并置**（tablist / roving tabindex / `layoutId` 指示块 / `AnimatePresence` 面板切换 / 高度锚点层整套删除），两栏顶对齐等高起头（原让右栏下移 `--poster-offset` 错位，2026-10 按 YG 意见去掉），两栏之间只有一条到内容底就终止的 1px 竖线。
+> - **03**：从「三行通栏列表」换成「三栏横排」（标题在上、编号压在栏底，通栏 hairline 全撤）。
+> - **04**：编号栏从 230px 收到 `--poster-index-w`，英文小标挑到正文列顶部，分隔线改成两端留缺口的局部线。
+> - **05**：底部那条通栏的第四篇并进右列栅格；副句左侧那根 2px 灰竖线（还带着一条重复的 `opacity` 声明）换成与眉标同款的 18×2 强调色横杠。
+> - **全页**：04–06 的左轴从 79px 统一到 86px。
+>
+> 动机：02 一次只能看一组、03 与 04 共用同一套栅格，连着滚读起来像同一节的第二遍。
+> 首屏另外试过一版贯通细线（从 `--poster-gutter` 横贯到圆形线稿左缘），YG 看过 1440 截图后**否掉了**，已连同 `@keyframes` 与两条媒体查询一起删除。
+
+**有意保持墨黑 hover 的例外**：`.site-tools-btn`、`.blog-footer-link`、`.picks-copy-btn`、`.join-copy-btn:hover`、`.site-nav-item:hover`、`.picks-item-link:hover`、`.drawer-close-btn`。
+
+工具页 / 业务页的 `--blue: #2563eb`（`src/styles.css:13`）**保持不动**：两档视觉不同屏，双蓝互不相见。
+
+### 首屏柔光背景（2026 新增）
+
+首屏不再是「一块纯白」：`.home-hero-viewport`（`src/components/home/hero-poster.css:45-55`）铺了一层**电光蓝柔光** —— 白纸右上角像有光斜着照进来，向左下衰减到零。
+
+```css
+background-image:
+  url('/assets/home-hero-glow.webp'),                                                       /* 顶层：3KB 抗色带纹理 */
+  radial-gradient(104% 48% at 84% 4%, var(--poster-accent-wash), rgba(43, 92, 255, 0) 68%); /* 下层：柔光本体 */
+background-blend-mode: multiply, normal;                                                    /* 必须同层相乘 */
+```
+
+| 参数     | 取值                                                                | 理由                                                                    |
+| -------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| 方位形状 | 横椭圆 `104% 48%`，中心 `at 84% 4%`（屏内右上）                     | 中心若放到屏外（`86% -6%`）峰值就浪费在视口外，屏内只剩 6–14% 残余      |
+| 峰值     | `--poster-accent-wash` = 电光蓝 18%                                 | 16% 看起来仍像纯白纸；20% 是上限，再深就开始像「有底色」而不是「受光」  |
+| 衰减     | 68% 处归零                                                          | 标题 / 正文 / 按钮全在左列（x 86–563），那里 alpha 已为 0               |
+| 纹理     | `public/assets/home-hero-glow.webp`（1024px webp q72，**2984 字节**） | 见下                                                                    |
+
+**那张 3KB 纹理不是装饰，是抗色带**：纯 CSS 渐变在 8bit 下会出现极长的同值段（实测穿过光斑的横向扫描线同值段 792px，等于整行一个灰值 = 肉眼可见硬色带）。把它乘上去后同值段缩到 **168px**、灰阶从 1 级变 4 级。纹理由生图云絮图（`viz/bg/` 过程稿）重映射到只剩 229–255 区间后导出。
+
+**必须同层 `multiply`**：把不透明纹理当独立层压上去，会把整片光替换掉 —— 实测光斑核心 `#cbddff` → `#eff9ff`，页头「工具区」链接从 14.16:1 弹回 17.82:1，等于白做。
+
+**三条硬界限**：峰值 ≤20%；只允许单层蓝（第二层配色试过青 / 暖白 / 雾紫，全部出局）；不做任何动画（没有 `@keyframes`，因此也不涉及 reduced-motion）。
+
+实测代价（1440×900，这是文字列与光斑的真实关系，不是假想最坏值）：
+
+| 位置                        | 基线  | 加光后 | 说明                                             |
+| --------------------------- | ----- | ------ | ------------------------------------------------ |
+| 首屏标题 `#111111`          | 18.88 | 17.77  | 光已衰减到 0                                     |
+| 说明段 `--poster-ink-2`     | 8.86  | 8.59   | 同上                                             |
+| 三级灰 `--poster-ink-3`     | 3.45  | 3.39   | 该灰本身就低于 AA 正文线，属既有状态，与本次无关 |
+| 页头「工具区 →」（光斑核心）| 18.88 | 14.16  | 全页**唯一**被光覆盖的文字                       |
+
+窄屏（`≤600px`）首屏会变成长于视口的滚动块，光重新对位成 `78% 34% at 76% 2%`（`hero-poster.css:57-64`），390×844 实测标题 17.03、工具区 14.51。
+
+单文件版：`scripts/create-standalone.mjs` 会把 `/assets/home-hero-glow.webp` base64 内联进 `nchu-cs-club-standalone.html`（约 +4KB），不会丢背景。
+
+
+
+### 04 截图条目（两条各带一张真实界面截图）
+
+04「小组推荐」的两条（`src/components/home/PicksSection.tsx` 的 `.picks-item--visual`）每条都配一张真实界面截图，文案与图来自模块级 `PICKS` 数组：**01 贴右半、02 追加 `.picks-item--visual-reverse` 贴左半**，正文列退到另一半。除这两条以外，01–06 都是淡灰纸底（`--poster-canvas` `#f2f3f5`）。
+
+| 参数 | 取值                                                                                   | 理由                                                            |
+| ---- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| 底图 | `public/assets/picks-*.webp`，一条一张（长边 1600、webp q82）             | 全是各自项目跑起来后的界面截图，不是配图                        |
+| 块高 | `min-height: clamp(300px, 29vw, 420px)`                                                 | 1440 下这条宽约 1267px → 418px；再矮就把图裁成一条窄带          |
+| 裁切 | `object-fit: cover`；01 取右段（`object-position: 100% center`，≤900px 收成 80%），02 取正中（`.picks-item--visual-reverse` 自带的 `center`） | 01 那张左半是海与天空（留给文字）；工具页是居中排布的卡片网格         |
+| 窄屏 | `≤900px` 图落到文字下方，`aspect-ratio: 16/9` + 1px 描边，编号改用图上的 `.picks-item-cover-badge` | 单列时没有左右可贴                                             |
+
+- 蓝色仍只有 `.picks-item-num` 那个序号（含移动端角标），e2e 的「只有一个实心蓝面」照旧通过。
+- 文字列用 `z-index: 1` 压在图上；带图的条目里 `::after` 那条局部 hairline 设成 `display: none`。
+- 两张底图：`picks-minecraft-base.webp`（01 小组自己的世界）、`picks-tools-page.webp`（02 小组工具页）。另外三张界面截图（次元小屋 / 数据可视化大屏 / 原神音乐会首页）2026-10 已按 YG 要求移到 03，登记在下面的「项目封面截图（03）」。
+- 试过又把它们放回这里的版本已还原成两条：**这三张图归 03，不要往 04 加第三/四/五条。**
+- 验收：`node scripts/snap-sections.mjs 1440x900` 与 `390x844` 两份都要 `errors: none`（1440 下 story-picks 高 1157）。
+- **踩坑（本机 ffmpeg）**：压 webp 必须用 `-q:v`，`-quality` / `-global_quality` 会被静默忽略 —— 实测 `-quality 50/75/78/85/90/95` 输出全是同一个 12186 字节（0.06 bpp，块状伪影肉眼可见），换成 `-q:v 90` 才是 189KB。仓库现有两张 webp 背景的码率是 0.82 / 1.18 bpp，新素材按实测 0.6–1.1 bpp 取（`picks-tools-page.webp` 只有 0.13 bpp，偏软）。
+- **分辨率只够 DPR1**：底图长边 1600px，而 1440 下这条块宽 1268 CSS px，DPR2 需要约 2536px —— 视网膜屏上是 0.63×，会略软。要更实得让生图重出 2K/4K 版本（现在这张不够）。
 
 ### 字体与排版
 
@@ -47,12 +155,11 @@
 | 副标题 `.hero-sub-title`         | 约 27.36px / `--poster-ink`                                                                          | 只有「计算机科技小组」一句，短横线已删                                                                          |
 | 说明段 `.hero-value-desc`        | 15px / `--poster-ink-2`                                                                              | 一句话：「学技术、做项目，把经验传给下一届。」                                                                  |
 | 区段标题 `.poster-section-title` | 800 / `letter-spacing -.035em` / `line-height 1.06`                                                  | 字号由各区段 CSS 自己定                                                                                         |
-| 眉标 `.poster-eyebrow`           | `--mono` / 11px / 600 / `letter-spacing .18em` / 大写 / **`white-space: nowrap`**                    | 前导 2×18px 红杠；`.poster-eyebrow--plain` 去掉红杠；窄列里宁可溢出也不折行                                     |
-| 区段引导 `.poster-next`          | 13px / 500 / `--poster-ink-2`，hover 转 `--poster-ink`                                               | 一个词 + 箭头，不带编号                                                                                         |
+| 眉标 `.poster-eyebrow`           | `--mono` / 11px / 600 / `letter-spacing .18em` / 大写 / **`white-space: nowrap`**                    | 前导 2×18px 强调色杠；`.poster-eyebrow--plain` 去掉杠；窄列里宁可溢出也不折行                                     |
 
 ### 布局
 
-首屏（左列文字 / 右下圆形线稿，无指标行、无 SCROLL 提示）：
+首屏（左列文字 / 右下圆形线稿 / 左下角极简滚动指引 `.scroll-indicator`，无指标行）：
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
@@ -63,30 +170,87 @@
 │  计算机科技小组                              │ 真实校园  │    │
 │  学技术、做项目，把经验传给下一届。           │ 线稿 245px│    │
 │  [ 加入我们 ]   打开工作台 →                 ╰──────────╯    │
+│  │ SCROLL                                                    │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 - 顶部导航与首屏同处一条白底：导航是文字项（`--poster-ink`，未激活 0.5 透明度），当前项下方 2px `--poster-accent` 线；右侧只有一个 CTA「工作台」（`.site-tools-btn` 已去胶囊改文字）。导航文案不带 `01 /` 编号。
+- 左下角 `.scroll-indicator`（`src/components/home/ScrollIndicator.tsx`，实测 50×67 @ x86/y795）：鼠标轮廓 + 竖向下滑线（`scroll-stem-pulse`）+ `SCROLL` 标签，点击滚到 02；**全站仅此一处**滚动指引（02–06 末尾的下一节引导已删除，见「区段 02–06」）。
 - 右下圆形线稿 `.hero-corner-art`：245px 圆裁切，`object-position: 44% 90%` + `transform: scale(1.18)`（origin 同点），取景含图书馆立面与校训石四字；灰度化。
-- 页脚统一（计算机科技小组 + 导航 + 联系方式 + `©`），整页同样只有 eyebrow 那一处彩色。
+- 全页左轴：首屏 / 02–06 / 页脚的正文列都从 `--poster-gutter`（`clamp(24px, 6vw, 92px)`，1440 下 x86）起算；2026-10 之前 04–06 是 x79。
+- 首屏曾经试过一条贯通细线（从 x86 横贯到圆形线稿左缘 x1132、垂直取圆心的 723px），YG 看过 1440 截图后否掉了，已连同它的 `@keyframes` 与两条媒体查询一起删除——首屏右半仍是一片留白。
+- 页脚统一（计算机科技小组 + 导航 + 联系方式 + `©`），页脚内只有链接 hover 会用到强调色（`.footer-nav-link` / `.footer-connect-item` / `.footer-back-to-top`）。
 
 ### 区段 02–06
 
 | 节            | 锚点           | 结构                                                                     |
 | ------------- | -------------- | ------------------------------------------------------------------------ |
-| 02 关于我们   | `#story-about` | 左「02 关于我们」+ 项目组 / 算法组选择卡，右侧四角细线框内是组信息与正文 |
-| 03 能带来什么 | `#story-offer` | 三段行式条目（环境 / 项目 / 比赛），每条一句中文 + 几枚等宽英文关键词    |
-| 04 小组推荐   | `#story-picks` | 两条推荐各占一行，与 03 共用同一套列宽、间距、分隔线                     |
-| 05 小组博客   | `#story-blog`  | 一条主文 + 三条列表，元信息用 `--mono`                                   |
+| 02 关于我们   | `#story-about` | **两组并置**：左项目组 / 右算法组，两栏**顶对齐等高起头**，每栏「组名 → 18×2 强调色横杠 → 组标 → 两行短句（两行之间一条跟着行宽的发丝短线）→ 一句短语 → 栏尾四格」；两栏之间一条到内容底就终止的 1px 竖线；≤860px 回单列 |
+| 03 作品展示 | `#story-offer` | **左切换器 + 右详情**：左栏（`clamp(180px,15vw,240px)`）只有序号与项目名，选中项是靠左一条 2px 电光蓝竖杠；右栏是项目自己的界面截图（`Project.coverImage`，比例 1440/820，见下「项目封面截图」）+ 元信息行 + 一句说明 + 三条规格（参与 / 方向 / 状态）；≤860px 切换器改横向项目名条、规格行转单列 |
+| 04 小组推荐   | `#story-picks` | 两条推荐各占一行：左编号栏 `--poster-index-w`（窄到只容纳序号）+ 右正文列（顶部英文小标 → 标题 → 说明 → 真实字段 → 入口），01 封面贴右半、02 贴左半；两条都带图，`::after` 的两端留缺口局部线一律 `display: none` |
+| 05 小组博客   | `#story-blog`  | 左主文（58%）+ 右列三条（42%，02/03/04 共用一套条目范式）；副句上方是与眉标同款的 18×2 强调色横杠；元信息用 `--mono` |
 | 06 加入我们   | `#story-join`  | 四句短句 + 三步（加入 QQ 群 / 认识大家 / 一起做东西）+ 二维码卡          |
 
-共用原子件只有 `poster-sections.css` 里的 `.poster-eyebrow` / `.poster-eyebrow--plain` / `.poster-section-title` / `.poster-next`，各区段 CSS **不要再重复定义**这四个（见 AGENTS.md 约束 8）。区段里不许再出现海军蓝 `#073f73`、暖纸 `#faf8f2`、浅青 `rgba(159,209,222,·)` 等旧色。
+共用原子件只有 `poster-sections.css` 里的 `.poster-eyebrow` / `.poster-eyebrow--plain` / `.poster-section-title`，各区段 CSS **不要再重复定义**这三个（见 AGENTS.md 约束 8）。02–06 各区段末尾原本各有一行「下一节引导」（共用原子件 `.poster-next`，实例为 `.about-footer-nav` / `.offer-footer-guide` / `.picks-footer-anchor` / `.blog-next-hint`），**已整体删除**：全页只保留首屏左下角的 `.scroll-indicator` 一处滚动指引。区段里不许再出现海军蓝 `#073f73`、暖纸 `#faf8f2`、浅青 `rgba(159,209,222,·)` 等旧色。
+
+### 项目封面截图（03）
+
+03 的封面是**项目自己的真实界面截图**，来源是 `src/data/mock.ts` 里各项目的 `coverImage`。素材由项目本身跑起来再截：`public/assets/showcase/shop-01-home.webp` 就是绿易坊（Vue 3 + Spring Boot 的校园二手与环保平台）首页在 1440×900、DPR 2 下的实拍，降采样后 **1440×820**。
+
+切换器列的是 `projects.filter((p) => p.featured).sort((a, b) => b.year - a.year)`（`src/components/home/OfferSection.tsx:25`），2026-10 起是六条：
+
+| 位  | 项目               | 封面                                                 |
+| --- | ------------------ | ---------------------------------------------------- |
+| 01  | 绿易坊             | `public/assets/showcase/shop-01-home.webp`           |
+| 02  | 砺境               | `public/assets/showcase/lijing-01-home.webp`         |
+| 03  | 次元小屋           | `public/assets/showcase/acg-hut-01-home.webp`        |
+| 04  | 数据可视化大屏     | `public/assets/showcase/data-board-01-home.webp`     |
+| 05  | 原神音乐会首页     | `public/assets/showcase/genshin-concert-01-home.webp` |
+| 06  | 音乐播放器         | `public/assets/showcase/music-app-01-home.webp`      |
+
+03 后面的四张由界面截图导出（webp q82、文件命名与 01/02 的「项目名-位次-页面」一致）：次元小屋 / 数据可视化大屏 / 原神音乐会首页三张长边 1600（123KB / 94KB / 173KB），音乐播放器那张原截图只有 1163×744，按原尺寸导出（70KB），**不放大**以保清晰。四张原本都登记在 04「小组推荐」下，2026-10 按 YG 要求移到 03。
+
+```
+┌──────────────────────────┬────────────────────────────────────────────┐
+│ 01  绿易坊               │ ┌────────────────────────────────────────┐ │  封面 = 项目界面截图
+│ 02  砺境                 │ │  当前项目的首页（应用自己的导航 + 主视觉）│ │  figure 锁 1440/820
+│ 03  次元小屋             │ └────────────────────────────────────────┘ │  img height:100%
+│ 04  数据可视化大屏       │ WEB · 2026 年立项 · 维护中                  │  元信息行（--mono）
+│ 05  原神音乐会首页       │ 把「问、估、找、做、聊」放在一条线上…        │  一句说明
+│ 06  音乐播放器           │ 参与 3 人 │ 方向 Web │ 状态 维护中          │  三条规格（无技术栈）
+│                          │ 在项目库中看这个项目 →                      │  入口
+└──────────────────────────┴────────────────────────────────────────────┘
+```
+
+- **比例**：`.offer-cover` 上写死 `aspect-ratio: 1440 / 820`（绿易坊截图的真实比例），`img` 用 `height: 100%` 填进去。两头都不依赖元素固有尺寸，截图解码完成时封面不会先矮后高抖一下，换图也不会。**不要**改回「让 img 自己撑开」——那会在慢网络下让整节跳一次。
+- **`object-position: top center` 必须留着**：截图是整页截的，顶对齐才保得住应用自己的导航与主标题；改成 `cover` 的默认居中会从腰上裁。
+- **素材来源与代换**：截图从 `http://127.0.0.1:18080/`（绿易坊 dev）实拍，`deviceScaleFactor: 2` 截 2880×1800 再 LANCZOS 降到 1440。注意项目右上角会显示「样例数据」（后端没起时的兜底态），这是它真实会出现的界面状态，按原样保留。换素材时同步改 `.offer-cover` 的 `aspect-ratio`。
+- **色**：本节的 UI（选中竖杠、焦点环、文字入口）还是电光蓝；**绿色只存在于截图的像素里**（绿易坊自己的品牌绿 `#1f7a53`），这是 YG 认可的例外，登记在 `AGENTS.md` 约束 8。
+- **实测（1440×900）**：`node scripts/snap-sections.mjs 1440x900` 回显本节总高 **929**（`errors: none`）。这是真实截图版的已知取舍：截图信息量（导航 + 主标题 + 配图 + 浮卡 + 四格指标）比原来的 3:1 裁切大，完整性优先。
+- **窄屏（390×844 实测）**：切换器转横向项目名条，封面 342×195.6，`overflowX: 0`，无报错。
+- **归档说明**：没有截图时用的那套「纯 CSS 平面海报」（`ProjectCover.tsx` / `project-cover-art.ts` / `project-cover.css`，含发丝网格、电光蓝块、标注引线）已连同它的 `data-mode="fallback"` 分支一起撤回，原稿在 `backups/home/project-cover/`，不进构建。03 现在只有 `image` 一种封面状态。
 
 ### 动效与交互
 
-保留的动效只有四处：首屏入场（framer-motion，分段 `opacity 0→1` + `y 22→0`，delay 0 / 0.15 / 0.25 / 0.35 / 0.45）、Lenis 平滑滚动、IntersectionObserver 驱动的当前节高亮、`.poster-next` 与按钮的 hover 变色。`prefers-reduced-motion` 下走原生滚动、不做首屏位移。
+一套运动语言，参数只有一份：`src/components/home/motion.ts`（秒）与 `hero-poster.css` 里 `.home-story-scroll` 上的 `--motion-*`（毫秒）必须同步改。
 
-已删除：粒子 Canvas、点阵、流动线圈、十字定位标、假仪表读数、巨型英文轮廓字、刊物印记、SCROLL 提示。加新动效前先判断它会不会让页面像 AI 生成的（`frontend-design` SKILL.md 第 23 行）。
+| 维度 | 值                             | 用途                                                   |
+| ---- | ------------------------------ | ------------------------------------------------------ |
+| 缓动 | `cubic-bezier(.16,1,.3,1)`     | 所有进场与 hover 回正（`EASE_OUT` / `--motion-ease-out`） |
+| 缓动 | `cubic-bezier(.42,0,.58,1)`    | 退场专用（`EASE_IN` / `--motion-ease-in`），目前只给 05 的文章抽屉 |
+| 时长 | 160 / 400 / 850 / 900ms        | 微交互 / 线条与面板 / 标题与段落 / 首屏整场             |
+| 位移 | 4 / 16 / 24px                  | 图标按钮 / 文本 / 整块                                 |
+| 交错 | 90ms                           | 同组按阅读顺序，单组总长 ≤240ms                        |
+
+**签名动作（2026-10 新增）：线先落，字后到。** 每节眉标那条 2×18px 蓝杠先进场（400ms `scaleX` 生长，见 `poster-sections.css` 的 `.poster-eyebrow.is-rule-in::before`），节标题与承接句再按 90ms 交错跟上（`useRuleIn()` + `fadeUp()`）。每节顺序恒为：杠 → 标题 → 承接句 → 内容（04/05 是条目逐条跟进）。
+
+**滚动反馈**：顶部 `.home-scroll-progress`（1px 进度线，`scaleX` 跟 `useScroll` + `useSpring`，`z-index: 120`，reduced-motion 下整条不渲染）；首屏依旧在 0.6vh–1.3vh 之间位移 + 缩放淡出离场（`ExpandedHomePage.tsx` 的 `HERO_PARALLAX_LIFT` / `HERO_PARALLAX_SCALE`），**柔光随首屏一起淡出**，所以不需要第二条滚动映射。
+
+保留的动效还有：Lenis 平滑滚动、IntersectionObserver 驱动的当前节高亮、条目与按钮/链接的 hover 变色。`prefers-reduced-motion` 下走原生滚动、不渲染进度线、眉标杠直接给终态。
+
+**2026-10 收敛**：02–06 的入场原来是同一套 `opacity + y`，但位移有 6 种值、交错有 7 种值、缓动常量在 5 个组件里各复制一份，而 `viewport.amount: 0.2–0.3` 会让快速滚动时标题与正文错帧到达。现在全部走 `motion.ts` 的 token；顺序差异靠「杠 → 标题 → 承接句 → 内容」的 90ms 阶梯表达，不再靠改 duration。
+
+已删除：粒子 Canvas、点阵、流动线圈、十字定位标、假仪表读数、巨型英文轮廓字、刊物印记、成句的 SCROLL DOWN 标语（只剩左下角极简 `.scroll-indicator`）。加新动效前先判断它会不会让页面像 AI 生成的。
 
 ### 响应式
 
@@ -205,7 +369,7 @@
 **入口页（`#/home`）**
 
 1. 先读 `AGENTS.md` 的《设计工作流（入口页）》，判断这次是全套档还是小修档。
-2. 色值只从入口页档的 6 个 `--poster-*` 里取；要新增语义状态先确认 —— 目前强调色只有 `#e8442a` 一个。
+2. 色值只从入口页档的 `--poster-*` 里取（白 / 墨黑 / 灰阶 + 电光蓝 5 个 + 品牌蓝 2 个）；要新增语义状态先确认 —— 强调色的全部落点就是上面那 12 处，再加一处之前先问；`--poster-brand*` 两个只给校徽圆形标记 `.site-brand-mark`（院校名 `.site-brand-college` 取墨黑）。
 3. 排版原子件复用 `poster-sections.css`，不要在区段 CSS 里重复定义；新眉标必须 `white-space: nowrap`。
 4. 改完跑 `node scripts/snap-sections.mjs 1440x900`（`errors: none`）并肉眼复核 `viz/section-*.png`；随后 `pnpm lint && pnpm test && pnpm e2e`。
 5. 完成时把 1440 截图交给 YG 目视验收。
@@ -222,8 +386,10 @@
 
 | Evidence                                                                | Finding                      | Path                                                                                  |
 | ----------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------- |
-| 入口页 02–06 与页脚统一为纯白 / 墨黑 / `#e8442a`，装饰层已删            | 入口页档的视觉语言           | [src/components/home/poster-sections.css](../src/components/home/poster-sections.css) |
+| 入口页 02–06 与页脚统一为纯白 / 墨黑 / 电光蓝 `#2b5cff`，装饰层已删            | 入口页档的视觉语言           | [src/components/home/poster-sections.css](../src/components/home/poster-sections.css) |
 | 首屏纯白底、主标题 `clamp(76px,8.6vw,140px)`、右下 245px 圆形线稿       | 入口页档的排版与布局         | [src/components/home/hero-poster.css](../src/components/home/hero-poster.css)         |
+| `.home-hero-viewport` 为两层背景 + `background-blend-mode: multiply, normal` | 首屏柔光是渐变与纹理同层相乘 | [src/components/home/hero-poster.css](../src/components/home/hero-poster.css)         |
+| `home-hero-glow.webp` = 2984 字节的云絮重映射纹理                       | 3KB 资产换来抗色带 792px→168px | [public/assets/home-hero-glow.webp](../public/assets/home-hero-glow.webp)           |
 | `:root` 定义蓝、薄荷绿、紫、橙、玫红与中性灰                            | 工具页通过语义色区分内容类型 | [src/styles.css](../src/styles.css)                                                   |
 | `.home-story-scroll` 仍是暖色纸底，`.home-hero-viewport` 已被覆盖为纯白 | 两档视觉在同一页面栈里共存   | [src/components/home/home-redesign.css](../src/components/home/home-redesign.css)     |
 | `e2e/home.spec.ts` 断言 `.hero-title-line` 不单字折行                   | 主标题折行是已修过的回归点   | [e2e/home.spec.ts](../e2e/home.spec.ts)                                               |

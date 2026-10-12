@@ -526,13 +526,17 @@ export interface CompetitionEvent extends ContentMeta {
 
 export interface BlogPost {
   id: string
-  category: '活动记录' | '技术文章' | '周报' | '比赛'
+  /** 分类名直接来自博客系统，不再限定为固定四项 */
+  category: string
   title: string
   excerpt: string
   date: string
   readTime: string
   author: string
   tags: string[]
+  /** mock 源是 Markdown 子集，Halo 源是清洗前的 HTML */
   content: string
+  /** 博客站原文地址，仅 Halo 源提供 */
+  url?: string
 }
 

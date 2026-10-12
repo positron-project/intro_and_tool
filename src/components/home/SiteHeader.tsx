@@ -17,7 +17,7 @@ interface SiteHeaderProps {
 const DEFAULT_SECTIONS: StorySectionItem[] = [
   { id: 'story-hero', label: '首页' },
   { id: 'story-about', label: '关于我们' },
-  { id: 'story-offer', label: '能带来什么' },
+  { id: 'story-offer', label: '作品展示' },
   { id: 'story-picks', label: '小组推荐' },
   { id: 'story-blog', label: '小组博客' },
   { id: 'story-join', label: '加入我们' },
@@ -71,19 +71,14 @@ export function SiteHeader({
           }}
           aria-label="返回首页顶部"
         >
-          <img
-            className="site-brand-mark"
-            src="./assets/brand-mark.svg"
-            alt=""
-            aria-hidden="true"
-            draggable={false}
-          />
+          {/* 图形本体由 CSS mask 提供、颜色由 CSS 给：圆形标记取 --poster-brand
+              （院校官方 logo 的蓝），院校名取墨黑；不再从 SVG 里带一份自己的蓝 */}
+          <span className="site-brand-mark" aria-hidden="true" />
           <span className="site-brand-lockup">
-            <img
+            <span
               className="site-brand-college"
-              src="./assets/college-wordmark.svg"
-              alt="南昌航空大学科技学院"
-              draggable={false}
+              role="img"
+              aria-label="南昌航空大学科技学院"
             />
             <span className="site-brand-rule" aria-hidden="true" />
             <span className="site-brand-name">计算机科技小组</span>

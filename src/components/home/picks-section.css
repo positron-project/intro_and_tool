@@ -26,7 +26,8 @@
   width: 100%;
   max-width: 1560px;
   margin: 0 auto;
-  padding: 0 clamp(24px, 5.5vw, 84px);
+  /* 与首屏 / 02 / 03 共用同一条左轴（1440 下 86px，原来是 5.5vw = 79px） */
+  padding: 0 var(--poster-gutter);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -78,23 +79,46 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  border-top: 1px solid rgba(17, 17, 17, 0.1);
+  /* 通栏 hairline 已撤掉：每行自带一条两端都留缺口的局部线 */
 }
 
 .picks-item {
   position: relative;
   display: grid;
-  grid-template-columns: clamp(140px, 16vw, 240px) 1fr;
-  gap: clamp(28px, 4vw, 72px);
-  align-items: flex-start;
+  /* 编号栏收到「只容纳序号」：宽度由 max-content 自己算（1440 下「01」实测 43px），
+     不再借 --poster-index-w 的 86px —— 那一栏里只放两个字符，剩下的都是空档，
+     正文列因此被顶到 x248。2026-10 按 YG「正文往左靠」的意见收窄：
+     英文小标随之从编号栏挪到正文列顶部（见 PicksSection.tsx），
+     否则它 137px 的 nowrap 宽度会把这一栏重新撑开。 */
+  grid-template-columns: max-content 1fr;
+  /* 编号与正文之间的呼吸：原来 37px 是给「序号 + 英文小标」两行留的，
+     只剩序号后收到 26px（1440 下），正文列左缘落在 x190 左右。 */
+  gap: clamp(20px, 1.8vw, 30px);
+  align-items: baseline;
   padding: clamp(28px, 3.8vh, 44px) clamp(8px, 1.5vw, 24px);
-  border-bottom: 1px solid rgba(17, 17, 17, 0.08);
   box-sizing: border-box;
   transition: background-color 0.25s ease;
 }
 
+/* 分隔线改成局部线：两端都留缺口，右端再缩进 8%，左端与正文左缘同轴 */
+.picks-item::after {
+  content: '';
+  position: absolute;
+  left: clamp(8px, 1.5vw, 24px);
+  right: calc(8% + clamp(8px, 1.5vw, 24px));
+  bottom: 0;
+  height: 1px;
+  background: rgba(17, 17, 17, 0.08);
+  transition: background-color 0.25s ease;
+}
+
+/* hover：底色仍是中性灰，局部线换成强调色 tint（--poster-accent-tint 只做这件事） */
 .picks-item:hover {
   background-color: rgba(17, 17, 17, 0.04);
+}
+
+.picks-item:hover::after {
+  background: var(--poster-accent-tint);
 }
 
 .picks-item-meta {
@@ -106,11 +130,13 @@
 
 .picks-item-num {
   font-family: var(--mono);
-  font-size: clamp(34px, 3.8vw, 54px);
+  /* 编号不再是这一行最重的元素：收到「索引」量级，标题先被读到 */
+  font-size: clamp(26px, 2.6vw, 38px);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.03em;
-  color: var(--home-navy, #111111);
+  /* 大号章节序号恒满色强调色，与 03 / 05 同一处理 */
+  color: var(--poster-accent);
 }
 
 .picks-item-main {
@@ -195,8 +221,10 @@
   color: var(--poster-ink);
 }
 
+/* 错误态不再借用强调色：强调色只表示「强调」，错误靠墨黑 + 文案区分。
+   暖红退役后，这两层语义才真正分开。 */
 .picks-copy-error {
-  color: var(--poster-accent);
+  color: var(--poster-ink);
 }
 
 .picks-item-link {
@@ -224,25 +252,252 @@
 }
 
 /* ------------------------------------------------------------
-   底部与 05 / BLOG 衔接
-   ------------------------------------------------------------ */
-.picks-footer-anchor {
-  display: flex;
+   01 左半纸白 + 右半照片（黄昏的方块基地）
+   ------------------------------------------------------------
+   两半都是硬边，没有任何遮罩 —— 左边就是页面自己的 #ffffff，
+   不再有「半透明白压彩色照片」那块脏膜（旧做法实测左区是
+   243,243,241 的暖灰，顶上还挂着 219,223,248 的蓝紫）。
+   照片是绝对定位的装饰层，贴右缘占一半；正文列靠块自身的
+   padding-right 让开，永远不会跑到照片上面去。 */
+.picks-item--visual {
+  overflow: hidden;
+  /* 高度与 02 那条同一量级；再矮照片就被压成一条窄带 */
+  min-height: clamp(300px, 29vw, 420px);
+  /* 正文块在本条里垂直居中；序号不跟着走，见下面的 meta 规则 */
   align-items: center;
+  padding: clamp(32px, 3.6vh, 48px) 50% clamp(32px, 3.6vh, 48px) clamp(24px, 2.6vw, 44px);
+}
+
+/* 有照片之后不再需要那条两端留缺口的局部线 */
+.picks-item--visual::after {
+  display: none;
+}
+
+/* hover 底色会盖在照片下面（图是子元素），这一条不换底 */
+.picks-item--visual:hover {
+  background-color: transparent;
+}
+
+.picks-item-cover {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.picks-item-photo {
+  display: block;
   width: 100%;
-  padding-top: clamp(16px, 2vh, 28px);
-  border-top: 1px solid rgba(17, 17, 17, 0.08);
-  box-sizing: border-box;
+  height: 100%;
+  object-fit: cover;
+  /* 源图最右是木屋与栈道，取最右那一段；太阳因此落在槽内偏左 */
+  object-position: 100% center;
+}
+
+.picks-item-cover-badge {
+  display: none;
+}
+
+.picks-item--visual .picks-item-meta,
+.picks-item--visual .picks-item-main {
+  position: relative;
+  z-index: 1;
+}
+
+/* 01 / 02 两处序号都仍贴本条顶部，落在同一条水平线上 */
+.picks-item--visual .picks-item-meta {
+  align-self: start;
+}
+
+/* ------------------------------------------------------------
+   02 镜像：照片贴左缘，序号贴右上角，右半区正文水平居中
+   ------------------------------------------------------------ */
+.picks-item--visual-reverse {
+  position: relative;
+  grid-template-columns: 1fr;
+  padding: clamp(32px, 3.6vh, 48px) 0 clamp(32px, 3.6vh, 48px) 50%;
+  justify-items: center;
+}
+
+.picks-item--visual-reverse .picks-item-main {
+  order: 1;
+  width: fit-content;
+  max-width: 440px;
+}
+
+.picks-item--visual-reverse .picks-item-meta {
+  order: 2;
+  position: absolute;
+  top: clamp(32px, 3.6vh, 48px);
+  right: clamp(24px, 2.6vw, 44px);
+}
+
+.picks-item--visual-reverse .picks-item-cover {
+  right: auto;
+  left: 0;
+}
+
+.picks-item--visual-reverse .picks-item-photo {
+  /* 图是居中排布的工具卡网格，取正中即可 */
+  object-position: center;
+}
+
+.picks-item--visual-reverse .picks-item-desc {
+  padding-left: 0;
 }
 
 /* ------------------------------------------------------------
    响应式
    ------------------------------------------------------------ */
 @media (max-width: 900px) {
+  .picks-list {
+    gap: 48px;
+  }
+
   .picks-item {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+    padding: 0 0 40px;
+  }
+
+  .picks-item::after {
+    left: 0;
+    right: 0;
+    display: block;
+  }
+
+  .picks-item:last-child {
+    padding-bottom: 0;
+  }
+
+  .picks-item:last-child::after {
+    display: none;
+  }
+
+  .picks-item--visual {
+    min-height: auto;
+    padding: 0 0 40px;
+  }
+
+  .picks-item--visual::after {
+    display: block;
+  }
+
+  .picks-item--visual:last-child::after {
+    display: none;
+  }
+
+  /* 02 镜像在移动端重置为常规流 */
+  .picks-item--visual-reverse {
+    justify-items: stretch;
+    padding: 0 0 40px;
+  }
+
+  .picks-item--visual-reverse .picks-item-meta {
+    position: static;
+    order: 0;
+  }
+
+  /* 手机端隐藏原本独立左/右上角的序号，01/02 标在图上 */
+  .picks-item-meta {
+    display: none;
+  }
+
+  /* 英文小标跟着正文列走之后要跟着一起收起来（手机端它本来就被上面这条隐藏） */
+  .picks-item .poster-eyebrow--plain {
+    display: none;
+  }
+
+  /* 手机端：介绍在上面 */
+  .picks-item-main {
+    order: 1;
+    width: 100%;
+    max-width: none;
     gap: 14px;
-    padding: 24px 0;
+  }
+
+  .picks-item--visual-reverse .picks-item-main {
+    order: 1;
+    width: 100%;
+    max-width: none;
+  }
+
+  .picks-item-desc {
+    max-width: none;
+    padding-left: 0;
+  }
+
+  .picks-item--visual-reverse .picks-item-desc {
+    padding-left: 0;
+  }
+
+  /* 手机端：图在下面 */
+  .picks-item-cover {
+    order: 2;
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--poster-line, rgba(17, 17, 17, 0.12));
+    background: var(--poster-paper, #ffffff);
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .picks-item--visual-reverse .picks-item-cover {
+    left: auto;
+    right: auto;
+  }
+
+  .picks-item-photo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .picks-item--visual .picks-item-photo {
+    /* 01 Minecraft 黄昏图取木屋和落日居中视角 */
+    object-position: 80% center;
+  }
+
+  .picks-item--visual-reverse .picks-item-photo {
+    object-position: center;
+  }
+
+  /* 手机端：01 和 02 标在图上 */
+  .picks-item-cover-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(17, 17, 17, 0.12);
+    box-sizing: border-box;
+    line-height: 1;
+  }
+
+  .picks-item-cover-num {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--poster-accent);
   }
 
   .picks-heading-row {

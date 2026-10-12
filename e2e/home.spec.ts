@@ -61,6 +61,54 @@ test('滚动到 02 关于我们后导航高亮跟随', async ({ page }) => {
   expect(errors, errors.join('\n')).toEqual([])
 })
 
+test('入口页强调色收敛到电光蓝，且只有一个实心蓝面', async ({ page }) => {
+  const errors = collectPageErrors(page)
+  await page.goto('/#/home')
+  await expect(page.locator('.home-story-scroll')).toHaveCount(1)
+
+  const tokens = await page.evaluate(async () => {
+    const root = document.querySelector('.home-story-scroll')
+    const cta = document.querySelector('.hero-btn-primary')
+    const hero = document.querySelector('.home-hero-viewport')
+    if (!root || !cta || !hero) return null
+    const cs = getComputedStyle(root)
+    const heroCs = getComputedStyle(hero)
+    const glow = await fetch('/assets/home-hero-glow.webp')
+    return {
+      accent: cs.getPropertyValue('--poster-accent').trim().toLowerCase(),
+      deep: cs.getPropertyValue('--poster-accent-deep').trim().toLowerCase(),
+      on: cs.getPropertyValue('--poster-accent-on').trim().toLowerCase(),
+      tint: cs.getPropertyValue('--poster-accent-tint').trim(),
+      wash: cs.getPropertyValue('--poster-accent-wash').trim(),
+      ctaBackground: getComputedStyle(cta).backgroundColor,
+      heroBackground: heroCs.backgroundImage,
+      heroBlend: heroCs.backgroundBlendMode,
+      glowBytes: glow.ok ? (await glow.arrayBuffer()).byteLength : 0,
+    }
+  })
+
+  expect(tokens, '没找到 .home-story-scroll / .hero-btn-primary / .home-hero-viewport').not.toBeNull()
+  expect(tokens!.accent).toBe('#2b5cff')
+  expect(tokens!.deep).toBe('#1e43cc')
+  expect(tokens!.on).toBe('#ffffff')
+  expect(tokens!.tint).toBe('rgba(43, 92, 255, 0.14)')
+  expect(tokens!.wash).toBe('rgba(43, 92, 255, 0.18)')
+  // 退役的暖红不许再挂在任何一处强调色 token 上
+  expect(JSON.stringify(tokens)).not.toContain('e8442a')
+  // 首屏 CTA 是入口页唯一的实心强调色面
+  expect(tokens!.ctaBackground).toBe('rgb(43, 92, 255)')
+
+  // 首屏柔光：两层背景（3KB 纹理 + 径向渐变），且必须同层相乘
+  // ——纯渐变在 8bit 下会出 792px 硬色带，独立层会把光整片洗掉
+  expect(tokens!.heroBackground).toContain('home-hero-glow.webp')
+  expect(tokens!.heroBackground).toContain('radial-gradient')
+  expect(tokens!.heroBackground).toContain('rgba(43, 92, 255, 0.18)')
+  expect(tokens!.heroBlend).toBe('multiply, normal')
+  expect(tokens!.glowBytes).toBeGreaterThan(1024)
+
+  expect(errors, errors.join('\n')).toEqual([])
+})
+
 test('工作台路由可用', async ({ page }) => {
   const errors = collectPageErrors(page)
   await page.goto('/#/tools')
