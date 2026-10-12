@@ -47,6 +47,7 @@ import {
   Moon,
   Palette,
   Plus,
+  PlayCircle,
   Quote,
   Radio,
   RefreshCw,
@@ -1852,18 +1853,18 @@ function LearningNodeCard({ node: learningNode, index, onOpenProject }: { node: 
   const { user } = useAuth()
   const nodeProjects = (learningNode.projectIds ?? []).map((id) => projects.find((project) => project.id === id)).filter((project): project is Project => Boolean(project)).filter((project) => canViewContent(user, project.visibility))
   const node = { ...learningNode, projects: nodeProjects.length }
-  const videoUrl = safeLink(node.videoUrl)
+  const resourceLinks = node.resourceLinks ?? []
+  const videoLinks = node.videoLinks ?? (node.videoTitle || node.videoUrl ? [{ id: `legacy-video-${node.id}`, title: node.videoTitle ?? '', url: node.videoUrl ?? '' }] : [])
   return <motion.div className="learning-node" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
     <div className="node-marker"><span>{String(index + 1).padStart(2, '0')}</span></div>
     <div className="node-card">
       <div className="node-card-heading"><div><span className="node-status">学习节点 {String(index + 1).padStart(2, '0')}</span><h3>{node.title}</h3></div><span className="node-duration"><Clock3 size={13} /> {node.duration}</span></div>
       {node.description && <p>{node.description}</p>}
-      <div className="node-card-meta">
-        <span><BookOpen size={14} /> {node.resources} 个资源</span>
-        <span><Rocket size={14} /> {node.projects} 个相关项目</span>
-        {videoUrl && <a className="learning-video-entry" href={videoUrl} target="_blank" rel="noopener noreferrer"><BookOpen size={13} /><span>{node.videoTitle?.trim() || '观看教程'}</span><ExternalLink size={12} /></a>}
-        {nodeProjects.map((project) => <button key={project.id} className="project-entry" onClick={() => onOpenProject(project)}><Rocket size={13} /> {project.name} <ArrowUpRight size={13} /></button>)}
-      </div>
+      {(nodeProjects.length > 0 || resourceLinks.length > 0 || videoLinks.length > 0) && <div className="node-learning-links">
+        {nodeProjects.map((project) => <button type="button" key={project.id} className="learning-link-chip project-entry" onClick={() => onOpenProject(project)} aria-label={`打开项目：${project.name}`} title={`打开项目：${project.name}`}><Rocket size={13} /><span>{project.name}</span><ArrowUpRight size={12} /></button>)}
+        {resourceLinks.map((link) => { const url = safeLink(link.url); const title = link.title.trim() || '打开文档'; return url && <a className="learning-link-chip" key={link.id} href={url} target="_blank" rel="noopener noreferrer" aria-label={`打开文档：${title}`} title={`打开文档：${title}`}><FileText size={13} /><span>{title}</span><ExternalLink size={12} /></a> })}
+        {videoLinks.map((link) => { const url = safeLink(link.url); const title = link.title.trim() || '观看教程'; return url && <a className="learning-link-chip" key={link.id} href={url} target="_blank" rel="noopener noreferrer" aria-label={`打开视频：${title}`} title={`打开视频：${title}`}><PlayCircle size={13} /><span>{title}</span><ExternalLink size={12} /></a> })}
+      </div>}
     </div>
   </motion.div>
 }

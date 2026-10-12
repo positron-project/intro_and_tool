@@ -287,6 +287,12 @@ export interface ContentCategory extends ContentMeta {
 /** Backward-compatible name for integrations that still call these project categories. */
 export type ProjectCategory = ContentCategory
 
+export interface LearningLink {
+  id: string
+  title: string
+  url: string
+}
+
 export interface LearningNode {
   id: string
   title: string
@@ -295,6 +301,8 @@ export interface LearningNode {
   projects: number
   description?: string
   projectIds?: string[]
+  resourceLinks?: LearningLink[]
+  videoLinks?: LearningLink[] | null
   videoTitle?: string
   videoUrl?: string
 }
