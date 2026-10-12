@@ -4828,35 +4828,42 @@ html[data-theme='dark'] .event-timeline-point[data-stage='results'] { --stage-co
   .interview-index-page .interview-card-expanded > .favorite-control { position: absolute; right: 10px; bottom: 7px; margin: 0; }
 }
 
-/* Keep every destination visible on laptop screens without leaving a dead nav gap. */
-@media (min-width: 1151px) and (max-width: 1680px) {
-  .topbar-inner { gap: 12px; padding-inline: 20px; }
-  .brand { min-width: 180px; }
-  .brand-copy small { display: none; }
-  .brand-copy strong { font-size: 12px; }
-  .main-nav { justify-content: space-between; gap: 0; }
-  .nav-link { gap: 4px; padding-inline: 4px; font-size: 11px; }
-  .nav-link::after { right: 4px; left: 4px; }
-  .nav-link svg { width: 14px; height: 14px; flex: 0 0 auto; }
-  .search-trigger { width: clamp(142px, 12vw, 184px); }
-}
-
-@media (max-width: 1150px) {
+/* Collapse the full navigation before laptop widths can crowd the action area. */
+@media (max-width: 1460px) {
   .topbar { height: 62px; }
-  .topbar-inner { padding: 0 18px; }
-  .brand { min-width: auto; }
+  .topbar-inner { padding: 0 18px; gap: 13px; }
+  .brand { min-width: 0; }
   .brand-copy strong { font-size: 12px; }
   .brand-copy small { display: none; }
-  .main-nav { position: absolute; top: 62px; right: 14px; left: 14px; display: none; height: auto; flex-direction: column; align-items: stretch; padding: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-sm); }
+  .main-nav {
+    position: absolute;
+    top: 62px;
+    right: 14px;
+    left: 14px;
+    z-index: 1;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    max-height: calc(100vh - 76px);
+    padding: 8px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+  }
   .main-nav.is-open { display: flex; }
   .nav-link { min-height: 39px; padding: 0 12px; }
   .nav-link::after { display: none; }
-  .topbar-actions { margin-left: auto; }
+  .topbar-actions { margin-left: auto; gap: 4px; }
   .search-trigger { width: 34px; justify-content: center; padding: 0; }
-  .search-trigger span, .search-trigger kbd, .profile-button { display: none; }
+  .search-trigger span, .search-trigger kbd, .profile-button-label, .profile-button > svg { display: none; }
+  .profile-button { padding: 0; }
   .mobile-menu { display: inline-flex; }
 }
 
-@media (max-width: 640px) {
-  .topbar-inner { padding: 0 14px; }
+@media (max-width: 420px) {
+  .topbar-inner { padding: 0 10px; gap: 6px; }
+  .brand-copy { display: none; }
+  .topbar-actions { gap: 0; }
 }
