@@ -1,7 +1,8 @@
 /* ============================================================
    入口页首屏 · 方向 C「克制」
    ------------------------------------------------------------
-   淡灰画布（--poster-canvas #f2f3f5）+ 墨黑排版，唯一强调色是电光蓝 --poster-accent（#2b5cff）。
+   暖白画布（--poster-canvas #f9f5ed）+ 墨黑排版；主色是深青蓝 --poster-accent（#0f4c5c），
+   强调色是琥珀 --poster-amber（#b3741a）：青蓝管交互，琥珀管记号（2026-10 YG 指定）。
    落点与禁令见 docs/homepage-design-style.md「一、入口页档」。
    本文件在 home-redesign.css 之后加载，用同等特异性覆盖旧色板；
    旧的暖白/浅蓝/网格装饰规则仍留在原文件里，其他区段还在用那些变量。
@@ -14,34 +15,45 @@
    若只把变量定义在 .home-hero-viewport 里，导航取不到值会回落到
    styles.css:4846 给 .home-story-scroll 的暖棕色 #3b2c24。 */
 .home-story-scroll {
-  /* 纸（面）：卡片这类「浮起来的白面」继续用它 */
-  --poster-paper: #ffffff;
-  /* 画布（底）：整页纸底。由纯白改淡灰（YG 指定）；
+  /* 纸（面）：卡片这类「浮起来的白面」继续用它；比画布更白一档，且同样是暖调 */
+  --poster-paper: #fffdf9;
+  /* 画布（底）：整页纸底。2026-10 由淡灰 #f2f3f5 改暖白（YG 指定）；
      只作用于首屏 / 区段 / 页脚这类整块底色，不动卡片。 */
-  --poster-canvas: #f2f3f5;
+  --poster-canvas: #f9f5ed;
   /* 02 / 04 / 05 的底色读的是 :root 的 --home-bg-warm（home-redesign.css:7），
-     在入口页作用域内一并指到画布灰，避免两套纸底同屏。 */
+     在入口页作用域内一并指到暖白画布，避免两套纸底同屏。 */
   --home-bg-warm: var(--poster-canvas);
-  --poster-ink: #111111;
-  --poster-ink-2: #4a4a4a;
-  --poster-ink-3: #8a8a8a;
-  --poster-line: rgba(17, 17, 17, 0.12);
-  /* 强调色：电光蓝（替换退役的暖红 #e8442a——它同时兼任「强调」与「错误」，
-     两义合一既让错误态抢眼，也让强调色失去专属性）。
-     五个值是一套，不要只取其中一个：
+  /* 02 / 04 / 05 与 06 的正文色读的是 :root 的 --home-navy（#111111），
+     同样在入口页作用域内指到暖墨，免得同屏出现两种黑（h2 暖、h3 冷）。 */
+  --home-navy: var(--poster-ink);
+  /* 墨色与灰阶整体偏暖一档：中性灰落在暖白纸上会反出一层冷调 */
+  --poster-ink: #14110c;
+  --poster-ink-2: #4b443a;
+  --poster-ink-3: #857e73;
+  --poster-line: rgba(28, 22, 14, 0.14);
+  /* 主色：深青蓝（YG 2026-10 指定，替换退役的电光蓝 #2b5cff——它在暖白纸上偏冷偏脆）。
+     它管的是「可交互反馈」：五个值是一套，不要只取其中一个：
      accent 用于文字 / 1px 线 / 小面积描边；deep 只给主 CTA :hover；
-     on 只给蓝面上的字；tint 只做条目 hover 的底边线——一律不做填充底；
+     on 只给青蓝面（全站唯一实心面 = 主 CTA）上的字；
+     tint 只做条目 hover 的底边线——一律不做填充底；
      wash 只给首屏背景的柔光渐变（见 .home-hero-viewport 上方注释）。 */
-  --poster-accent: #2b5cff;
-  --poster-accent-deep: #1e43cc;
+  --poster-accent: #0f4c5c;
+  --poster-accent-deep: #0a3b48;
   --poster-accent-on: #ffffff;
-  --poster-accent-tint: rgba(43, 92, 255, 0.14);
-  /* 首屏柔光的峰值洗色：电光蓝 18%，只给 .home-hero-viewport 的背景用。
-     它不是一个面，是纸面受光——峰值处页头「工具区 →」仍有 14.16:1。 */
-  --poster-accent-wash: rgba(43, 92, 255, 0.18);
+  --poster-accent-tint: rgba(15, 76, 92, 0.14);
+  /* 首屏柔光的峰值洗色：深青蓝 18%，只给 .home-hero-viewport 的背景用。
+     它不是一个面，是纸面受光（暖白纸上是一层冷光，正好压住底色的甜）。 */
+  --poster-accent-wash: rgba(15, 76, 92, 0.18);
+  /* 强调色：琥珀（YG 2026-10 指定）。青蓝管交互，琥珀管「记号」——
+     只落在 18×2 记号杠、导航当前项、03 选中项左杠与大号章节序号这四类上，
+     一律不做填充底、不做渐变。
+     两个值按字号分工：amber 给 ≥26px 的大号序号与 2px 记号杠（非文字档，
+     对暖白画布 ≥3:1）；amber-deep 给 16px 这类小字号序号（需 ≥4.5:1）。 */
+  --poster-amber: #b3741a;
+  --poster-amber-deep: #8f5c10;
   /* 品牌蓝：院校官方 logo 的蓝（YG 给的参考图实测取色，主蓝 #008cd6）。
      只给 .site-brand-mark 圆形标记这一个图形服务，不参与文字 / 线 / 状态，
-     也不是第二种「强调色」——它是校徽自己的身份色。院校名矢量不走这套蓝，
+     它不是「强调色」（强调色是琥珀）——它是校徽自己的身份色。院校名矢量不走这套蓝，
      用墨黑（YG 2026-10 明确要求改回黑色）。
      官方稿里图标本体是青 → 蓝的柔和过渡，所以 hi 只当 mask 渐变的起点。 */
   --poster-brand: #008cd6;
@@ -75,21 +87,21 @@
   --motion-stagger: 90ms;
 }
 
-/* 首屏：淡灰纸（--poster-canvas）+ 右上角一片电光蓝柔光。
+/* 首屏：暖白纸（--poster-canvas）+ 右上角一片深青蓝柔光。
    ① 柔光本体是纯 CSS 径向渐变，峰值 18%，核心落在页头「工具区 →」那一带；
       渐变在 68% 处衰减到 0，而标题/正文全在左列（那里 alpha=0），
-      所以文字实际落在纸底上：弱化灰 #8a8a8a 对 #f2f3f5 ≈ 3.11:1
-      （纯白纸时是 3.45:1，eyebrow 这类灰本来就只够大字用）。
+      所以文字实际落在纸底上：弱化灰 #857e73 对 #f9f5ed ≈ 3.69:1
+      （淡灰画布那版是 3.11:1，eyebrow 这类灰只够大字用）。
    ② 顶层那张 3KB 纹理不是装饰。纯 CSS 渐变在 8bit 下会出现 792px 的超长同值
       色带（等于一整行同一个灰值），乘上这张只剩 10% 对比度的云絮后碎到 168px、
       灰阶从 1 级变 4 级。必须同层 multiply——当独立不透明层压上去会把整片光
-      替换掉（核心 #cbddff → #eff9ff）。
+      替换掉（核心那点青蓝被纹理自身的浅灰洗成近白）。
    纸底统一由 --poster-canvas 给，02 / 04 / 05 读的 --home-bg-warm 也指到它。 */
 .home-hero-viewport {
   background-color: var(--poster-canvas);
   background-image:
     url('/assets/home-hero-glow.webp'),
-    radial-gradient(104% 48% at 84% 4%, var(--poster-accent-wash), rgba(43, 92, 255, 0) 68%);
+    radial-gradient(104% 48% at 84% 4%, var(--poster-accent-wash), rgba(15, 76, 92, 0) 68%);
   background-position: center, center;
   background-size: cover, cover;
   background-repeat: no-repeat, no-repeat;
@@ -102,7 +114,7 @@
   .home-hero-viewport {
     background-image:
       url('/assets/home-hero-glow.webp'),
-      radial-gradient(78% 34% at 76% 2%, var(--poster-accent-wash), rgba(43, 92, 255, 0) 70%);
+      radial-gradient(78% 34% at 76% 2%, var(--poster-accent-wash), rgba(15, 76, 92, 0) 70%);
   }
 }
 
@@ -114,12 +126,12 @@
 }
 
 .site-header.is-scrolled {
-  background: rgba(242, 243, 245, 0.86);
+  background: rgba(249, 245, 237, 0.86);
   /* 用 box-shadow 画线而不是 border：切换时不会产生 1px 位移 */
   box-shadow: 0 1px 0 var(--poster-line);
 }
 
-/* 03（作品）与 06 + 页脚读的是 --poster-paper，但页底要走画布灰：
+/* 03（作品）与 06 + 页脚读的是 --poster-paper，但页底要走暖白画布：
    paper 留给卡片那种「浮起的白面」，两者别混在一个变量里 */
 /* 这两节自己的 CSS 在 hero-poster.css 之后加载（各区段组件各自 import），
    同特异性会反超，所以这里挂到入口页根节点上提高优先级 */
@@ -196,7 +208,7 @@
   color: var(--poster-ink);
 }
 
-/* 当前项：文字不换色，只在下方压一条强调色线 */
+/* 当前项：文字不换色，只在下方压一条琥珀记号线（与眉标那根 18×2 同一套强调） */
 .site-nav-item.is-active {
   opacity: 1;
   color: var(--poster-ink);
@@ -204,7 +216,7 @@
 }
 
 .site-nav-item.is-active::after {
-  background: var(--poster-accent);
+  background: var(--poster-amber);
   height: 2px;
   left: 4px;
   right: 4px;
@@ -369,8 +381,8 @@
   color: var(--poster-ink-3);
 }
 
-/* hover 的反馈从「整体变淡」改成「文字换强调色」：
-   父级 0.7 透明度会把 #2b5cff 洗成第二种浅蓝，等于凭空多出一个色。 */
+/* hover 的反馈从「整体变淡」改成「文字换主色」：
+   父级 0.7 透明度会把 #0f4c5c 洗成第二种浅青蓝，等于凭空多出一个色。 */
 .scroll-indicator:hover .scroll-text {
   color: var(--poster-accent);
 }
@@ -453,7 +465,7 @@
    ------------------------------------------------------------
    纯 transform 缩放，没有 rAF 循环、没有第二层配色、不占布局高度；
    挂在 .home-story-scroll 里所以能取到 --poster-accent。
-   这是蓝色落点清单的第 11 处（见 docs/homepage-design-style.md）。
+   它是主色（青蓝）的落点之一（见 docs/homepage-design-style.md）。
    z-index 必须高过页头（100），否则会被页头以后加的底色吃掉。 */
 .home-scroll-progress {
   position: fixed;

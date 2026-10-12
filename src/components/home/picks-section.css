@@ -135,8 +135,8 @@
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.03em;
-  /* 大号章节序号恒满色强调色，与 03 / 05 同一处理 */
-  color: var(--poster-accent);
+  /* 大号章节序号恒满色强调色（琥珀），与 03 / 05 同一处理 */
+  color: var(--poster-amber);
 }
 
 .picks-item-main {
@@ -497,7 +497,8 @@
     font-weight: 800;
     line-height: 1;
     letter-spacing: -0.02em;
-    color: var(--poster-accent);
+    /* 16px 不到大字档，用加深的琥珀（对暖白画布 5.2:1） */
+    color: var(--poster-amber-deep);
   }
 
   .picks-heading-row {

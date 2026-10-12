@@ -122,7 +122,8 @@
 
 .offer-switch-item[aria-pressed='true'] {
   color: var(--poster-ink, #111111);
-  border-left-color: var(--poster-accent);
+  /* 选中是个「记号」，走琥珀；青蓝只留给 hover / 焦点这类交互反馈 */
+  border-left-color: var(--poster-amber);
 }
 
 .offer-switch-item:focus-visible {

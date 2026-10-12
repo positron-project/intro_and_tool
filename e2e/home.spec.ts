@@ -61,7 +61,7 @@ test('滚动到 02 关于我们后导航高亮跟随', async ({ page }) => {
   expect(errors, errors.join('\n')).toEqual([])
 })
 
-test('入口页强调色收敛到电光蓝，且只有一个实心蓝面', async ({ page }) => {
+test('入口页主色收敛到深青蓝、强调色收敛到琥珀，且只有一个实心青蓝面', async ({ page }) => {
   const errors = collectPageErrors(page)
   await page.goto('/#/home')
   await expect(page.locator('.home-story-scroll')).toHaveCount(1)
@@ -80,6 +80,8 @@ test('入口页强调色收敛到电光蓝，且只有一个实心蓝面', async
       on: cs.getPropertyValue('--poster-accent-on').trim().toLowerCase(),
       tint: cs.getPropertyValue('--poster-accent-tint').trim(),
       wash: cs.getPropertyValue('--poster-accent-wash').trim(),
+      amber: cs.getPropertyValue('--poster-amber').trim().toLowerCase(),
+      amberDeep: cs.getPropertyValue('--poster-amber-deep').trim().toLowerCase(),
       ctaBackground: getComputedStyle(cta).backgroundColor,
       heroBackground: heroCs.backgroundImage,
       heroBlend: heroCs.backgroundBlendMode,
@@ -88,21 +90,24 @@ test('入口页强调色收敛到电光蓝，且只有一个实心蓝面', async
   })
 
   expect(tokens, '没找到 .home-story-scroll / .hero-btn-primary / .home-hero-viewport').not.toBeNull()
-  expect(tokens!.accent).toBe('#2b5cff')
-  expect(tokens!.deep).toBe('#1e43cc')
+  expect(tokens!.accent).toBe('#0f4c5c')
+  expect(tokens!.deep).toBe('#0a3b48')
   expect(tokens!.on).toBe('#ffffff')
-  expect(tokens!.tint).toBe('rgba(43, 92, 255, 0.14)')
-  expect(tokens!.wash).toBe('rgba(43, 92, 255, 0.18)')
-  // 退役的暖红不许再挂在任何一处强调色 token 上
+  expect(tokens!.tint).toBe('rgba(15, 76, 92, 0.14)')
+  expect(tokens!.wash).toBe('rgba(15, 76, 92, 0.18)')
+  expect(tokens!.amber).toBe('#b3741a')
+  expect(tokens!.amberDeep).toBe('#8f5c10')
+  // 退役的暖红与上一版电光蓝都不许再挂在任何一处强调色 token 上
   expect(JSON.stringify(tokens)).not.toContain('e8442a')
+  expect(JSON.stringify(tokens)).not.toContain('2b5cff')
   // 首屏 CTA 是入口页唯一的实心强调色面
-  expect(tokens!.ctaBackground).toBe('rgb(43, 92, 255)')
+  expect(tokens!.ctaBackground).toBe('rgb(15, 76, 92)')
 
   // 首屏柔光：两层背景（3KB 纹理 + 径向渐变），且必须同层相乘
   // ——纯渐变在 8bit 下会出 792px 硬色带，独立层会把光整片洗掉
   expect(tokens!.heroBackground).toContain('home-hero-glow.webp')
   expect(tokens!.heroBackground).toContain('radial-gradient')
-  expect(tokens!.heroBackground).toContain('rgba(43, 92, 255, 0.18)')
+  expect(tokens!.heroBackground).toContain('rgba(15, 76, 92, 0.18)')
   expect(tokens!.heroBlend).toBe('multiply, normal')
   expect(tokens!.glowBytes).toBeGreaterThan(1024)
 

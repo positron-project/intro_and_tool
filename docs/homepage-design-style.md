@@ -4,7 +4,7 @@
 
 | 档                          | 覆盖路由                               | 现行视觉                                      | 真源文件                                                                                                     |
 | --------------------------- | -------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| 入口页档（生效中）          | `#/home`（首屏 + 02–06 + 页脚）        | 纯白 + 墨黑 + 一套电光蓝 + 首屏一片柔光的克制海报语言 | `src/components/home/hero-poster.css`（首屏）、`src/components/home/poster-sections.css`（02–06 共用原子件） |
+| 入口页档（生效中）          | `#/home`（首屏 + 02–06 + 页脚）        | 暖白底 + 暖墨阶 + 深青蓝主色（藏于交互）+ 琥珀强调色（做记号）+ 首屏一片柔光的克制海报语言 | `src/components/home/hero-poster.css`（首屏）、`src/components/home/poster-sections.css`（02–06 共用原子件） |
 | 工具页 / 业务页档（未改版） | `#/tools`、`#/learning`、`#/projects`… | 暖白纸面 + 深蓝图纸 / 浅色半透明高密度工作台  | `src/components/home/home-redesign.css`（旧长卷）、`src/styles.css` 的 `:root`                               |
 
 动手前先读 `AGENTS.md` 的《设计工作流（入口页）》：范围、触发分级、必用技能、验收闸门都写在那里。本文档只负责 token 与视觉规则。
@@ -25,17 +25,19 @@
 
 | 用途     | 令牌              | 色值                     | 说明                                                                      |
 | -------- | ----------------- | ------------------------ | ------------------------------------------------------------------------- |
-| 纸（面） | `--poster-paper`  | `#ffffff`                | 卡片 / 浮层这类「浮起来的白面」                              |
-| 画布（底） | `--poster-canvas` | `#f2f3f5` | **整页纸底**（首屏 / 02–06 / 页脚）：2026-10 由纯白改淡灰，卡片不动 |
-| 主墨色   | `--poster-ink`    | `#111111`                | 主标题、区段标题、主按钮底、CTA 文字                                      |
-| 次级墨色 | `--poster-ink-2`  | `#4a4a4a`                | 说明段、行条目副文案                                                      |
-| 弱化墨色 | `--poster-ink-3`  | `#8a8a8a`                | eyebrow                                                                   |
-| 分隔线   | `--poster-line`   | `rgba(17, 17, 17, 0.12)` | 局部线：02 两栏之间的竖线、首屏圆形线稿的描边等              |
-| 唯一强调 | `--poster-accent`      | `#2b5cff`                | 文字 / 1px 线 / 小面积描边（12 处落点见下节）                             |
-| 强调加深 | `--poster-accent-deep` | `#1e43cc`                | **只给** `.hero-btn-primary:hover`                                        |
-| 蓝面文字 | `--poster-accent-on`   | `#ffffff`                | **只给**蓝面上的字（全站唯一蓝面 = 主 CTA）                              |
-| 强调淡描边 | `--poster-accent-tint` | `rgba(43, 92, 255, 0.14)` | **只做** `.picks-item::after` 那条局部分隔线的 hover 色，不做填充底 |
-| 柔光洗色 | `--poster-accent-wash` | `rgba(43, 92, 255, 0.18)` | **只给**首屏背景的柔光渐变（见下节），不是面、不填任何元素 |
+| 纸（面） | `--poster-paper`  | `#fffdf9`                | 卡片 / 浮层这类「浮起来的白面」（比画布更白一档，同是暖调）                              |
+| 画布（底） | `--poster-canvas` | `#f9f5ed` | **整页暖白纸底**（首屏 / 02–06 / 页脚），卡片不动：2026-10 由淡灰 `#f2f3f5` 改暖白 |
+| 主墨色   | `--poster-ink`    | `#14110c`                | 主标题、区段标题、主按钮底、CTA 文字（暖黑一档，落在暖白纸上不反冷调） |
+| 次级墨色 | `--poster-ink-2`  | `#4b443a`                | 说明段、行条目副文案                                                      |
+| 弱化墨色 | `--poster-ink-3`  | `#857e73`                | eyebrow（对暖白画布 3.69:1，仍只够大字）                                  |
+| 分隔线   | `--poster-line`   | `rgba(28, 22, 14, 0.14)` | 局部线：02 两栏之间的竖线、首屏圆形线稿的描边等              |
+| 主色（青蓝） | `--poster-accent`      | `#0f4c5c`                | 文字 / 1px 线 / 小面积描边 —— **只管可交互反馈**（落点见下节）             |
+| 主色加深 | `--poster-accent-deep` | `#0a3b48`                | **只给** `.hero-btn-primary:hover`                                        |
+| 青蓝面文字 | `--poster-accent-on`   | `#ffffff`                | **只给**青蓝面上的字（全站唯一实心面 = 主 CTA）                              |
+| 主色淡描边 | `--poster-accent-tint` | `rgba(15, 76, 92, 0.14)` | **只做** `.picks-item::after` 那条局部分隔线的 hover 色，不做填充底 |
+| 柔光洗色 | `--poster-accent-wash` | `rgba(15, 76, 92, 0.18)` | **只给**首屏背景的柔光渐变（见下节），不是面、不填任何元素 |
+| 强调色（琥珀） | `--poster-amber` | `#b3741a` | **只管「记号」**：18×2 记号杠、导航当前项、03 选中项左杠、≥26px 大号章节序号（非文字档 / 大字档，对暖白画布 ≥3:1） |
+| 强调加深 | `--poster-amber-deep` | `#8f5c10` | **只给** 16px 小字号序号 `.picks-item-cover-num`（大字档以下，需 ≥4.5:1，实测 5.2:1） |
 | 品牌蓝 | `--poster-brand` | `#008cd6` | **只给**圆形标记 `.site-brand-mark`：院校官方 logo 的蓝，2026-10 按 YG 给的参考图实测取色（院校名矢量已改回墨黑，不吃这个 token） |
 | 品牌亮青 | `--poster-brand-hi` | `#00a4e1` | **只给**圆形标记那层 225° 渐变的起点（官方图标本体是青 → 蓝过渡），别处不用 |
 | 内容左轴 | `--poster-gutter` | `clamp(24px, 6vw, 92px)` | **全页唯一左轴**（1440 下 86px）：导航、首屏、02–06 的正文列、06 的页脚都从这条起算。原先 04–06 是 `clamp(24px, 5.5vw, 84px)`（79px），两者差 7px，2026-10 已统一 |
@@ -44,28 +46,42 @@
 
 上面最后三个是尺寸量，不参与「没有第五种颜色」的色板约束。
 
-用色规则：白 / 墨黑 / 灰阶 + 一套电光蓝 token，再加一组**只属于校徽圆形标记的品牌蓝**（`--poster-brand` / `--poster-brand-hi`），没有别的颜色。品牌图形（`.site-brand-mark` 圆形标记、`.site-brand-college` 院校名矢量）**不再灰度化**：SVG 只当 CSS `mask`，颜色由 CSS 的 `background-color` 给——圆形标记取 `var(--poster-brand)`，院校名取 `var(--poster-ink)` 墨黑，因此图形永远不会再自带一份蓝。
+用色规则：暖白 / 纸白 / 暖墨阶 + 一套**深青蓝主色** token（管交互）+ 一套**琥珀强调色** token（管记号），再加一组**只属于校徽圆形标记的品牌蓝**（`--poster-brand` / `--poster-brand-hi`），没有别的颜色。品牌图形（`.site-brand-mark` 圆形标记、`.site-brand-college` 院校名矢量）**不再灰度化**：SVG 只当 CSS `mask`，颜色由 CSS 的 `background-color` 给——圆形标记取 `var(--poster-brand)`，院校名取 `var(--poster-ink)` 墨黑，因此图形永远不会再自带一份蓝。
 
-> **2026-10：品牌图形由电光蓝改为院校官方 logo 的蓝。** YG 给了院校官徽参考图，实测主蓝 `#008cd6`、图标本体另有一档亮青 `#00a4e1`，于是抽成 `--poster-brand` / `--poster-brand-hi`；圆形标记吃一层 `225deg` 的青→蓝渐变复刻官方稿图标本体的过渡。代价要知道：校徽蓝比电光蓝浅，对淡灰画布只有约 **3.3:1**（电光蓝 4.6:1），按无障碍的 logotype 例外处理，所以**除圆形标记以外的任何元素都不许借用这两个 token**。
+> **2026-10：配色由「淡灰底 + 电光蓝」整盘换成「暖白底 + 深青蓝主色 + 琥珀强调色」（YG 指定）。** 三个角色各归其位：暖白 `#f9f5ed` 是纸底，深青蓝 `#0f4c5c` 管**可交互反馈**（CTA 实心面、hover、焦点环、进度线、条目 hover 底线、首屏柔光），琥珀 `#b3741a` 管**记号**（18×2 记号杠、导航当前项、03 选中项左杠、大号章节序号）。电光蓝 `#2b5cff` 退役的理由是它在暖白纸上偏冷偏脆，且「强调」与「交互」两义合一——现在交互认颜色、记号认颜色，一眼可辨。灰阶一并转暖（`--poster-ink` `#14110c` / `-2` `#4b443a` / `-3` `#857e73` / 线 `rgba(28, 22, 14, 0.14)`），否则中性灰落在暖白纸上会反出一层冷调。
+
+> **2026-10：品牌图形由电光蓝改为院校官方 logo 的蓝。** YG 给了院校官徽参考图，实测主蓝 `#008cd6`、图标本体另有一档亮青 `#00a4e1`，于是抽成 `--poster-brand` / `--poster-brand-hi`；圆形标记吃一层 `225deg` 的青→蓝渐变复刻官方稿图标本体的过渡。代价要知道：校徽蓝比深青蓝浅，对暖白画布只有约 **3.4:1**（深青蓝 8.7:1），按无障碍的 logotype 例外处理，所以**除圆形标记以外的任何元素都不许借用这两个 token**。
 >
 > **同轮追加（YG 当场反馈）：院校名矢量改回墨黑 `--poster-ink`。** 参考图里院校名确实是蓝的，但 YG 要求站内品牌区只留圆形标记是蓝的、院校名回到黑；于是 `.site-brand-college` 单独覆一层 `background-color: var(--poster-ink)`，实测该区域蓝调像素归 0、最暗像素 `#111111`，同时圆形标记的蓝仍为 `#008cd6` 一系（顶带均值 `#1ea0dc`、底带 `#0990d7`）。
 
-> **2026 改版：强调色由暖红 `#e8442a` 换成电光蓝 `#2b5cff`。** 退役理由是红同时兼任「强调」与「复制失败」，两义合一既让错误态抢眼，也让强调色失去专属性。现在错误态只走墨黑 + 文案。
+> **2026 改版：强调色由暖红 `#e8442a` 换成电光蓝 `#2b5cff`。** 退役理由是红同时兼任「强调」与「复制失败」，两义合一既让错误态抢眼，也让强调色失去专属性。现在错误态只走墨黑 + 文案。（电光蓝本身已于 2026-10 被上面的暖白 / 深青蓝 / 琥珀方案取代。）
 
-### 强调色落点（共 12 处，别处一律不得再出现蓝）
+### 强调色落点：深青蓝管交互，琥珀管记号
+
+**琥珀（记号层 —— 除下表三类别处不得出现）**
+
+| 落点类型           | 位置                                                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 18×2 记号杠        | `.poster-eyebrow::before`（每节眉标）；`.about-pair-rule`（02 每栏栏头）；`.blog-sub-quote::before`（05 副句上方）——同一根杠在三处的复用              |
+| 当前 / 选中记号    | `.site-nav-item.is-active::after`（2px）；`.offer-switch-item[aria-pressed='true']` 的 `border-left-color`                                              |
+| 大号章节序号       | `.blog-item-num`（22–30px）/ `.picks-item-num`（26–38px）用 `--poster-amber`；窄屏封面徽标 `.picks-item-cover-num`（16px）用 `--poster-amber-deep`       |
+
+**深青蓝（交互层）**
 
 | 落点类型                 | 位置                                                                                                                                                                                                                                        |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 文字                     | `.blog-item-num` / `.offer-col-num` / `.picks-item-num`（大号章节序号，恒满色；03 的编号在每栏底部 54px，04 的在左侧 38px）；`.blog-featured-article:hover .blog-read-more`；`.hero-btn-secondary:hover`；`.footer-nav-link:hover` / `.footer-connect-item:hover` / `.footer-back-to-top:hover`；`.scroll-indicator:hover .scroll-text`；`.join-copy-btn.is-copied` |
-| 1px 线                   | `.poster-eyebrow::before`（2×18px 杠）；`.site-nav-item.is-active::after`（2px）；`.scroll-stem-pulse`；`.offer-col-rule`（03 每栏顶上）；`.about-pair-rule`（02 每栏栏头）；`.blog-sub-quote::before`（05 副句上方）——这三处是同一根 18×2 杠在不同节里的复用；`.home-scroll-progress`（顶部滚动进度线，固定 1px，见「动效与交互」）；`.picks-item::after` 的 hover 色（`--poster-accent-tint`）                                                          |
+| 文字                     | `.blog-featured-article:hover .blog-read-more`；`.hero-btn-secondary:hover`（连 `border-bottom-color` 一起换）；`.footer-nav-link:hover` / `.footer-connect-item:hover` / `.footer-back-to-top:hover`；`.scroll-indicator:hover .scroll-text`；`.join-copy-btn.is-copied` |
+| 1px 线                   | `.scroll-stem-pulse`；`.picks-item::after` 的 hover 色（`--poster-accent-tint`）；`.home-scroll-progress`（顶部滚动进度线，固定 1px，见「动效与交互」）                                                          |
+| 焦点环                   | `.offer-switch-item:focus-visible` 的 1px outline                                                                                                                                                                                            |
 | 实心面（全站唯一）       | `.hero-btn-primary`（底色 `--poster-accent`，`:hover` 用 `--poster-accent-deep`，字用 `--poster-accent-on`）                                                                                                                               |
-| 品牌图形（2026-10 新增） | `.site-brand-mark` 圆形标记：图形作 `mask`、颜色取 `--poster-brand` `#008cd6`，并叠一层 `--poster-brand-hi` → `--poster-brand` 的 `225deg` 渐变（`.site-brand:hover` 用换色而不是父级 `opacity`，否则蓝会被洗成另一种蓝）。院校名 `.site-brand-college` 同一套 mask 手法但取墨黑 `--poster-ink`，不占蓝 |
+| 品牌图形                 | `.site-brand-mark` 圆形标记（唯一例外，见上表；院校名 `.site-brand-college` 取墨黑，不吃这两个 token）                                                                                                                                       |
+| 首屏柔光                 | `.home-hero-viewport` 的径向渐变，不在元素上成面（见下节）                                                                                                                                                                                  |
 
-**禁令**：蓝只允许落在上面四类。不许大面积蓝底、不许蓝渐变、不许新增第五种蓝、不许多出一个靠近电光蓝的浅蓝 —— 父级 `opacity` 会把 `#2b5cff` 洗成第二种蓝，所以这类 hover 一律改成换色，而不是调透明度。行条目的 hover 底色永远是中性灰 `rgba(17, 17, 17, 0.04)`。
+**禁令**：青蓝只落交互层、琥珀只落记号层，两套不许交叉（别把 CTA 改成琥珀，也别把眉标杠改回青蓝）。不许大面积色底、不许色渐变、不许新增第三种强调色 —— 父级 `opacity` 会把 `#0f4c5c` 洗成另一种浅青蓝、把 `#b3741a` 洗成浅琥珀，这类 hover 一律改成换色而不是调透明度。行条目的 hover 底色永远是暖中性灰 `rgba(28, 22, 14, 0.04)`。
 
-两个例外：**首屏背景那片柔光**（本档唯一允许的强调色渐变，只许出现在 `.home-hero-viewport` 的背景层，径向、单层蓝、峰值 ≤20%、与纹理同层相乘）与**圆形标记那层品牌渐变**（225°、两站、只在 `.site-brand-mark` 的 mask 上，见上表），除此之外入口页不许再出现任何渐变蓝。
+两个例外：**首屏背景那片柔光**（本档唯一允许的强调色渐变，只许出现在 `.home-hero-viewport` 的背景层，径向、单层青蓝、峰值 ≤20%、与纹理同层相乘）与**圆形标记那层品牌渐变**（225°、两站、只在 `.site-brand-mark` 的 mask 上，见上表），除此之外入口页不许再出现任何渐变色。
 
-入口页不许再出现任何渐变蓝（首屏柔光与圆形标记的品牌渐变除外，见上）。
+入口页不许再出现任何渐变色（首屏柔光与圆形标记的品牌渐变除外，见上）。
 
 **颜色那一轮只动颜色，不做形态学**：2026 换色时字号 / 圆角 / 间距 / 卡片形态 / 动效时长一律没动（唯一例外是删掉 `.offer-row-item:hover .offer-row-num` 那条 `opacity` 规则）。
 
@@ -86,19 +102,19 @@
 
 ### 首屏柔光背景（2026 新增）
 
-首屏不再是「一块纯白」：`.home-hero-viewport`（`src/components/home/hero-poster.css:45-55`）铺了一层**电光蓝柔光** —— 白纸右上角像有光斜着照进来，向左下衰减到零。
+首屏不再是「一块平底」：`.home-hero-viewport`（`src/components/home/hero-poster.css`）铺了一层**深青蓝柔光** —— 暖白纸右上角像有光斜着照进来，向左下衰减到零；暖底配冷光，正好把纸底的甜压住。
 
 ```css
 background-image:
   url('/assets/home-hero-glow.webp'),                                                       /* 顶层：3KB 抗色带纹理 */
-  radial-gradient(104% 48% at 84% 4%, var(--poster-accent-wash), rgba(43, 92, 255, 0) 68%); /* 下层：柔光本体 */
+  radial-gradient(104% 48% at 84% 4%, var(--poster-accent-wash), rgba(15, 76, 92, 0) 68%); /* 下层：柔光本体 */
 background-blend-mode: multiply, normal;                                                    /* 必须同层相乘 */
 ```
 
 | 参数     | 取值                                                                | 理由                                                                    |
 | -------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | 方位形状 | 横椭圆 `104% 48%`，中心 `at 84% 4%`（屏内右上）                     | 中心若放到屏外（`86% -6%`）峰值就浪费在视口外，屏内只剩 6–14% 残余      |
-| 峰值     | `--poster-accent-wash` = 电光蓝 18%                                 | 16% 看起来仍像纯白纸；20% 是上限，再深就开始像「有底色」而不是「受光」  |
+| 峰值     | `--poster-accent-wash` = 深青蓝 18%                                 | 16% 看起来仍像没铺底；20% 是上限，再深就开始像「有底色」而不是「受光」  |
 | 衰减     | 68% 处归零                                                          | 标题 / 正文 / 按钮全在左列（x 86–563），那里 alpha 已为 0               |
 | 纹理     | `public/assets/home-hero-glow.webp`（1024px webp q72，**2984 字节**） | 见下                                                                    |
 
@@ -125,7 +141,7 @@ background-blend-mode: multiply, normal;                                        
 
 ### 04 截图条目（两条各带一张真实界面截图）
 
-04「小组推荐」的两条（`src/components/home/PicksSection.tsx` 的 `.picks-item--visual`）每条都配一张真实界面截图，文案与图来自模块级 `PICKS` 数组：**01 贴右半、02 追加 `.picks-item--visual-reverse` 贴左半**，正文列退到另一半。除这两条以外，01–06 都是淡灰纸底（`--poster-canvas` `#f2f3f5`）。
+04「小组推荐」的两条（`src/components/home/PicksSection.tsx` 的 `.picks-item--visual`）每条都配一张真实界面截图，文案与图来自模块级 `PICKS` 数组：**01 贴右半、02 追加 `.picks-item--visual-reverse` 贴左半**，正文列退到另一半。除这两条以外，01–06 都是暖白纸底（`--poster-canvas` `#f9f5ed`）。
 
 | 参数 | 取值                                                                                   | 理由                                                            |
 | ---- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
@@ -185,10 +201,10 @@ background-blend-mode: multiply, normal;                                        
 
 | 节            | 锚点           | 结构                                                                     |
 | ------------- | -------------- | ------------------------------------------------------------------------ |
-| 02 关于我们   | `#story-about` | **两组并置**：左项目组 / 右算法组，两栏**顶对齐等高起头**，每栏「组名 → 18×2 强调色横杠 → 组标 → 两行短句（两行之间一条跟着行宽的发丝短线）→ 一句短语 → 栏尾四格」；两栏之间一条到内容底就终止的 1px 竖线；≤860px 回单列 |
-| 03 作品展示 | `#story-offer` | **左切换器 + 右详情**：左栏（`clamp(180px,15vw,240px)`）只有序号与项目名，选中项是靠左一条 2px 电光蓝竖杠；右栏是项目自己的界面截图（`Project.coverImage`，比例 1440/820，见下「项目封面截图」）+ 元信息行 + 一句说明 + 三条规格（参与 / 方向 / 状态）；≤860px 切换器改横向项目名条、规格行转单列 |
+| 02 关于我们   | `#story-about` | **两组并置**：左项目组 / 右算法组，两栏**顶对齐等高起头**，每栏「组名 → 18×2 琥珀记号横杠 → 组标 → 两行短句（两行之间一条跟着行宽的发丝短线）→ 一句短语 → 栏尾四格」；两栏之间一条到内容底就终止的 1px 竖线；≤860px 回单列 |
+| 03 作品展示 | `#story-offer` | **左切换器 + 右详情**：左栏（`clamp(180px,15vw,240px)`）只有序号与项目名，选中项是靠左一条 2px 琥珀竖杠（记号层；hover 与焦点环才走深青蓝）；右栏是项目自己的界面截图（`Project.coverImage`，比例 1440/820，见下「项目封面截图」）+ 元信息行 + 一句说明 + 三条规格（参与 / 方向 / 状态）；≤860px 切换器改横向项目名条、规格行转单列 |
 | 04 小组推荐   | `#story-picks` | 两条推荐各占一行：左编号栏 `--poster-index-w`（窄到只容纳序号）+ 右正文列（顶部英文小标 → 标题 → 说明 → 真实字段 → 入口），01 封面贴右半、02 贴左半；两条都带图，`::after` 的两端留缺口局部线一律 `display: none` |
-| 05 小组博客   | `#story-blog`  | 左主文（58%）+ 右列三条（42%，02/03/04 共用一套条目范式）；副句上方是与眉标同款的 18×2 强调色横杠；元信息用 `--mono` |
+| 05 小组博客   | `#story-blog`  | 左主文（58%）+ 右列三条（42%，02/03/04 共用一套条目范式）；副句上方是与眉标同款的 18×2 琥珀记号横杠；元信息用 `--mono` |
 | 06 加入我们   | `#story-join`  | 四句短句 + 三步（加入 QQ 群 / 认识大家 / 一起做东西）+ 二维码卡          |
 
 共用原子件只有 `poster-sections.css` 里的 `.poster-eyebrow` / `.poster-eyebrow--plain` / `.poster-section-title`，各区段 CSS **不要再重复定义**这三个（见 AGENTS.md 约束 8）。02–06 各区段末尾原本各有一行「下一节引导」（共用原子件 `.poster-next`，实例为 `.about-footer-nav` / `.offer-footer-guide` / `.picks-footer-anchor` / `.blog-next-hint`），**已整体删除**：全页只保留首屏左下角的 `.scroll-indicator` 一处滚动指引。区段里不许再出现海军蓝 `#073f73`、暖纸 `#faf8f2`、浅青 `rgba(159,209,222,·)` 等旧色。
@@ -225,7 +241,7 @@ background-blend-mode: multiply, normal;                                        
 - **比例**：`.offer-cover` 上写死 `aspect-ratio: 1440 / 820`（绿易坊截图的真实比例），`img` 用 `height: 100%` 填进去。两头都不依赖元素固有尺寸，截图解码完成时封面不会先矮后高抖一下，换图也不会。**不要**改回「让 img 自己撑开」——那会在慢网络下让整节跳一次。
 - **`object-position: top center` 必须留着**：截图是整页截的，顶对齐才保得住应用自己的导航与主标题；改成 `cover` 的默认居中会从腰上裁。
 - **素材来源与代换**：截图从 `http://127.0.0.1:18080/`（绿易坊 dev）实拍，`deviceScaleFactor: 2` 截 2880×1800 再 LANCZOS 降到 1440。注意项目右上角会显示「样例数据」（后端没起时的兜底态），这是它真实会出现的界面状态，按原样保留。换素材时同步改 `.offer-cover` 的 `aspect-ratio`。
-- **色**：本节的 UI（选中竖杠、焦点环、文字入口）还是电光蓝；**绿色只存在于截图的像素里**（绿易坊自己的品牌绿 `#1f7a53`），这是 YG 认可的例外，登记在 `AGENTS.md` 约束 8。
+- **色**：本节的 UI（选中竖杠 = 琥珀记号，焦点环与文字入口 = 深青蓝）还是站内主色系；**绿色只存在于截图的像素里**（绿易坊自己的品牌绿 `#1f7a53`），这是 YG 认可的例外，登记在 `AGENTS.md` 约束 8。
 - **实测（1440×900）**：`node scripts/snap-sections.mjs 1440x900` 回显本节总高 **929**（`errors: none`）。这是真实截图版的已知取舍：截图信息量（导航 + 主标题 + 配图 + 浮卡 + 四格指标）比原来的 3:1 裁切大，完整性优先。
 - **窄屏（390×844 实测）**：切换器转横向项目名条，封面 342×195.6，`overflowX: 0`，无报错。
 - **归档说明**：没有截图时用的那套「纯 CSS 平面海报」（`ProjectCover.tsx` / `project-cover-art.ts` / `project-cover.css`，含发丝网格、电光蓝块、标注引线）已连同它的 `data-mode="fallback"` 分支一起撤回，原稿在 `backups/home/project-cover/`，不进构建。03 现在只有 `image` 一种封面状态。
@@ -369,7 +385,7 @@ background-blend-mode: multiply, normal;                                        
 **入口页（`#/home`）**
 
 1. 先读 `AGENTS.md` 的《设计工作流（入口页）》，判断这次是全套档还是小修档。
-2. 色值只从入口页档的 `--poster-*` 里取（白 / 墨黑 / 灰阶 + 电光蓝 5 个 + 品牌蓝 2 个）；要新增语义状态先确认 —— 强调色的全部落点就是上面那 12 处，再加一处之前先问；`--poster-brand*` 两个只给校徽圆形标记 `.site-brand-mark`（院校名 `.site-brand-college` 取墨黑）。
+2. 色值只从入口页档的 `--poster-*` 里取（暖白 / 纸白 / 暖墨阶 + 深青蓝 5 个 + 琥珀 2 个 + 品牌蓝 2 个）；要新增语义状态先确认 —— 青蓝只落交互层、琥珀只落记号层（落点清单见上），再加一处之前先问；`--poster-brand*` 两个只给校徽圆形标记 `.site-brand-mark`（院校名 `.site-brand-college` 取墨黑）。
 3. 排版原子件复用 `poster-sections.css`，不要在区段 CSS 里重复定义；新眉标必须 `white-space: nowrap`。
 4. 改完跑 `node scripts/snap-sections.mjs 1440x900`（`errors: none`）并肉眼复核 `viz/section-*.png`；随后 `pnpm lint && pnpm test && pnpm e2e`。
 5. 完成时把 1440 截图交给 YG 目视验收。
@@ -386,10 +402,10 @@ background-blend-mode: multiply, normal;                                        
 
 | Evidence                                                                | Finding                      | Path                                                                                  |
 | ----------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------- |
-| 入口页 02–06 与页脚统一为纯白 / 墨黑 / 电光蓝 `#2b5cff`，装饰层已删            | 入口页档的视觉语言           | [src/components/home/poster-sections.css](../src/components/home/poster-sections.css) |
-| 首屏纯白底、主标题 `clamp(76px,8.6vw,140px)`、右下 245px 圆形线稿       | 入口页档的排版与布局         | [src/components/home/hero-poster.css](../src/components/home/hero-poster.css)         |
+| 入口页 02–06 与页脚统一为暖白 / 墨黑 / 深青蓝 `#0f4c5c` + 琥珀 `#b3741a`，装饰层已删 | 入口页档的视觉语言           | [src/components/home/poster-sections.css](../src/components/home/poster-sections.css) |
+| 首屏暖白底、主标题 `clamp(76px,8.6vw,140px)`、右下 245px 圆形线稿       | 入口页档的排版与布局         | [src/components/home/hero-poster.css](../src/components/home/hero-poster.css)         |
 | `.home-hero-viewport` 为两层背景 + `background-blend-mode: multiply, normal` | 首屏柔光是渐变与纹理同层相乘 | [src/components/home/hero-poster.css](../src/components/home/hero-poster.css)         |
 | `home-hero-glow.webp` = 2984 字节的云絮重映射纹理                       | 3KB 资产换来抗色带 792px→168px | [public/assets/home-hero-glow.webp](../public/assets/home-hero-glow.webp)           |
 | `:root` 定义蓝、薄荷绿、紫、橙、玫红与中性灰                            | 工具页通过语义色区分内容类型 | [src/styles.css](../src/styles.css)                                                   |
-| `.home-story-scroll` 仍是暖色纸底，`.home-hero-viewport` 已被覆盖为纯白 | 两档视觉在同一页面栈里共存   | [src/components/home/home-redesign.css](../src/components/home/home-redesign.css)     |
+| `.home-story-scroll` 仍是暖色纸底，`.home-hero-viewport` 已被覆盖为暖白 | 两档视觉在同一页面栈里共存   | [src/components/home/home-redesign.css](../src/components/home/home-redesign.css)     |
 | `e2e/home.spec.ts` 断言 `.hero-title-line` 不单字折行                   | 主标题折行是已修过的回归点   | [e2e/home.spec.ts](../e2e/home.spec.ts)                                               |

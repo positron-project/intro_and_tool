@@ -29,7 +29,8 @@
   content: '';
   width: 18px;
   height: 2px;
-  background: var(--poster-accent);
+  /* 记号杠吃强调色琥珀：全站每一节靠它定位（青蓝留给可交互反馈） */
+  background: var(--poster-amber);
   /* 「线先落，字后到」：杠从左侧长出来。默认就是终态（首帧不闪），
      进入视口后由 useRuleIn 给 eyebrow 加上 .is-rule-in 播一次生长，
      标题再按 STAGGER 跟上。 */

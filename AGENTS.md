@@ -4,7 +4,7 @@
 
 ## 当前状态（2026-10）
 
-- 入口页（`#/home`）已按「淡灰底 `#f2f3f5` + 白面 + 墨黑 + 唯一强调色电光蓝 `#2b5cff`」改版完成：首屏在 `hero-poster.css`，02–06 六节与统一页脚共用 `poster-sections.css` 的原子件。旧的装饰层（网格 / 斜带 / 水印 / 十字标 / 假仪表 / 巨型英文轮廓字 / 刊物印记）已全部删除，`src/data/mock.ts` 的四篇博客文案也已去过 AI 味。
+- 入口页（`#/home`）已按「暖白底 `#f9f5ed` + 纸白面 + 暖墨阶 `#14110c` + 主色深青蓝 `#0f4c5c`（藏于交互）+ 强调色琥珀 `#b3741a`（做记号）」改版完成（2026-10 由淡灰底 + 电光蓝整盘换掉）：首屏在 `hero-poster.css`，02–06 六节与统一页脚共用 `poster-sections.css` 的原子件。旧的装饰层（网格 / 斜带 / 水印 / 十字标 / 假仪表 / 巨型英文轮廓字 / 刊物印记）已全部删除，`src/data/mock.ts` 的四篇博客文案也已去过 AI 味。
 - 工具页（`#/tools`）与业务页仍是旧视觉（暖色纸底 + 海军蓝 `#073f73` + 深浅主题开关）。**改版只覆盖入口页**，动工具页前先问清楚范围。
 - 工程基建已就位：ESLint / Prettier / Vitest / Playwright / Tailwind 骨架；`src/App.tsx` 已从 528KB 拆到 281KB，拆出 `components/home/ExpandedHomePage.tsx`、`components/admin/AdminPage.tsx`、`lib/app-shared.tsx`。
 
@@ -78,19 +78,21 @@ powershell -ExecutionPolicy Bypass -File scripts/dev-up.ps1
 7. **入口页首屏的样式分层**：`src/components/home/hero-poster.css` 在 `home-redesign.css` 之后加载，**同等特异性下它一定胜出**（包括旧文件里那些 `@media` 断点）。所以：
    - 凡在 `hero-poster.css` 里改过的属性，响应式值必须在**它自己的媒体查询**里重给一遍，不能指望 `home-redesign.css` 的断点；
    - `--poster-*` 调色板变量定义在 `.home-story-scroll` 上（首屏与顶部导航是兄弟节点，只定义在 `.home-hero-viewport` 里导航会取不到值、回落到 `styles.css` 给根节点的暖棕 `#3b2c24`）；
-   - `.home-story-scroll` 的纸底（`var(--home-bg-warm)`）在入口页作用域内被指向 `--poster-canvas`（淡灰 `#f2f3f5`），02 / 04 / 05 跟着一起变；卡片那种「浮起来的白面」仍走 `--poster-paper`（纯白），两者别混用一个变量。
-8. **入口页（首屏 + 02–06）的视觉语言**：淡灰纸底（`--poster-canvas` `#f2f3f5`，2026-10 由纯白改）+ 白面（`--poster-paper`）+ 墨黑 `#111111` + 一套电光蓝强调 token（定义在 `hero-poster.css` 的 `.home-story-scroll` 块；5 个值是一套，不要只取一个：`--poster-accent` `#2b5cff` 用于文字 / 1px 线 / 小面积描边、`--poster-accent-deep` `#1e43cc` 只给主 CTA `:hover`、`--poster-accent-on` `#ffffff` 只给蓝面上的字、`--poster-accent-tint` `rgba(43,92,255,.14)` 只做条目 hover 底边线、`--poster-accent-wash` `rgba(43,92,255,.18)` 只给首屏背景柔光）。
-   - 蓝只允许落在那 **12 处**（清单见 `docs/homepage-design-style.md`「强调色落点」）：**全站唯一蓝面是主 CTA**，其余全是不填底的文字 / 1px 线 / 小面积描边。不许大面积蓝底、不许蓝渐变，也不许多出第二种蓝 —— 父级 `opacity` 会把 `#2b5cff` 洗成一个浅蓝，这类 hover 一律改成换色而不是调透明度。
-   - **校徽圆形标记是唯一走「院校品牌蓝」的地方**（2026-10 按 YG 给的官方 logo 参考图改）：`.site-brand-mark` / `.site-brand-college` 都只作 CSS `mask`、颜色由 CSS 给；圆形标记取 `--poster-brand` `#008cd6`（官方稿主蓝，实测取色）并叠一层 `--poster-brand-hi` `#00a4e1` → `--poster-brand` 的 `225deg` 渐变，复刻官方稿图标本体那点青 → 蓝过渡；**院校名矢量取墨黑 `--poster-ink`**（YG 当场要求从品牌蓝改回黑色，参考图里它是蓝的）。**这两个变量只给圆形标记**，别借去当第二种强调色；校徽蓝比电光蓝浅，对淡灰画布约 3.3:1（电光蓝 4.6:1），按无障碍的 logotype 例外处理。
-   - **03 的作品界面自带一套绿（森林绿一系，绿易坊自己的品牌色）**：01 的封面是该项目的真实界面截图，绿色只存在于截图的像素里，**只在 01 封面内部出现**（YG 明确认可）；本节自己的 UI（选中竖杠、焦点环、文字入口）仍然是电光蓝，不要跟着截图走绿。`ProjectCover.tsx` / `project-cover-art.ts` / `project-cover.css`（无图态用的纯 CSS 平面海报）已按 YG 要求连同把原稿整个归档到 `backups/home/project-cover/`，不再进构建；`e2e/home.spec.ts` 的「只有一个实心蓝面」只认首屏 CTA。
-   - **首屏背景那片柔光**（`.home-hero-viewport`，`hero-poster.css:36-64`）：横椭圆径向 `104% 48% at 84% 4%`、峰值 `--poster-accent-wash` 18%（**上限 20%**）、只允许单层蓝、不做动画、只出现在首屏；窄屏 `≤600px` 重新对位成 `78% 34% at 76% 2%`。它必须与 3KB 纹理 `public/assets/home-hero-glow.webp` **同层** `background-blend-mode: multiply`：纯渐变在 8bit 下会有 792px 的硬色带（乘上纹理降到 168px），而把不透明纹理当独立层压上去会把整片光洗掉。别改成蓝底块、别加第二层配色、别加第二张纹理。
+   - `.home-story-scroll` 的纸底（`var(--home-bg-warm)`）在入口页作用域内被指向 `--poster-canvas`（暖白 `#f9f5ed`），02 / 04 / 05 跟着一起变；卡片那种「浮起来的白面」仍走 `--poster-paper`（`#fffdf9`），两者别混用一个变量。
+8. **入口页（首屏 + 02–06）的视觉语言**：暖白纸底（`--poster-canvas` `#f9f5ed`，2026-10 由淡灰改）+ 纸白面（`--poster-paper` `#fffdf9`）+ 暖墨阶（`--poster-ink` `#14110c` / `-2` `#4b443a` / `-3` `#857e73` / `--poster-line` `rgba(28,22,14,.14)`）+ **一深青蓝主色 + 一琥珀强调色**（都定义在 `hero-poster.css` 的 `.home-story-scroll` 块）：
+   - **主色深青蓝 = 只管「可交互反馈」**：5 个值是一套，不要只取一个——`--poster-accent` `#0f4c5c` 用于文字 / 1px 线 / 小面积描边、`--poster-accent-deep` `#0a3b48` 只给主 CTA `:hover`、`--poster-accent-on` `#ffffff` 只给青蓝面上的字、`--poster-accent-tint` `rgba(15,76,92,.14)` 只做条目 hover 底边线、`--poster-accent-wash` `rgba(15,76,92,.18)` 只给首屏背景柔光。
+   - **强调色琥珀 = 只管「记号」**：`--poster-amber` `#b3741a` 给 18×2 记号杠（`.poster-eyebrow::before` / `.about-pair-rule` / `.blog-sub-quote::before`）、导航当前项 `.site-nav-item.is-active::after`、03 选中项左杠、≥26px 大号章节序号；`--poster-amber-deep` `#8f5c10` 只给 16px 的 `.picks-item-cover-num`（大字档以下要 ≥4.5:1）。
+   - **两套不许交叉**（别把 CTA 改琥珀、别把眉标杠改回青蓝）：**全站唯一实心面是主 CTA**，其余全是不填底的文字 / 1px 线 / 小面积描边。不许大面积色底、不许色渐变、不许多出第三种强调色 —— 父级 `opacity` 会把 `#0f4c5c` / `#b3741a` 洗成另一个浅色，这类 hover 一律改成换色而不是调透明度。落点清单见 `docs/homepage-design-style.md`「强调色落点」。
+   - **校徽圆形标记是唯一走「院校品牌蓝」的地方**（2026-10 按 YG 给的官方 logo 参考图改）：`.site-brand-mark` / `.site-brand-college` 都只作 CSS `mask`、颜色由 CSS 给；圆形标记取 `--poster-brand` `#008cd6`（官方稿主蓝，实测取色）并叠一层 `--poster-brand-hi` `#00a4e1` → `--poster-brand` 的 `225deg` 渐变，复刻官方稿图标本体那点青 → 蓝过渡；**院校名矢量取墨黑 `--poster-ink`**（YG 当场要求从品牌蓝改回黑色，参考图里它是蓝的）。**这两个变量只给圆形标记**，别借去当第三种强调色；校徽蓝比深青蓝浅，对暖白画布约 3.4:1（深青蓝 8.7:1），按无障碍的 logotype 例外处理。
+   - **03 的作品界面自带一套绿（森林绿一系，绿易坊自己的品牌色）**：01 的封面是该项目的真实界面截图，绿色只存在于截图的像素里，**只在 01 封面内部出现**（YG 明确认可）；本节自己的 UI（选中竖杠 = 琥珀记号，焦点环与文字入口 = 深青蓝）仍然是站内主色系，不要跟着截图走绿。`ProjectCover.tsx` / `project-cover-art.ts` / `project-cover.css`（无图态用的纯 CSS 平面海报）已按 YG 要求连同把原稿整个归档到 `backups/home/project-cover/`，不再进构建；`e2e/home.spec.ts` 的「只有一个实心蓝面」只认首屏 CTA。
+   - **首屏背景那片柔光**（`.home-hero-viewport`，`hero-poster.css:36-64`）：横椭圆径向 `104% 48% at 84% 4%`、峰值 `--poster-accent-wash` 深青蓝 18%（**上限 20%**）、只允许单层色、不做动画、只出现在首屏；窄屏 `≤600px` 重新对位成 `78% 34% at 76% 2%`。它必须与 3KB 纹理 `public/assets/home-hero-glow.webp` **同层** `background-blend-mode: multiply`：纯渐变在 8bit 下会有 792px 的硬色带（乘上纹理降到 168px），而把不透明纹理当独立层压上去会把整片光洗掉。别改成色底块、别加第二层配色、别加第二张纹理。
    - 暖红 `#e8442a` 已退役（它同时兼任「强调」与「复制失败」，两义合一）**：错误态走墨黑 + 文案，别再把强调色借给状态提示。
    - 有意保持墨黑 hover 的例外：`.site-tools-btn`、`.blog-footer-link`、`.picks-copy-btn`、`.join-copy-btn:hover`、`.site-nav-item:hover`、`.about-group-tab:hover`、`.picks-item-link:hover`、`.drawer-close-btn`、项目组选中墨黑块 `.about-group-indicator`。
    - 工具页 / 业务页的 `--blue: #2563eb`（`src/styles.css:13`）**不动**：两档视觉不同屏，双蓝互不相见。
    - 共用的排版原子件只有 `poster-sections.css` 里的 `.poster-eyebrow` / `.poster-eyebrow--plain` / `.poster-section-title`，各区段 CSS 不要再重复定义它们；新加的眉标必须带 `white-space: nowrap`（窄列折行会顶乱左对齐线）。区段末尾的「下一节引导」已整体删除 —— 原共用原子件 `.poster-next` 连同 `.about-footer-nav` / `.offer-footer-guide` / `.picks-footer-anchor` / `.blog-next-hint` 四个实例、以及失去消费者的 `handleNextOffer` / `handleNextPicks` / `handleNextBlog` 回调一并移除：**全页只剩首屏左下角 `.scroll-indicator` 一处滚动指引，不要再把区段引导加回来**。
    - 区段里**不要再出现海军蓝 `#073f73`、暖纸 `#faf8f2`、浅青 `rgba(159,209,222,·)` 等旧色**（它们已被 `poster-recolor.mjs` 批量替换过）；补规则时用 `--poster-*` 变量，颜色写错会让整节与首屏脱节。
    - 装饰性元素（网格/斜带/水印/十字标/假仪表/巨型英文轮廓字/刊物印记）一律不加：海报感靠留白与字号层级，不靠装饰。
-   - 改完区段样式必须跑 `node scripts/snap-sections.mjs 1440x900`（`errors: none`）并肉眼复核 `viz/section-*.png`；`.poster-eyebrow` 的强调色杠、行条目 hover、复制按钮三态是最容易被 CSS 解析错误整条吞掉的地方（曾因注释被咬成 `//*` 导致 `position: relative` 整条失效）。
+   - 改完区段样式必须跑 `node scripts/snap-sections.mjs 1440x900`（`errors: none`）并肉眼复核 `viz/section-*.png`；`.poster-eyebrow` 的琥珀记号杠、行条目 hover、复制按钮三态是最容易被 CSS 解析错误整条吞掉的地方（曾因注释被咬成 `//*` 导致 `position: relative` 整条失效）。
 9. **Tailwind 只做骨架，不做第二套设计系统**：不导 preflight，也不要回头把旧页面的语义类名（`hero-*`、`about-*`、`story-*`…）改成 Tailwind 工具类 —— 那些类名是 `styles.css` 与各区段 CSS 的契约。新组件可以用工具类，但先确认不与既有类名冲突（已实测无碰撞：全仓 1420 个类名 token 与 Tailwind 单字工具类交集为 0）。
 10. **入口页没有深色主题**：切主题的入口只存在于工具页 / 业务页。`src/components/home/**` 的 CSS 里 `data-theme='dark'` 零命中，入口页按淡灰纸底设计（见约束 7、8）；想给它加深色规则先确认产品要求。
 11. **入口页的设计改动必须走《设计工作流》**：新视觉方向 / 新页面 / 整节改版属于「全套档」，动代码前先出 token 表与一张待确认的 `visualize` 卡片；文案、间距、错字、bug 修属于「小修档」，只跑验收闸门。两档都必须用真浏览器实测验收（`node scripts/snap-sections.mjs 1440x900` 的 `errors: none` + 肉眼复核 `viz/section-*.png`），不允许只读 CSS 就下结论。
@@ -151,7 +153,7 @@ pnpm lint && pnpm test && pnpm e2e        # 基线 0 error / 13 warning、32 个
 - 样式优先使用 `src/styles.css` 中已有的 CSS 变量与类名，不要引入新的全局重置样式（会打断现有页面）。
 - 数据访问一律走 `src/services/*`，组件内不要直接 `fetch`。
 - 文案：见 `docs/copy-style.md`（入口页尤其要避免营销腔与 AI 味套话；改完文案要在 1440 与 390 两档看折行）。
-- 入口页组件一律从 `.home-story-scroll` 继承 `--poster-*` 变量，不要在组件里 `:root` 定义新色值；色值只允许白 / 墨黑 / 灰阶（纸底 `--poster-canvas` `#f2f3f5`、白面 `--poster-paper`）+ 那 5 个电光蓝 token（`--poster-accent` / `-deep` / `-on` / `-tint` / `-wash`）+ 2 个品牌蓝 token（`--poster-brand` / `--poster-brand-hi`，只给校徽圆形标记 `.site-brand-mark`；院校名 `.site-brand-college` 取墨黑），且各有专属用途，不要跨用途混用。
+- 入口页组件一律从 `.home-story-scroll` 继承 `--poster-*` 变量，不要在组件里 `:root` 定义新色值；色值只允许暖白 / 纸白 / 暖墨阶（纸底 `--poster-canvas` `#f9f5ed`、白面 `--poster-paper` `#fffdf9`）+ 那 5 个深青蓝主色 token（`--poster-accent` / `-deep` / `-on` / `-tint` / `-wash`）+ 2 个琥珀强调色 token（`--poster-amber` / `-deep`）+ 2 个品牌蓝 token（`--poster-brand` / `--poster-brand-hi`，只给校徽圆形标记 `.site-brand-mark`；院校名 `.site-brand-college` 取墨黑），且各有专属用途，不要跨用途混用。
 - 提交前至少跑 `pnpm typecheck && pnpm lint && pnpm test`；动了交付链再加 `pnpm e2e && pnpm build:standalone && pnpm verify:standalone`。
 
 ## 已知债务

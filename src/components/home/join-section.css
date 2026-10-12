@@ -213,8 +213,8 @@
 }
 
 .join-copy-btn.is-copied {
-  border-color: var(--poster-accent, #2b5cff);
-  color: var(--poster-accent, #2b5cff);
+  border-color: var(--poster-accent, #0f4c5c);
+  color: var(--poster-accent, #0f4c5c);
 }
 
 .copy-icon {
@@ -290,7 +290,7 @@
 }
 
 .footer-nav-link:hover {
-  color: var(--poster-accent, #2b5cff);
+  color: var(--poster-accent, #0f4c5c);
 }
 
 .footer-connect-list {
@@ -316,7 +316,7 @@
 }
 
 .footer-connect-item:hover {
-  color: var(--poster-accent, #2b5cff);
+  color: var(--poster-accent, #0f4c5c);
 }
 
 .connect-arrow {
@@ -357,7 +357,7 @@
 }
 
 .footer-back-to-top:hover {
-  color: var(--poster-accent, #2b5cff);
+  color: var(--poster-accent, #0f4c5c);
 }
 
 .back-arrow {

@@ -126,7 +126,7 @@
 .about-pair-rule {
   width: 18px;
   height: 2px;
-  background: var(--poster-accent);
+  background: var(--poster-amber);
   margin: clamp(22px, 2.8vh, 32px) 0 clamp(14px, 1.8vh, 20px);
 }
 

@@ -89,7 +89,7 @@
   width: 18px;
   height: 2px;
   margin: 0 0 14px auto;
-  background: var(--poster-accent);
+  background: var(--poster-amber);
 }
 
 /* ============================================================
@@ -132,8 +132,8 @@
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
-  /* 大号章节序号恒满色强调色：不靠 hover 提亮，它是这一节的视觉锚点之一 */
-  color: var(--poster-accent);
+  /* 大号章节序号恒满色强调色（琥珀）：不靠 hover 提亮，它是这一节的视觉锚点之一 */
+  color: var(--poster-amber);
 }
 
 .blog-item-date {
