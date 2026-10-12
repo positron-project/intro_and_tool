@@ -10,6 +10,40 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 LearningRouteVisibility = Literal["public", "members", "contributors"]
 
 
+class LearningLinkData(BaseModel):
+    """学习节点中的一条文档或视频链接。"""
+
+    id: str = Field(min_length=1, max_length=100)
+    title: str = Field(default="", max_length=200)
+    url: str = Field(min_length=1, max_length=2048)
+
+    @field_validator("id", "url", mode="before")
+    @classmethod
+    def trim_required_text(cls, value: str) -> str:
+        """去掉编号和链接地址两边多余的空格。"""
+
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def trim_title(cls, value: str) -> str:
+        """名称可以留空，前端会显示默认名称。"""
+
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, value: str) -> str:
+        """只接受可在浏览器打开的 HTTP 或 HTTPS 链接。"""
+
+        parsed = urlsplit(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("链接地址必须是 http 或 https 地址")
+        return value
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class LearningNodeData(BaseModel):
     """学习路线中的一个节点；字段名与前端 LearningNode 一致。"""
 
@@ -20,6 +54,8 @@ class LearningNodeData(BaseModel):
     projects: int = Field(default=0, ge=0)
     description: str | None = Field(default=None, max_length=5000)
     project_ids: list[str] = Field(default_factory=list, alias="projectIds")
+    resource_links: list[LearningLinkData] = Field(default_factory=list, alias="resourceLinks")
+    video_links: list[LearningLinkData] | None = Field(default=None, alias="videoLinks")
     video_title: str | None = Field(default=None, max_length=200, alias="videoTitle")
     video_url: str | None = Field(default=None, max_length=2048, alias="videoUrl")
 

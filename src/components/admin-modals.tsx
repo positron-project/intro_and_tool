@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { ArrowDown, ArrowRight, ArrowUp, Check, ChevronRight, Eye, EyeOff, Folder, GripVertical, MessageCircle, Megaphone, Plus, Rocket, Route, Save, ScrollText, Search, SlidersHorizontal, Sparkles, Tag, Trash2, UserCog, X } from 'lucide-react'
-import type { Announcement, AnnouncementCategory, ContentCategory, InterviewExperience, LearningNode, LearningRoute, Member, Project, ProjectCategory, ProjectLogEntry, ProjectMilestone, Resource, ResourceAttachment, WorkbenchFeedItem, WorkbenchSettings } from '../types'
+import { ArrowDown, ArrowRight, ArrowUp, Check, ChevronRight, Eye, EyeOff, FileText, Folder, GripVertical, MessageCircle, Megaphone, PlayCircle, Plus, Rocket, Route, Save, ScrollText, Search, SlidersHorizontal, Sparkles, Tag, Trash2, UserCog, X } from 'lucide-react'
+import type { Announcement, AnnouncementCategory, ContentCategory, InterviewExperience, LearningLink, LearningNode, LearningRoute, Member, Project, ProjectCategory, ProjectLogEntry, ProjectMilestone, Resource, ResourceAttachment, WorkbenchFeedItem, WorkbenchSettings } from '../types'
 import { useContent } from '../services/content.context'
 import { apiConfig } from '../services/api-client'
 import { MAX_RESOURCE_ATTACHMENTS, uploadAsset, validateResourceAttachmentFiles } from '../services/upload.service'
@@ -437,6 +437,14 @@ export function AdminLearningRouteModal({ draft: initialDraft, routes = [], proj
   const updateNode = (id: string, patch: Partial<LearningNode>) => setDraft((current) => ({ ...current, nodes: current.nodes.map((node) => node.id === id ? { ...node, ...patch } : node) }))
   const addNode = () => setDraft((current) => ({ ...current, nodes: [...current.nodes, { id: `node-${Date.now()}`, title: '', duration: '2 周', resources: 0, projects: 0, description: '', projectIds: [] }] }))
   const removeNode = (id: string) => setDraft((current) => ({ ...current, nodes: current.nodes.filter((node) => node.id !== id) }))
+  const updateNodeLinks = (nodeId: string, field: 'resourceLinks' | 'videoLinks', links: LearningLink[]) => {
+    const patch: Partial<LearningNode> = { [field]: links }
+    if (field === 'videoLinks') {
+      patch.videoTitle = links[0]?.title ?? ''
+      patch.videoUrl = links[0]?.url ?? ''
+    }
+    updateNode(nodeId, patch)
+  }
   const toggleProject = (ids: string[], projectId: string) => ids.includes(projectId) ? ids.filter((id) => id !== projectId) : [...ids, projectId]
   return <div className="admin-modal-scrim" role="presentation" onClick={onClose}><section className="admin-editor-modal admin-learning-modal" role="dialog" aria-modal="true" aria-labelledby="admin-learning-title" onClick={(event) => event.stopPropagation()}>
     <div className="admin-modal-head"><div><p className="eyebrow">LEARNING / ROUTE BUILDER</p><h2 id="admin-learning-title">编辑学习路线</h2><p>按方向维护路线，再给每个节点绑定真实项目；右侧项目入口也从这里配置。</p></div><button className="icon-button small" onClick={onClose} aria-label="关闭学习路线编辑"><X size={16} /></button></div>
@@ -452,15 +460,26 @@ export function AdminLearningRouteModal({ draft: initialDraft, routes = [], proj
               <label><span>节点标题</span><input value={node.title} onChange={(event) => updateNode(node.id, { title: event.target.value })} placeholder="例如：Python 基础与工程习惯" /></label>
               <label><span>预计时长</span><input value={node.duration} onChange={(event) => updateNode(node.id, { duration: event.target.value })} placeholder="2 周" /></label>
             </div>
-            <div className="admin-editor-form-grid">
-              <label><span>资源数</span><input type="number" min="0" value={node.resources} onChange={(event) => updateNode(node.id, { resources: Number(event.target.value) || 0 })} /></label>
-              <label><span>已关联项目数（自动）</span><input type="number" value={(node.projectIds ?? []).length} readOnly /></label>
-            </div>
             <label><span>节点说明</span><textarea value={node.description ?? ''} onChange={(event) => updateNode(node.id, { description: event.target.value })} rows={2} placeholder="写清本阶段的产出和验收方式" /></label>
-            <div className="admin-editor-form-grid">
-              <label><span>教程名称（可选）</span><input value={node.videoTitle ?? ''} onChange={(event) => updateNode(node.id, { videoTitle: event.target.value })} placeholder="例如：Python 入门课程" /></label>
-              <label><span>视频课程链接（可选）</span><input type="url" value={node.videoUrl ?? ''} onChange={(event) => updateNode(node.id, { videoUrl: event.target.value })} placeholder="https://..." /></label>
-            </div>
+            <section className="admin-node-links">
+              <div className="admin-node-links-head"><strong><FileText size={14} /> 文档资料</strong><button type="button" className="text-button" onClick={() => updateNodeLinks(node.id, 'resourceLinks', [...(node.resourceLinks ?? []), { id: `resource-link-${Date.now()}`, title: '', url: '' }])}><Plus size={13} /> 添加文档</button></div>
+              {(node.resourceLinks ?? []).map((link, linkIndex) => <div className="admin-node-link-row" key={link.id}>
+                <label><span>资料名称</span><input value={link.title} onChange={(event) => updateNodeLinks(node.id, 'resourceLinks', (node.resourceLinks ?? []).map((item, index) => index === linkIndex ? { ...item, title: event.target.value } : item))} placeholder="例如：Python 官方教程" /></label>
+                <label><span>文档地址</span><input type="url" value={link.url} onChange={(event) => updateNodeLinks(node.id, 'resourceLinks', (node.resourceLinks ?? []).map((item, index) => index === linkIndex ? { ...item, url: event.target.value } : item))} placeholder="https://..." /></label>
+                <button type="button" className="admin-route-node-remove admin-danger-link" onClick={() => updateNodeLinks(node.id, 'resourceLinks', (node.resourceLinks ?? []).filter((item) => item.id !== link.id))} aria-label={`删除文档资料 ${link.title || linkIndex + 1}`}><Trash2 size={14} /></button>
+              </div>)}
+            </section>
+            <section className="admin-node-links">
+              <div className="admin-node-links-head"><strong><PlayCircle size={14} /> 视频课程</strong><button type="button" className="text-button" onClick={() => {
+                const currentLinks = node.videoLinks ?? (node.videoTitle || node.videoUrl ? [{ id: `legacy-video-${node.id}`, title: node.videoTitle ?? '', url: node.videoUrl ?? '' }] : [])
+                updateNodeLinks(node.id, 'videoLinks', [...currentLinks, { id: `video-link-${Date.now()}`, title: '', url: '' }])
+              }}><Plus size={13} /> 添加视频</button></div>
+              {(node.videoLinks ?? (node.videoTitle || node.videoUrl ? [{ id: `legacy-video-${node.id}`, title: node.videoTitle ?? '', url: node.videoUrl ?? '' }] : [])).map((link, linkIndex, currentLinks) => <div className="admin-node-link-row" key={link.id}>
+                <label><span>课程名称</span><input value={link.title} onChange={(event) => updateNodeLinks(node.id, 'videoLinks', currentLinks.map((item, index) => index === linkIndex ? { ...item, title: event.target.value } : item))} placeholder="例如：Python 入门课程" /></label>
+                <label><span>视频地址</span><input type="url" value={link.url} onChange={(event) => updateNodeLinks(node.id, 'videoLinks', currentLinks.map((item, index) => index === linkIndex ? { ...item, url: event.target.value } : item))} placeholder="https://..." /></label>
+                <button type="button" className="admin-route-node-remove admin-danger-link" onClick={() => updateNodeLinks(node.id, 'videoLinks', currentLinks.filter((item) => item.id !== link.id))} aria-label={`删除视频课程 ${link.title || linkIndex + 1}`}><Trash2 size={14} /></button>
+              </div>)}
+            </section>
             <div className="admin-node-project-picker"><span>节点项目入口</span><div className="admin-project-picker compact">{projects.map((project) => <label key={project.id}><input type="checkbox" checked={(node.projectIds ?? []).includes(project.id)} onChange={() => updateNode(node.id, { projectIds: toggleProject(node.projectIds ?? [], project.id) })} /><span>{project.name}</span></label>)}</div></div>
           </div>
           <button type="button" className="admin-route-node-remove admin-danger-link" onClick={() => removeNode(node.id)} aria-label={`删除第 ${index + 1} 个学习节点`}><Trash2 size={14} /></button>
