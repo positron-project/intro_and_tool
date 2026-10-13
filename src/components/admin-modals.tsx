@@ -480,7 +480,10 @@ export function AdminLearningRouteModal({ draft: initialDraft, routes = [], proj
                 <button type="button" className="admin-route-node-remove admin-danger-link" onClick={() => updateNodeLinks(node.id, 'videoLinks', currentLinks.filter((item) => item.id !== link.id))} aria-label={`删除视频课程 ${link.title || linkIndex + 1}`}><Trash2 size={14} /></button>
               </div>)}
             </section>
-            <div className="admin-node-project-picker"><span>节点项目入口</span><div className="admin-project-picker compact">{projects.map((project) => <label key={project.id}><input type="checkbox" checked={(node.projectIds ?? []).includes(project.id)} onChange={() => updateNode(node.id, { projectIds: toggleProject(node.projectIds ?? [], project.id) })} /><span>{project.name}</span></label>)}</div></div>
+            <section className="admin-node-links admin-node-project-links">
+              <div className="admin-node-links-head"><strong><Folder size={14} /> 节点项目入口</strong></div>
+              <div className="admin-project-picker compact">{projects.map((project) => <label key={project.id}><input type="checkbox" checked={(node.projectIds ?? []).includes(project.id)} onChange={() => updateNode(node.id, { projectIds: toggleProject(node.projectIds ?? [], project.id) })} /><span>{project.name}</span></label>)}</div>
+            </section>
           </div>
           <button type="button" className="admin-route-node-remove admin-danger-link" onClick={() => removeNode(node.id)} aria-label={`删除第 ${index + 1} 个学习节点`}><Trash2 size={14} /></button>
         </article>)}
