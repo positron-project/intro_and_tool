@@ -1,4 +1,6 @@
 import type { AuthUser, Member } from '../types'
+import { useState } from 'react'
+import { apiConfig } from '../services/api-client'
 
 // ---------------------------------------------------------------------------
 // App 级共享小工具（从 src/App.tsx 抽出）
@@ -60,8 +62,30 @@ function Tag({ children, tone = 'neutral' }: { children: React.ReactNode; tone?:
   return <span className={`tag tag-${tone}`}>{children}</span>
 }
 
-function Avatar({ initials, accent = 'blue', size = 'md' }: { initials: string; accent?: string; size?: 'sm' | 'md' | 'lg' }) {
-  return <span className={`avatar avatar-${accent} avatar-${size}`}>{initials}</span>
+function initialsFromName(name: string) {
+  return Array.from(name.trim().replace(/\s+/g, '')).slice(-2).join('')
+}
+
+function avatarImageSource(value?: string | null) {
+  const source = value?.trim().replace(/\\/g, '/')
+  if (!source) return undefined
+  if (/^data:image\/(?:png|jpeg|webp);base64,/i.test(source)) return source
+  try {
+    const origin = typeof window === 'undefined'
+      ? new URL(apiConfig.baseUrl || 'http://localhost').origin
+      : new URL(apiConfig.baseUrl || window.location.origin, window.location.origin).origin
+    const url = new URL(source, origin)
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function Avatar({ initials, name, avatarUrl, accent = 'blue', size = 'md' }: { initials: string; name?: string; avatarUrl?: string | null; accent?: string; size?: 'sm' | 'md' | 'lg' }) {
+  const imageUrl = avatarImageSource(avatarUrl)
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null)
+  const displayInitials = (name && initialsFromName(name)) || initials
+  return <span className={`avatar avatar-${accent} avatar-${size}`}>{imageUrl && failedImageUrl !== imageUrl ? <img src={imageUrl} alt="" onError={() => setFailedImageUrl(imageUrl)} /> : displayInitials}</span>
 }
 function normalizeMemberTeamId(direction: string) {
   const value = direction.trim().toLowerCase()
@@ -107,7 +131,7 @@ function sortTeamMembers<T extends { role: string }>(members: T[]) {
   return [...members].sort((left, right) => memberRoleOrder[normalizeMemberRole(left.role)] - memberRoleOrder[normalizeMemberRole(right.role)])
 }
 
-function mergeManagedTeamMembers<T extends { id: string; name: string; members: Array<{ id: string; name: string; role: string; direction: string; initials: string; accent: string }> }>(team: T, managedMembers: Member[], cohortYear: string, membersManaged: boolean) {
+function mergeManagedTeamMembers<T extends { id: string; name: string; members: Array<{ id: string; name: string; role: string; direction: string; initials: string; accent: string; avatarUrl?: string }> }>(team: T, managedMembers: Member[], cohortYear: string, membersManaged: boolean) {
   if (!membersManaged) return sortTeamMembers(team.members)
   // 后端届次接口返回数据库数字 ID（例如项目组是 "3"），
   // 成员接口返回的是方向名称（例如“项目组”）。
@@ -115,7 +139,7 @@ function mergeManagedTeamMembers<T extends { id: string; name: string; members: 
   const teamKey = normalizeMemberTeamId(team.name)
   const managed = managedMembers
     .filter((member) => member.cohort.replace(/\D/g, '') === cohortYear && normalizeMemberTeamId(member.direction) === teamKey)
-    .map((member) => ({ id: member.id, name: member.name, role: normalizeMemberRole(member.role), direction: member.direction, initials: member.initials, accent: member.accent }))
+    .map((member) => ({ id: member.id, name: member.name, role: normalizeMemberRole(member.role), direction: member.direction, initials: member.initials, accent: member.accent, avatarUrl: member.avatarUrl }))
   return sortTeamMembers(managed)
 }
 
@@ -127,6 +151,7 @@ export {
   accountDirectoryDirection,
   safeLink,
   safeImageSource,
+  initialsFromName,
   Tag,
   Avatar,
   normalizeMemberTeamId,

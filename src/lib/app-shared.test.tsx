@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 
 import type { Member } from '../types'
 import {
@@ -144,5 +144,13 @@ describe('Tag / Avatar', () => {
   it('Avatar 同时带主题色与尺寸类名', () => {
     render(<Avatar initials="计" accent="rose" size="lg" />)
     expect(screen.getByText('计').className).toBe('avatar avatar-rose avatar-lg')
+  })
+
+  it('Avatar 显示头像图片，加载失败时退回姓名缩写', () => {
+    const { container } = render(<Avatar initials="小王" name="王小明" avatarUrl="https://cdn.example.com/avatar.webp" />)
+    const image = container.querySelector('.avatar img')
+    expect(image?.getAttribute('src')).toBe('https://cdn.example.com/avatar.webp')
+    if (image) fireEvent.error(image)
+    expect(screen.getByText('小明')).toBeTruthy()
   })
 })

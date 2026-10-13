@@ -124,6 +124,7 @@ export interface ContentContextValue {
   loading: boolean
   error: string | null
   refresh: () => Promise<void>
+  updateMemberProfileInCache: (userId: string | number, profile: Pick<Member, 'name' | 'initials' | 'avatarUrl'>) => void
   createAnnouncement: (input: CreateInput<Announcement>) => Promise<Announcement>
   updateAnnouncement: (id: string, patch: UpdateInput<Announcement>) => Promise<Announcement>
   deleteAnnouncement: (id: string) => Promise<void>
@@ -398,6 +399,22 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const updateMemberProfileInCache = useCallback((userId: string | number, profile: Pick<Member, 'name' | 'initials' | 'avatarUrl'>) => {
+    setData((current) => {
+      let changed = false
+      const members = current.members.map((member) => {
+        if (member.userId == null || String(member.userId) !== String(userId)) return member
+        if (member.name === profile.name && member.initials === profile.initials && member.avatarUrl === profile.avatarUrl) return member
+        changed = true
+        return { ...member, ...profile }
+      })
+      if (!changed) return current
+      const next = { ...current, members }
+      persistContent(next)
+      return next
+    })
+  }, [])
+
   useEffect(() => { void refresh() }, [refresh])
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -597,7 +614,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     return result
   }, [])
 
-  const value = useMemo(() => ({ data, loading, error, refresh, createAnnouncement, updateAnnouncement, deleteAnnouncement, createMember, updateMember, deleteMember, createProject, updateProject, deleteProject, createPrompt, updatePrompt, deletePrompt, recordProjectView, listProjectReviewQueue, reviewProject, createProjectCategory, updateProjectCategory, deleteProjectCategory, createResourceCategory, updateResourceCategory, deleteResourceCategory, createResource, updateResource, deleteResource, recordResourceView, createInterview, updateInterview, deleteInterview, recordInterviewView, createInterviewCategory, updateInterviewCategory, deleteInterviewCategory, createCompetition, updateCompetition, deleteCompetition, createLearningRoute, updateLearningRoute, deleteLearningRoute, updateWorkbench }), [data, loading, error, refresh, createAnnouncement, updateAnnouncement, deleteAnnouncement, createMember, updateMember, deleteMember, createProject, updateProject, deleteProject, createPrompt, updatePrompt, deletePrompt, recordProjectView, listProjectReviewQueue, reviewProject, createProjectCategory, updateProjectCategory, deleteProjectCategory, createResourceCategory, updateResourceCategory, deleteResourceCategory, createResource, updateResource, deleteResource, recordResourceView, createInterview, updateInterview, deleteInterview, recordInterviewView, createInterviewCategory, updateInterviewCategory, deleteInterviewCategory, createCompetition, updateCompetition, deleteCompetition, createLearningRoute, updateLearningRoute, deleteLearningRoute, updateWorkbench])
+  const value = useMemo(() => ({ data, loading, error, refresh, updateMemberProfileInCache, createAnnouncement, updateAnnouncement, deleteAnnouncement, createMember, updateMember, deleteMember, createProject, updateProject, deleteProject, createPrompt, updatePrompt, deletePrompt, recordProjectView, listProjectReviewQueue, reviewProject, createProjectCategory, updateProjectCategory, deleteProjectCategory, createResourceCategory, updateResourceCategory, deleteResourceCategory, createResource, updateResource, deleteResource, recordResourceView, createInterview, updateInterview, deleteInterview, recordInterviewView, createInterviewCategory, updateInterviewCategory, deleteInterviewCategory, createCompetition, updateCompetition, deleteCompetition, createLearningRoute, updateLearningRoute, deleteLearningRoute, updateWorkbench }), [data, loading, error, refresh, updateMemberProfileInCache, createAnnouncement, updateAnnouncement, deleteAnnouncement, createMember, updateMember, deleteMember, createProject, updateProject, deleteProject, createPrompt, updatePrompt, deletePrompt, recordProjectView, listProjectReviewQueue, reviewProject, createProjectCategory, updateProjectCategory, deleteProjectCategory, createResourceCategory, updateResourceCategory, deleteResourceCategory, createResource, updateResource, deleteResource, recordResourceView, createInterview, updateInterview, deleteInterview, recordInterviewView, createInterviewCategory, updateInterviewCategory, deleteInterviewCategory, createCompetition, updateCompetition, deleteCompetition, createLearningRoute, updateLearningRoute, deleteLearningRoute, updateWorkbench])
   return <ContentContext.Provider value={value}>{children}</ContentContext.Provider>
 }
 

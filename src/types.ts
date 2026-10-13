@@ -345,6 +345,7 @@ export interface Member extends ContentMeta {
   id: string
   /** Login account ID when this member profile belongs to a user account. */
   userId?: string | number
+  avatarUrl?: string
   name: string
   role: string
   cohort: string

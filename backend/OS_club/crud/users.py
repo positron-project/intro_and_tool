@@ -177,14 +177,18 @@ async def update_user_profile(
     for field_name, field_value in update_values.items():
         setattr(user, field_name, field_value)
 
-    # 成员目录也保存头像地址；账号换头像时同步更新对应的成员档案。
-    if "avatar_url" in update_values:
+    # 成员目录保存公开资料；账号修改姓名或头像时同步更新已关联的成员档案。
+    if "nickname" in update_values or "avatar_url" in update_values:
         result = await db.execute(
             select(Member).where(Member.user_id == user.id)
         )
         member = result.scalar_one_or_none()
         if member is not None:
-            member.avatar_url = user.avatar_url
+            if "nickname" in update_values:
+                member.name = (user.nickname or user.username).strip()
+                member.initials = member.name[-2:]
+            if "avatar_url" in update_values:
+                member.avatar_url = user.avatar_url
 
     if update_values:
         await db.commit()
