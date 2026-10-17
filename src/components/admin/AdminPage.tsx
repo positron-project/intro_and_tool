@@ -1248,7 +1248,7 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
   const directoryMembers: AdminMemberRecord[] = [
     // Member IDs and user IDs are different sequences. Use the explicit
     // userId relation returned by the backend to attach the login account.
-    ...memberItems.map((member) => ({ ...member, source: 'member' as const, account: member.userId != null ? accountById.get(String(member.userId)) : undefined })),
+    ...memberItems.map((member) => ({ ...member, initials: initialsFromName(member.name) || member.initials, source: 'member' as const, account: member.userId != null ? accountById.get(String(member.userId)) : undefined })),
     ...demoAccountDirectory
       // Do not render a second account row when its member profile already
       // exists in the members table.
@@ -1272,9 +1272,16 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
   ]
   const memberDirectionOptions = Array.from(new Set([...sortedCohorts.flatMap((cohort) => cohort.teams.map((team) => team.name)), ...directoryMembers.map((member) => member.direction).filter(Boolean)]))
   const scopedMembers = directoryMembers.filter((member) => isLeader || member.cohort.includes(user.cohort))
+  const configuredCohortYears = new Set(sortedCohorts.map((cohort) => cohort.year.replace(/\D/g, '')))
+  const unassignedCohortFilter = '__unassigned__'
+  const unassignedMemberCount = scopedMembers.filter((member) => {
+    const year = member.cohort.replace(/\D/g, '')
+    return !year || !configuredCohortYears.has(year)
+  }).length
   const visibleMembers = scopedMembers.filter((member) => {
     const memberYear = member.cohort.replace(/\D/g, '')
-    const matchesCohort = memberCohortFilter === '全部' || memberYear === memberCohortFilter
+    const matchesCohort = memberCohortFilter === '全部'
+      || (memberCohortFilter === unassignedCohortFilter ? !memberYear || !configuredCohortYears.has(memberYear) : memberYear === memberCohortFilter)
     const matchesTeam = memberTeamFilter === '全部' || member.direction === memberTeamFilter || normalizeMemberTeamId(member.direction) === normalizeMemberTeamId(memberTeamFilter)
     const matchesSearch = (member.name + ' ' + (member.account?.email ?? '') + ' ' + member.direction + ' ' + member.role).toLowerCase().includes(memberSearch.toLowerCase())
     return matchesCohort && matchesTeam && matchesSearch
@@ -1300,12 +1307,14 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
       const result = log.result === 'failure' ? 'failure' : 'success'
       const target = log.target || [log.resourceType, log.resourceId].filter(Boolean).join(' / ') || '未标注对象'
       const actor = log.actorName || (log.actorId === user.id ? user.name : '未知操作者')
+      const actorMember = data.members.find((member) => member.userId != null && String(member.userId) === String(log.actorId))
       const timestamp = Date.parse(log.createdAt)
       return {
         id: log.id,
         time: Number.isNaN(timestamp) ? log.createdAt : new Date(timestamp).toLocaleString('zh-CN'),
         actor,
         actorInitials: actor === user.name ? user.initials : actor.slice(0, 2),
+        actorAvatarUrl: String(log.actorId) === String(user.id) ? user.avatarUrl : actorMember?.avatarUrl,
         action: log.action,
         target,
         result,
@@ -1314,7 +1323,7 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
     })
   const auditRows = isRemoteAuditEnabled
     ? formatAuditRows(auditLogs)
-    : recentLogs.map((log) => ({ id: `${log.time}-${log.action}`, time: log.time, actor: user.name, actorInitials: user.initials, action: log.action, target: log.target, result: 'success' as const, tone: log.tone }))
+    : recentLogs.map((log) => ({ id: `${log.time}-${log.action}`, time: log.time, actor: user.name, actorInitials: user.initials, actorAvatarUrl: user.avatarUrl, action: log.action, target: log.target, result: 'success' as const, tone: log.tone }))
   const showToast = (message: string) => setToast(message)
   const handleCreateInviteCode = async () => {
     try {
@@ -1823,7 +1832,7 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
   const openMemberEditor = (member?: typeof memberItems[number]) => {
     if (!canEditAdminContent) { showToast('组员只能查看成员目录，不能打开编辑器'); return }
     if (member && !belongsToUserCohort(member.cohort)) { showToast('不能编辑其他届次的成员'); return }
-    setMemberDraft(createMemberDraft(member, isLeader ? (memberCohortFilter === '全部' ? (selectedCohort?.year ?? '2029') : memberCohortFilter) : user.cohort))
+    setMemberDraft(createMemberDraft(member, isLeader ? (memberCohortFilter === '全部' || memberCohortFilter === unassignedCohortFilter ? (selectedCohort?.year ?? '2029') : memberCohortFilter) : user.cohort))
   }
   const saveMember = async () => {
     if (!canEditAdminContent) { showToast('组员只能查看成员目录，不能修改成员资料'); return }
@@ -1835,7 +1844,7 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
       if (!existing || !belongsToUserCohort(existing.cohort)) { showToast('不能编辑其他届次的成员'); return }
     }
     const cohort = `${cohortYear} 届`
-    const payload = { name: memberDraft.name.trim(), role: memberDraft.role, cohort, direction: memberDraft.direction.trim() || '待补充', initials: memberDraft.initials.trim() || memberDraft.name.trim().slice(0, 2), accent: memberDraft.accent, projects: memberDraft.projects ?? [] }
+    const payload = { name: memberDraft.name.trim(), role: memberDraft.role, cohort, direction: memberDraft.direction.trim() || '待补充', initials: initialsFromName(memberDraft.name) || memberDraft.initials.trim(), accent: memberDraft.accent, projects: memberDraft.projects ?? [] }
     try {
       if (memberDraft.id) await updateMember(memberDraft.id, payload)
       else await createMember(payload)
@@ -2276,11 +2285,12 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
             <div className="admin-member-rail-list">
               <button type="button" className={memberCohortFilter === '全部' ? 'active' : ''} onClick={() => { setMemberCohortFilter('全部'); setMemberTeamFilter('全部'); setMemberPage(1) }}><span><Users size={14} /><strong>全部成员</strong></span><small>{scopedMembers.length}</small></button>
               {visibleCohorts.map((cohort) => { const count = scopedMembers.filter((member) => member.cohort.replace(/\D/g, '') === cohort.year).length; return <button type="button" key={cohort.id} className={memberCohortFilter === cohort.year ? 'active' : ''} onClick={() => { setMemberCohortFilter(cohort.year); setMemberTeamFilter('全部'); setMemberPage(1) }}><span><CalendarDays size={14} /><strong>{cohort.year} 届</strong></span><small>{count}</small></button> })}
+              {unassignedMemberCount > 0 && <button type="button" className={memberCohortFilter === unassignedCohortFilter ? 'active' : ''} onClick={() => { setMemberCohortFilter(unassignedCohortFilter); setMemberTeamFilter('全部'); setMemberPage(1) }}><span><CalendarDays size={14} /><strong>未分配届次</strong></span><small>{unassignedMemberCount}</small></button>}
             </div>
             <div className="admin-member-rail-note"><ShieldCheck size={14} /><span>{isLeader ? '可查看全部届次' : `仅显示 ${user.cohort} 届`}</span></div>
           </nav>
           <section className="admin-member-directory" aria-label="成员列表">
-            <div className="admin-member-directory-head"><div><p className="eyebrow">MEMBER LIST</p><h3>{memberCohortFilter === '全部' ? '全部成员' : `${memberCohortFilter} 届成员`}</h3></div><span>{visibleMembers.length} 个结果</span></div>
+            <div className="admin-member-directory-head"><div><p className="eyebrow">MEMBER LIST</p><h3>{memberCohortFilter === '全部' ? '全部成员' : memberCohortFilter === unassignedCohortFilter ? '未分配届次成员' : `${memberCohortFilter} 届成员`}</h3></div><span>{visibleMembers.length} 个结果</span></div>
             <div className="admin-filter-row admin-member-filter-row">
               <div className="admin-search"><Search size={15} /><input value={memberSearch} onChange={(event) => { setMemberSearch(event.target.value); setMemberPage(1) }} placeholder="搜索姓名、邮箱、方向或角色" /></div>
               <div className="admin-member-filters"><select className="admin-filter-select" value={memberTeamFilter} onChange={(event) => { setMemberTeamFilter(event.target.value); setMemberPage(1) }}><option value="全部">全部小组</option>{memberDirectionOptions.map((direction) => <option key={direction} value={direction}>{direction}</option>)}</select></div>
@@ -2399,7 +2409,7 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
      <section className="admin-card admin-invite-list">
        <div className="admin-card-head"><div><p className="eyebrow">INVITE / DIRECTORY</p><h2>已创建的邀请码</h2></div><div className="admin-invite-list-head-actions"><span className="admin-card-hint">{inviteCodes.length} 个凭证</span><div className="admin-segmented-control" role="group" aria-label="邀请码筛选"><button type="button" className={inviteFilter === 'active' ? 'active' : ''} onClick={() => setInviteFilter('active')}>有效</button><button type="button" className={inviteFilter === 'all' ? 'active' : ''} onClick={() => setInviteFilter('all')}>全部</button></div></div></div>
        <label className="admin-search admin-admin-list-search"><Search size={14} /><input value={inviteQuery} onChange={(event) => setInviteQuery(event.target.value)} placeholder="搜索邀请码、届次、方向或状态" aria-label="搜索邀请码" /></label>
-       {inviteCodes.length ? (visibleInviteCodes.length ? <div className="admin-invite-rows">{visibleInviteCodes.map((inviteCode) => <article className="admin-invite-row" key={inviteCode.id}><div className="admin-invite-row-head"><code>{inviteCode.code}</code></div><div className="admin-invite-meta"><span>{inviteCode.cohort ? `${inviteCode.cohort} 届 · ${inviteCode.direction ?? '待分配方向'}` : '兑换后待分配方向'}</span><span>{inviteCode.usedCount} / {inviteCode.maxUses} 次</span><span>{inviteCode.status === 'active' ? formatInviteExpiry(inviteCode.expiresAt) : `截止 ${new Date(inviteCode.expiresAt).toLocaleString('zh-CN')}`}</span><time>创建于 {new Date(inviteCode.createdAt).toLocaleString('zh-CN')}</time></div><div className="admin-row-actions"><span className={`admin-invite-status ${inviteCode.status}`}><i /> {inviteStatusLabels[inviteCode.status]}</span><button className="admin-link-button" onClick={() => void handleCopyInviteCode(inviteCode.code)}><Copy size={13} /> 复制</button>{inviteCode.status === 'active' ? <button className="admin-link-button admin-danger-link" onClick={() => handleRevokeInviteCode(inviteCode.id)}><ShieldAlert size={13} /> 撤销</button> : <button className="admin-link-button admin-danger-link" onClick={() => handleDeleteInviteCode(inviteCode)}><Trash2 size={13} /> 删除</button>}</div></article>)}</div> : <div className="admin-empty admin-invite-filter-empty"><KeyRound size={20} /><strong>{inviteCodes.length && visibleInviteCodes.length === 0 ? '没有匹配的邀请码' : '没有有效邀请码'}</strong><span>{inviteCodes.length && visibleInviteCodes.length === 0 ? '换个关键词或切换筛选范围再试试。' : '切换到“全部”可以查看并清理已过期或已撤销的记录。'}</span></div>) : <div className="admin-empty admin-invite-empty"><KeyRound size={22} /><strong>还没有邀请码</strong><span>设置有效期和使用次数后，生成第一张加入凭证。</span></div>}
+       {inviteCodes.length ? (visibleInviteCodes.length ? <div className="admin-invite-rows">{visibleInviteCodes.map((inviteCode) => <article className="admin-invite-row" key={inviteCode.id}><div className="admin-invite-main"><div className="admin-invite-row-head"><code>{inviteCode.code}</code></div><div className="admin-invite-meta"><span>{inviteCode.cohort ? `${inviteCode.cohort} 届 · ${inviteCode.direction ?? '待分配方向'}` : '兑换后待分配方向'}</span><span>{inviteCode.usedCount} / {inviteCode.maxUses} 次</span><span>{inviteCode.status === 'active' ? formatInviteExpiry(inviteCode.expiresAt) : `截止 ${new Date(inviteCode.expiresAt).toLocaleString('zh-CN')}`}</span><time>创建于 {new Date(inviteCode.createdAt).toLocaleString('zh-CN')}</time></div></div><div className="admin-row-actions"><span className={`admin-invite-status ${inviteCode.status}`}><i /> {inviteStatusLabels[inviteCode.status]}</span><button className="admin-link-button" onClick={() => void handleCopyInviteCode(inviteCode.code)}><Copy size={13} /> 复制</button>{inviteCode.status === 'active' ? <button className="admin-link-button admin-danger-link" onClick={() => handleRevokeInviteCode(inviteCode.id)}><ShieldAlert size={13} /> 撤销</button> : <button className="admin-link-button admin-danger-link" onClick={() => handleDeleteInviteCode(inviteCode)}><Trash2 size={13} /> 删除</button>}</div></article>)}</div> : <div className="admin-empty admin-invite-filter-empty"><KeyRound size={20} /><strong>{inviteCodes.length && visibleInviteCodes.length === 0 ? '没有匹配的邀请码' : '没有有效邀请码'}</strong><span>{inviteCodes.length && visibleInviteCodes.length === 0 ? '换个关键词或切换筛选范围再试试。' : '切换到“全部”可以查看并清理已过期或已撤销的记录。'}</span></div>) : <div className="admin-empty admin-invite-empty"><KeyRound size={22} /><strong>还没有邀请码</strong><span>设置有效期和使用次数后，生成第一张加入凭证。</span></div>}
      </section>
    </div>
   }
@@ -2676,7 +2686,7 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
               {pagedLogs.map((log) => (
                 <div className="admin-log-row" key={log.id}>
                   <span className="admin-log-time"><time>{log.time}</time></span>
-                  <span className="admin-log-user"><Avatar initials={log.actorInitials} size="sm" />{log.actor}</span>
+                  <span className="admin-log-user"><Avatar initials={log.actorInitials} name={log.actor} avatarUrl={log.actorAvatarUrl} size="sm" />{log.actor}</span>
                   <strong>{log.action}</strong>
                   <span>{log.target}</span>
                   <Tag tone={log.result === 'failure' ? 'red' : 'mint'}>{log.result === 'failure' ? '失败' : '成功'}</Tag>

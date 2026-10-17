@@ -24,6 +24,12 @@
       "sourceType": "local",
       "skillPath": ".agents/skills/react-bits/SKILL.md",
       "computedHash": ""
+    },
+    "ssh-server-ops": {
+      "source": "Xiaoyun-0922/sshops",
+      "sourceType": "github",
+      "skillPath": "skills/ssh-server-ops/SKILL.md",
+      "computedHash": "50741ce36545c21fcbc663bfa3db9fa5f0fdc1a277860cd59a0ec3aef25622f5"
     }
   }
 }

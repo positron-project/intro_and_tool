@@ -97,6 +97,7 @@ import { InterviewPage, InterviewSubmissionRows } from './components/interviews'
 import { TurnstileWidget } from './components/turnstile-widget'
 import { ExpandedHomePage } from './components/home/ExpandedHomePage'
 import { AdminPage } from './components/admin/AdminPage'
+import { resolveProjectMembers } from './utils/project-members'
 import {
   Avatar,
   MAX_LOCAL_AVATAR_BYTES,
@@ -2294,13 +2295,12 @@ function ProjectDetailPage({ project: initialProject, slug, onNavigate }: { proj
     const accessDescription = !user ? '登录后可以查看这个项目。' : project.visibility === 'contributors' ? '升级为组员后才能查看完整项目资料。' : '当前账号暂时无法查看这个项目。'
     return <div className="page"><div className="empty-state access-denied-state"><LockKeyhole size={28} /><strong>{!user ? '请先登录' : '这个项目需要更高权限'}</strong><span>{accessDescription}</span><button className="primary-button" onClick={() => onNavigate(user ? '#/tools' : '#/login')}>{user ? '返回工作台' : '去登录'} <ArrowRight size={15} /></button></div></div>
   }
-  // Project memberIds may contain either the member-profile id or the linked
-  // account/user id. Match both forms so API records are not silently omitted.
-  const projectMembers = (project.memberIds ?? []).map((id) => members.find((member) => String(member.id) === String(id) || (member.userId != null && String(member.userId) === String(id)))).filter((member): member is typeof members[number] => Boolean(member))
+  const projectMemberData = resolveProjectMembers(project.memberIds ?? [], members)
+  const projectMembers = projectMemberData.members
   const milestones = project.milestones ?? []
   const logs = project.logs ?? []
   const visibleMembers = projectMembers
-  const collaboratorCount = project.memberIds?.length ? project.memberIds.length : project.members
+  const collaboratorCount = project.memberIds?.length ? projectMemberData.memberIds.length : project.members
   const previewMembers = visibleMembers.slice(0, 5)
   const remainingMemberCount = Math.max(collaboratorCount - previewMembers.length, 0)
   const favoriteCount = project.favoriteCount ?? project.stars
@@ -2371,7 +2371,7 @@ function ProjectDetailPage({ project: initialProject, slug, onNavigate }: { proj
             <div className="team-avatars">{previewMembers.map((member) => <Avatar key={member.id} initials={member.initials} name={member.name} avatarUrl={member.avatarUrl} accent={member.accent} />)}{remainingMemberCount > 0 && <span aria-label={`还有 ${remainingMemberCount} 位成员`}>+{remainingMemberCount}</span>}{!previewMembers.length && <span className="team-empty">待配置</span>}</div>
             {visibleMembers.length > 0 && <div className="project-member-list" aria-label="项目协作成员">{visibleMembers.map((member) => <div className="project-member-row" key={`detail-${member.id}`}><Avatar initials={member.initials} name={member.name} avatarUrl={member.avatarUrl} accent={member.accent} size="sm" /><span className="project-member-info"><strong>{member.name}</strong><small>{member.role}{member.direction ? ` · ${member.direction}` : ''}</small></span></div>)}</div>}
             <strong>{collaboratorCount} 位成员正在协作</strong>
-            <small>{project.members > projectMembers.length ? `已关联 ${projectMembers.length} 位成员资料，另有 ${project.members - projectMembers.length} 位需要后端补充 memberIds。` : project.joinNote || '项目协作成员由管理员维护。'}</small>
+            <small>{projectMemberData.unresolvedCount > 0 ? `另有 ${projectMemberData.unresolvedCount} 位成员尚未关联成员资料。` : project.joinNote || '项目协作成员由管理员维护。'}</small>
             {joinError && <p className="login-error" role="alert">{joinError}</p>}
             <button type="button" className="secondary-button full-button" disabled={project.joinEnabled === false || joinBusy || joinSubmitted} onClick={() => void requestToJoin()}>{project.joinEnabled === false ? '暂不开放加入' : joinSubmitted ? '申请已提交' : joinBusy ? '提交中…' : user ? '申请加入项目' : '登录后申请加入'}</button>
           </section>

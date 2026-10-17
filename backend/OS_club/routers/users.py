@@ -35,6 +35,7 @@ from schemas.auth import (
     LoginRequest,
     LoginResponse,
     PasswordChangeRequest,
+    RegistrationEmailCodeSendRequest,
 )
 from utils.email_sender import send_verification_email
 from utils.turnstile import TurnstileVerificationError, verify_turnstile_token
@@ -106,7 +107,7 @@ async def _send_email_verification_code(
 # 发送注册验证码接口
 @router.post("/register/send-code")
 async def send_registration_email_code(
-    request_data: EmailCodeSendRequest,
+    request_data: RegistrationEmailCodeSendRequest,
     db: AsyncSession = Depends(get_database),
 ):
     """核验人机 token 后，向尚未注册的邮箱发送注册码。"""
