@@ -5,6 +5,7 @@
 """
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from schemas.email import SupportedRegistrationEmail
 from schemas.users import UserInfoResponse
 
 
@@ -13,6 +14,17 @@ class EmailCodeSendRequest(BaseModel):
     """前端请求发送邮箱验证码时提交的数据。"""
 
     email: EmailStr
+
+    turnstile_token: str = Field(
+        alias="turnstileToken",
+        min_length=1,
+    )
+
+
+class RegistrationEmailCodeSendRequest(BaseModel):
+    """新账号注册时发送验证码，只接受指定邮箱域名。"""
+
+    email: SupportedRegistrationEmail
 
     turnstile_token: str = Field(
         alias="turnstileToken",

@@ -5,7 +5,9 @@
 """
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+from schemas.email import SupportedRegistrationEmail
 
 
 class UserInfoBase(BaseModel):
@@ -44,7 +46,7 @@ class RegisterRequest(BaseModel):    #UserCreate：只用于接收注册数据�
         max_length=32,
     )
 
-    email: EmailStr #email：EmailStr 会检查邮箱格式；
+    email: SupportedRegistrationEmail
 
     verification_code: str = Field(
         alias="verificationCode",

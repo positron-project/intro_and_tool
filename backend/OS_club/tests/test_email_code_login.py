@@ -7,7 +7,8 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from routers.users import login, login_with_email_code
-from schemas.auth import LoginCodeRequest, LoginRequest
+from schemas.auth import LoginCodeRequest, LoginRequest, RegistrationEmailCodeSendRequest
+from schemas.users import RegisterRequest
 
 
 class FakeAsyncSession:
@@ -58,6 +59,34 @@ class LoginCodeSchemaTests(unittest.TestCase):
                 {
                     "email": "learner@example.com",
                     "verificationCode": "12a456",
+                    "turnstileToken": "test-turnstile-token",
+                }
+            )
+
+
+class RegistrationEmailDomainTests(unittest.TestCase):
+    def test_registration_accepts_supported_domains_case_insensitively(self):
+        for email in ("member@gmail.com", "member@qq.com", "member@163.com", "member@GMAIL.COM"):
+            with self.subTest(email=email):
+                request = RegistrationEmailCodeSendRequest.model_validate(
+                    {"email": email, "turnstileToken": "test-turnstile-token"}
+                )
+                self.assertEqual(request.email.rsplit("@", 1)[-1].lower(), email.rsplit("@", 1)[-1].lower())
+
+    def test_registration_code_rejects_other_domains(self):
+        with self.assertRaises(ValidationError):
+            RegistrationEmailCodeSendRequest.model_validate(
+                {"email": "member@example.com", "turnstileToken": "test-turnstile-token"}
+            )
+
+    def test_registration_request_rejects_other_domains(self):
+        with self.assertRaises(ValidationError):
+            RegisterRequest.model_validate(
+                {
+                    "username": "member",
+                    "email": "member@example.com",
+                    "verificationCode": "012345",
+                    "password": "correct-horse-battery",
                     "turnstileToken": "test-turnstile-token",
                 }
             )
