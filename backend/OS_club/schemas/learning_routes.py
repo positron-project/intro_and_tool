@@ -11,11 +11,12 @@ LearningRouteVisibility = Literal["public", "members", "contributors"]
 
 
 class LearningLinkData(BaseModel):
-    """学习节点中的一条文档或视频链接。"""
+    """学习节点中的一条文档、视频或网盘链接。"""
 
     id: str = Field(min_length=1, max_length=100)
     title: str = Field(default="", max_length=200)
     url: str = Field(min_length=1, max_length=2048)
+    description: str | None = Field(default=None, max_length=500)
 
     @field_validator("id", "url", mode="before")
     @classmethod
@@ -30,6 +31,15 @@ class LearningLinkData(BaseModel):
         """名称可以留空，前端会显示默认名称。"""
 
         return value.strip() if isinstance(value, str) else value
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def trim_description(cls, value: str | None) -> str | None:
+        """说明可选，空白输入按未填写处理。"""
+
+        if isinstance(value, str):
+            return value.strip() or None
+        return value
 
     @field_validator("url")
     @classmethod
@@ -54,8 +64,10 @@ class LearningNodeData(BaseModel):
     projects: int = Field(default=0, ge=0)
     description: str | None = Field(default=None, max_length=5000)
     project_ids: list[str] = Field(default_factory=list, alias="projectIds")
+    resource_ids: list[str] = Field(default_factory=list, alias="resourceIds")
     resource_links: list[LearningLinkData] = Field(default_factory=list, alias="resourceLinks")
     video_links: list[LearningLinkData] | None = Field(default=None, alias="videoLinks")
+    cloud_drive_links: list[LearningLinkData] = Field(default_factory=list, alias="cloudDriveLinks")
     video_title: str | None = Field(default=None, max_length=200, alias="videoTitle")
     video_url: str | None = Field(default=None, max_length=2048, alias="videoUrl")
 

@@ -1,5 +1,5 @@
 import { apiConfig, apiRequest } from './api-client'
-import type { ContentVisibility, ContributionSubmission, ContributionSubmissionStatus, ResourceAccessMode, ResourceAttachment, ResourceType } from '../types'
+import type { ContentVisibility, ContributionSubmission, ContributionSubmissionStatus, ResourceAccessMode, ResourceAttachment, ResourceLink, ResourceType } from '../types'
 
 const CONTRIBUTIONS_STORAGE_KEY = 'club-demo-contribution-submissions-v1'
 const isRemoteContributionEnabled = apiConfig.contentSource === 'api'
@@ -31,6 +31,7 @@ export interface CreateContributionInput {
   tags: string[]
   visibility: ContentVisibility
   resourceUrl?: string
+  links?: ResourceLink[]
   fileName?: string
   attachments?: ResourceAttachment[]
   content?: string

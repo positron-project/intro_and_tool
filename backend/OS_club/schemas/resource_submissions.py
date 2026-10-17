@@ -15,7 +15,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from schemas.resources import ResourceAttachment
+from schemas.resources import ResourceAttachment, ResourceLink
 
 
 SubmissionStatus = Literal[
@@ -83,6 +83,11 @@ class ResourceSubmissionCreateRequest(BaseModel):
         default=None,
         alias="resourceUrl",
         max_length=500,
+    )
+
+    # 一条投稿可以包含多条有名称和用途说明的外部链接。
+    links: list[ResourceLink] = Field(
+        default_factory=list,
     )
 
     file_name: str | None = Field(
@@ -184,6 +189,10 @@ class ResourceSubmissionResponse(BaseModel):
     resource_url: str | None = Field(
         default=None,
         alias="resourceUrl",
+    )
+
+    links: list[ResourceLink] = Field(
+        default_factory=list,
     )
 
     file_name: str | None = Field(

@@ -80,6 +80,12 @@ export interface ResourceAttachment {
   sortOrder?: number
 }
 
+export interface ResourceLink {
+  title: string
+  url: string
+  description?: string
+}
+
 /** Local demo record for a resource submitted by a member for moderation. */
 export interface ContributionSubmission {
   id: string
@@ -93,6 +99,7 @@ export interface ContributionSubmission {
   tags?: string[]
   visibility?: ContentVisibility
   resourceUrl?: string
+  links?: ResourceLink[]
   fileName?: string
   attachments?: ResourceAttachment[]
   content?: string
@@ -291,6 +298,7 @@ export interface LearningLink {
   id: string
   title: string
   url: string
+  description?: string
 }
 
 export interface LearningNode {
@@ -301,8 +309,11 @@ export interface LearningNode {
   projects: number
   description?: string
   projectIds?: string[]
+  /** IDs of existing resource-library entries linked to this learning node. */
+  resourceIds?: string[]
   resourceLinks?: LearningLink[]
   videoLinks?: LearningLink[] | null
+  cloudDriveLinks?: LearningLink[]
   videoTitle?: string
   videoUrl?: string
 }
@@ -333,6 +344,7 @@ export interface Resource extends ContentMeta {
   isFavorited?: boolean
   accent: string
   resourceUrl?: string
+  links?: ResourceLink[]
   downloadUrl?: string
   content?: string
   accessMode?: ResourceAccessMode

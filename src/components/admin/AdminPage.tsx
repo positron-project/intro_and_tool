@@ -51,7 +51,7 @@ import {
 } from 'lucide-react'
 import { apiConfig } from '../../services/api-client'
 import { useContent } from '../../services/content.context'
-import { isCoreTeam, useClubConfig } from '../../services/club-config.context'
+import { isCoreTeam, useClubConfig, type CohortTeamRecord } from '../../services/club-config.context'
 import { useAuth } from '../../services/auth.context'
 import {
   canAccessAdmin,
@@ -156,13 +156,13 @@ type CompetitionEditorValue = {
 }
 
 
-function AdminCohortManager({ onClose, initialCohortId, allowedCohortId }: { onClose: () => void; initialCohortId?: string; allowedCohortId?: string }) {
+export function AdminCohortManager({ onClose, initialCohortId, allowedCohortId, managedMembers, membersManaged }: { onClose: () => void; initialCohortId?: string; allowedCohortId?: string; managedMembers: Member[]; membersManaged: boolean }) {
   const { sortedCohorts, saveCohort, removeCohort, saveTeam, removeTeam } = useClubConfig()
   const availableCohorts = allowedCohortId ? sortedCohorts.filter((cohort) => cohort.id === allowedCohortId) : sortedCohorts
   const [selectedId, setSelectedId] = useState(initialCohortId ?? availableCohorts[0]?.id ?? '')
   const [creatingNew, setCreatingNew] = useState(false)
   const [form, setForm] = useState({ year: '', generationLabel: '', status: 'draft' as 'active' | 'archived' | 'draft', description: '' })
-  const [teamForm, setTeamForm] = useState({ id: '', name: '', description: '', accent: 'blue', memberCapacity: '' })
+  const [teamForm, setTeamForm] = useState({ id: '', name: '', description: '', accent: 'blue' })
   const [teamEditorOpen, setTeamEditorOpen] = useState(false)
   const [deleteRequest, setDeleteRequest] = useState<AdminDeleteRequest | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
@@ -171,6 +171,8 @@ function AdminCohortManager({ onClose, initialCohortId, allowedCohortId }: { onC
   const selected = availableCohorts.find((cohort) => cohort.id === selectedId)
   const normalizedCohortQuery = cohortQuery.trim().toLowerCase()
   const visibleCohorts = availableCohorts.filter((cohort) => !normalizedCohortQuery || `${cohort.year} ${cohort.generationLabel} ${cohort.status === 'active' ? '当前届' : cohort.status === 'archived' ? '已归档' : '筹备中'}`.toLowerCase().includes(normalizedCohortQuery))
+  const actualTeamMemberCount = (cohortYear: string, team: CohortTeamRecord) =>
+    mergeManagedTeamMembers(team, managedMembers, cohortYear, membersManaged).length
 
   useEffect(() => {
     const previousBodyOverflow = document.body.style.overflow
@@ -185,8 +187,11 @@ function AdminCohortManager({ onClose, initialCohortId, allowedCohortId }: { onC
 
   useEffect(() => {
     if (creatingNew) return
-    if (initialCohortId && availableCohorts.some((cohort) => cohort.id === initialCohortId)) setSelectedId(initialCohortId)
-    else if (!availableCohorts.some((cohort) => cohort.id === selectedId)) setSelectedId(availableCohorts[0]?.id ?? '')
+    if (initialCohortId && !selectedId && availableCohorts.some((cohort) => cohort.id === initialCohortId)) {
+      setSelectedId(initialCohortId)
+    } else if (!availableCohorts.some((cohort) => cohort.id === selectedId)) {
+      setSelectedId(availableCohorts[0]?.id ?? '')
+    }
   }, [creatingNew, initialCohortId, availableCohorts, selectedId])
 
   useEffect(() => {
@@ -229,23 +234,17 @@ function AdminCohortManager({ onClose, initialCohortId, allowedCohortId }: { onC
       setActionError(error instanceof Error ? error.message : '届次保存失败，请稍后重试')
     }
   }
-  const openTeamEditor = (team?: { id: string; name: string; description: string; accent: string; memberCapacity?: number | null; members: unknown[] }) => {
+  const openTeamEditor = (team?: CohortTeamRecord) => {
     setTeamForm(team
-      ? { id: team.id, name: team.name, description: team.description, accent: team.accent, memberCapacity: team.memberCapacity == null ? '' : String(team.memberCapacity) }
-      : { id: '', name: '', description: '', accent: 'blue', memberCapacity: '' })
+      ? { id: team.id, name: team.name, description: team.description, accent: team.accent }
+      : { id: '', name: '', description: '', accent: 'blue' })
     setTeamEditorOpen(true)
   }
   const saveTeamDraft = async () => {
     if (!selected || !teamForm.name.trim()) return
     setActionError('')
-    const capacityInput = teamForm.memberCapacity.trim()
-    const parsedCapacity = capacityInput ? Number(capacityInput) : null
-    if (capacityInput && (parsedCapacity === null || !Number.isInteger(parsedCapacity) || parsedCapacity < 1)) {
-      setActionError('成员人数请填写大于等于 1 的整数，留空表示暂不设置')
-      return
-    }
     try {
-      await saveTeam(selected.id, { id: teamForm.id || undefined, name: teamForm.name.trim(), description: teamForm.description.trim(), accent: teamForm.accent, memberCapacity: parsedCapacity })
+      await saveTeam(selected.id, { id: teamForm.id || undefined, name: teamForm.name.trim(), description: teamForm.description.trim(), accent: teamForm.accent })
       setTeamEditorOpen(false)
     } catch (error) {
       setActionError(error instanceof Error ? error.message : '小组保存失败，请稍后重试')
@@ -349,12 +348,12 @@ function AdminCohortManager({ onClose, initialCohortId, allowedCohortId }: { onC
             </div>
           </section>
           {selected && <section className="admin-team-editor admin-cohort-team-surface">
-            <div className="admin-cohort-section-head"><div><span className="admin-section-icon tone-violet"><Users size={15} /></span><span><strong>小组方向</strong><small>{selected.teams.length} 个方向 · 成员人数由管理员配置</small></span></div><button className="secondary-button admin-small-button" onClick={applyDefaultTeams}><Plus size={14} /> 补齐固定小组</button></div>
+            <div className="admin-cohort-section-head"><div><span className="admin-section-icon tone-violet"><Users size={15} /></span><span><strong>小组方向</strong><small>{selected.teams.length} 个方向 · 成员数按成员账号自动统计</small></span></div><button className="secondary-button admin-small-button" onClick={applyDefaultTeams}><Plus size={14} /> 补齐固定小组</button></div>
             <div className="admin-team-grid">
               {selected.teams.map((team) => <article className="admin-team-row admin-cohort-team-card" key={team.id}>
                 <div className="admin-cohort-team-card-head"><span className={'admin-team-icon tone-' + team.accent}><Users size={15} /></span><span className="admin-team-card-badge">{isCoreTeam(team) ? '固定方向' : '自定义'}</span></div>
                 <div className="admin-cohort-team-copy"><strong>{team.name}</strong><small>{team.description || '暂未填写小组简介'}</small></div>
-                <div className="admin-cohort-team-meta"><span><Users size={12} /> {team.memberCapacity == null ? '未设置成员人数' : `${team.memberCapacity} 人`}</span><div className="admin-row-actions"><button className="admin-link-button" onClick={() => openTeamEditor(team)}>编辑</button>{!isCoreTeam(team) && <button className="admin-link-button admin-danger-link" onClick={() => deleteTeam(team.id)}>删除</button>}</div></div>
+                <div className="admin-cohort-team-meta"><span><Users size={12} /> 当前 {actualTeamMemberCount(selected.year, team)} 人</span><div className="admin-row-actions"><button className="admin-link-button" onClick={() => openTeamEditor(team)}>编辑</button>{!isCoreTeam(team) && <button className="admin-link-button admin-danger-link" onClick={() => deleteTeam(team.id)}>删除</button>}</div></div>
               </article>)}
             </div>
             <button className="secondary-button admin-small-button admin-add-team-button" onClick={() => openTeamEditor()}><Plus size={14} /> 新增小组</button>
@@ -370,7 +369,7 @@ function AdminCohortManager({ onClose, initialCohortId, allowedCohortId }: { onC
       <section className="admin-form-modal admin-team-form-modal" role="dialog" aria-modal="true" aria-labelledby="admin-team-editor-title" onClick={(event) => event.stopPropagation()}>
         <div className="admin-modal-head"><div><p className="eyebrow">TEAM / EDITOR</p><h2 id="admin-team-editor-title">{teamForm.id ? '编辑小组' : '新增小组'}</h2><p>调整方向信息后，届次卡片和成员页面会同步更新。</p></div><button className="icon-button small" onClick={() => setTeamEditorOpen(false)} aria-label="关闭小组编辑"><X size={16} /></button></div>
         <div className="admin-editor-form">
-          <div className="admin-editor-form-grid"><label><span>小组名称</span><input value={teamForm.name} onChange={(event) => setTeamForm({ ...teamForm, name: event.target.value })} placeholder="例如：算法组" autoFocus /></label><label><span>成员人数（可选）</span><input type="number" min="1" value={teamForm.memberCapacity} onChange={(event) => setTeamForm({ ...teamForm, memberCapacity: event.target.value })} placeholder="留空表示未设置" /></label></div>
+          <label><span>小组名称</span><input value={teamForm.name} onChange={(event) => setTeamForm({ ...teamForm, name: event.target.value })} placeholder="例如：算法组" autoFocus /></label>
           <label><span>小组简介</span><textarea rows={3} value={teamForm.description} onChange={(event) => setTeamForm({ ...teamForm, description: event.target.value })} placeholder="写清楚这个方向负责什么" /></label>
           <label><span>视觉颜色</span><select value={teamForm.accent} onChange={(event) => setTeamForm({ ...teamForm, accent: event.target.value })}><option value="blue">蓝色</option><option value="violet">紫色</option><option value="mint">薄荷绿</option><option value="rose">玫红</option><option value="orange">橙色</option></select></label>
         </div>
@@ -977,7 +976,7 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
   const [sessionPolicy, setSessionPolicy] = useState(() => readAdminPreference('club-admin-session-policy', true))
   const [tunnelStatus, setTunnelStatus] = useState(() => readAdminPreference('club-admin-tunnel-status', '未连接'))
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([])
-  const [inviteFilter, setInviteFilter] = useState<'active' | 'all'>('active')
+  const [inviteFilter, setInviteFilter] = useState<'active' | 'inactive'>('active')
   const [inviteQuery, setInviteQuery] = useState('')
   const [inviteExpiresAt, setInviteExpiresAt] = useState(() => toDateTimeLocal(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)))
   const [inviteMaxUses, setInviteMaxUses] = useState('1')
@@ -1376,10 +1375,48 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
       },
     })
   }
+  const handleDeleteInactiveInviteCodes = () => {
+    const inactiveInviteCodes = inviteCodes.filter((inviteCode) => inviteCode.status !== 'active')
+    if (!inactiveInviteCodes.length) return
+
+    setDeleteRequest({
+      title: '清理全部失效邀请码？',
+      message: <>将永久删除 {inactiveInviteCodes.length} 个已撤销、过期或次数用完的邀请码记录。有效邀请码不会受到影响，删除后无法恢复。</>,
+      cancelLabel: '暂不清理',
+      confirmLabel: '确认全部删除',
+      onConfirm: async () => {
+        setDeleteBusy(true)
+        let deletedCount = 0
+        const failedCodes: string[] = []
+        try {
+          // 复用现有单条删除接口，不额外增加后端批量接口。
+          for (const inviteCode of inactiveInviteCodes) {
+            try {
+              await deleteInviteCode(inviteCode.id)
+              deletedCount += 1
+            } catch {
+              failedCodes.push(inviteCode.code)
+            }
+          }
+          setInviteCodes(await listInviteCodes())
+          setDeleteRequest(null)
+          if (failedCodes.length) {
+            showToast(`已删除 ${deletedCount} 个，${failedCodes.length} 个未能删除，请刷新后重试`)
+          } else {
+            showToast(`已清理 ${deletedCount} 个失效邀请码`)
+          }
+        } catch (error) {
+          showToast(error instanceof Error ? error.message : `已删除 ${deletedCount} 个，刷新邀请码列表失败`)
+        } finally {
+          setDeleteBusy(false)
+        }
+      },
+    })
+  }
   const handleReviewSubmission = async (submission: ContributionSubmission, status: 'approved' | 'rejected') => {
     try {
       if (status === 'approved' && apiConfig.contentSource !== 'api') {
-        await createResource({ title: submission.title, description: submission.description, category: submission.category, type: submission.resourceType ?? (submission.fileName ? 'file' : 'link'), tags: submission.tags?.length ? submission.tags : ['成员投稿'], author: submission.submitterName, updated: new Date().toLocaleDateString('zh-CN'), views: 0, accent: 'blue', visibility: submission.visibility ?? 'members', accessMode: submission.accessMode ?? (submission.fileName ? 'attachment' : 'external_link'), resourceUrl: submission.resourceUrl, attachments: submission.attachments ?? (submission.fileName ? [{ name: submission.fileName, url: '' }] : undefined), content: submission.content, status: 'published' })
+        await createResource({ title: submission.title, description: submission.description, category: submission.category, type: submission.resourceType ?? (submission.fileName ? 'file' : 'link'), tags: submission.tags?.length ? submission.tags : ['成员投稿'], author: submission.submitterName, updated: new Date().toLocaleDateString('zh-CN'), views: 0, accent: 'blue', visibility: submission.visibility ?? 'members', accessMode: submission.accessMode ?? (submission.fileName ? 'attachment' : 'external_link'), resourceUrl: submission.links?.[0]?.url ?? submission.resourceUrl, links: submission.links, attachments: submission.attachments ?? (submission.fileName ? [{ name: submission.fileName, url: '' }] : undefined), content: submission.content, status: 'published' })
       }
       await reviewContributionSubmission(submission.id, status, status === 'approved' ? '管理员已审核通过' : '管理员暂未通过这份投稿')
       if (status === 'approved' && apiConfig.contentSource === 'api') await refresh()
@@ -1915,6 +1952,9 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
     if (!isLeader && draft.kind !== '面经墙' && draft.kind !== '资源库') { showToast('届次负责人只能维护本届面经和资源；项目由组长统一管理'); return }
     if (!draft.title.trim()) { showToast('请填写内容标题'); return }
     if (!draft.description.trim()) { showToast('请填写内容简介'); return }
+    const resourceLinks = draft.links.filter((link) => link.title.trim() || link.url.trim() || link.description?.trim()).map((link) => ({ title: link.title.trim(), url: link.url.trim(), description: link.description?.trim() || undefined }))
+    if (draft.kind === '资源库' && draft.accessMode === 'external_link' && !resourceLinks.length) { showToast('请至少添加一个外部链接'); return }
+    if (draft.kind === '资源库' && draft.accessMode === 'external_link' && resourceLinks.some((link) => !link.title || !link.url)) { showToast('请填写每条链接的名称和地址'); return }
     const visibility = draft.visibility === '组员可见' ? 'contributors' as const : isLeader && draft.visibility === '全站公开' ? 'public' as const : 'members' as const
     const asNumber = (value: string, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback
     let savedId: string | undefined
@@ -1926,7 +1966,7 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
         else savedId = (await createProject(payload)).id
       } else if (draft.kind === '资源库') {
         const attachments = draft.attachments.map((attachment, index) => ({ ...attachment, sortOrder: index }))
-        const payload = { title: draft.title.trim(), description: draft.description.trim(), category: draft.category.trim() || '小组资料', type: draft.type || 'article', tags: draft.tags.split(/[,，]/).map((item) => item.trim()).filter(Boolean), author: draft.author.trim() || user.name, updated: draft.updated.trim() || new Date().toLocaleDateString('zh-CN'), views: asNumber(draft.views), accent: draft.accent || 'blue', visibility, accessMode: draft.accessMode, resourceUrl: draft.accessMode === 'external_link' ? draft.resourceUrl.trim() || undefined : undefined, attachments: draft.accessMode === 'attachment' ? attachments : undefined, content: draft.accessMode === 'article' ? draft.content.trim() || undefined : undefined, status: draft.resourceStatus, sourceName: draft.sourceName.trim() || undefined }
+        const payload = { title: draft.title.trim(), description: draft.description.trim(), category: draft.category.trim() || '小组资料', type: draft.type || 'article', tags: draft.tags.split(/[,，]/).map((item) => item.trim()).filter(Boolean), author: draft.author.trim() || user.name, updated: draft.updated.trim() || new Date().toLocaleDateString('zh-CN'), views: asNumber(draft.views), accent: draft.accent || 'blue', visibility, accessMode: draft.accessMode, resourceUrl: draft.accessMode === 'external_link' ? resourceLinks[0]?.url : undefined, links: draft.accessMode === 'external_link' ? resourceLinks : undefined, attachments: draft.accessMode === 'attachment' ? attachments : undefined, content: draft.accessMode === 'article' ? draft.content.trim() || undefined : undefined, status: draft.resourceStatus, sourceName: draft.sourceName.trim() || undefined }
         if (draft.id) savedId = (await updateResource(draft.id, payload)).id
         else savedId = (await createResource(payload)).id
       } else {
@@ -2236,7 +2276,7 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
         >
           <div><span className="admin-cohort-year">{cohort.year}</span><Tag tone={cohort.status === 'active' ? 'mint' : 'neutral'}>{cohort.status === 'active' ? '当前届' : cohort.status === 'draft' ? '草稿' : '已归档'}</Tag></div>
           <strong>{cohort.generationLabel}</strong>
-          <div className="admin-team-tags">{cohort.teams.map((team) => <span key={team.id}>{team.name} · {team.memberCapacity == null ? '未设置上限' : `${team.memberCapacity} 人上限`}</span>)}</div>
+          <div className="admin-team-tags">{cohort.teams.map((team) => <span key={team.id}>{team.name} · {teamMemberCount(cohort, team)} 人</span>)}</div>
            {(isLeader || cohort.year.replace(/\D/g, '') === userCohortYear) && <button className="admin-link-button" onClick={(event) => { event.stopPropagation(); openCohortManager(cohort.id) }}>编辑届次 <ArrowUpRight size={13} /></button>}
         </article>)}
       </div>
@@ -2244,7 +2284,7 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
     </section>
     <section className="admin-card">
       <div className="admin-card-head"><div><p className="eyebrow">{selectedCohort?.status === 'active' ? 'CURRENT TEAMS / ' : 'VIEWING TEAMS / '}{selectedCohort?.year ?? 'CURRENT'}</p><h2>{selectedCohort?.status === 'active' ? '本届小组' : (selectedCohort?.year ?? '') + '届小组'}</h2></div><span className="admin-card-hint">组长与负责人共同维护</span></div>
-       <div className="admin-team-list">{(selectedCohort?.teams ?? []).map((team) => <div className="admin-team-row" key={team.id}><span className={'admin-team-icon tone-' + team.accent}><Users size={16} /></span><div><strong>{team.name}</strong><small>{team.memberCapacity == null ? '未设置成员人数' : `${team.memberCapacity} 人`} · {team.description}</small></div><b>{teamMemberCount(selectedCohort ?? { year: '' }, team)} 人</b><button className="icon-button small" onClick={() => openCohortManager(selectedCohort?.id)} aria-label={'管理' + team.name}><ArrowUpRight size={14} /></button></div>)}</div>
+       <div className="admin-team-list">{(selectedCohort?.teams ?? []).map((team) => <div className="admin-team-row" key={team.id}><span className={'admin-team-icon tone-' + team.accent}><Users size={16} /></span><div><strong>{team.name}</strong><small>{team.description || '暂未填写小组简介'}</small></div><b>{teamMemberCount(selectedCohort ?? { year: '' }, team)} 人</b><button className="icon-button small" onClick={() => openCohortManager(selectedCohort?.id)} aria-label={'管理' + team.name}><ArrowUpRight size={14} /></button></div>)}</div>
     </section>
   </div>
 
@@ -2385,7 +2425,7 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
   const renderInvites = () => {
     const normalizedQuery = inviteQuery.trim().toLowerCase()
     const visibleInviteCodes = inviteCodes.filter((inviteCode) => {
-      const matchesFilter = inviteFilter === 'all' || inviteCode.status === 'active'
+      const matchesFilter = inviteFilter === 'active' ? inviteCode.status === 'active' : inviteCode.status !== 'active'
       const matchesSearch = !normalizedQuery || `${inviteCode.code} ${inviteCode.cohort ?? ''} ${inviteCode.direction ?? ''} ${inviteStatusLabels[inviteCode.status]}`.toLowerCase().includes(normalizedQuery)
       return matchesFilter && matchesSearch
     })
@@ -2407,9 +2447,9 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
       <div className="admin-note-card"><ShieldCheck size={15} /><div><strong>{isDemoAuth ? '本地演示模式' : '后端 API 模式'}</strong><p>{isDemoAuth ? '数据保存在当前浏览器。' : '邀请码由后端保存并通过数据库验证。'}</p></div></div>
     </section>
      <section className="admin-card admin-invite-list">
-       <div className="admin-card-head"><div><p className="eyebrow">INVITE / DIRECTORY</p><h2>已创建的邀请码</h2></div><div className="admin-invite-list-head-actions"><span className="admin-card-hint">{inviteCodes.length} 个凭证</span><div className="admin-segmented-control" role="group" aria-label="邀请码筛选"><button type="button" className={inviteFilter === 'active' ? 'active' : ''} onClick={() => setInviteFilter('active')}>有效</button><button type="button" className={inviteFilter === 'all' ? 'active' : ''} onClick={() => setInviteFilter('all')}>全部</button></div></div></div>
+       <div className="admin-card-head"><div><p className="eyebrow">INVITE / DIRECTORY</p><h2>已创建的邀请码</h2></div><div className="admin-invite-list-head-actions"><span className="admin-card-hint">{inviteCodes.length} 个凭证</span><div className="admin-segmented-control" role="group" aria-label="邀请码筛选"><button type="button" className={inviteFilter === 'active' ? 'active' : ''} onClick={() => setInviteFilter('active')}>有效</button><button type="button" className={inviteFilter === 'inactive' ? 'active' : ''} onClick={() => setInviteFilter('inactive')}>失效</button></div>{inviteFilter === 'inactive' && <button type="button" className="admin-link-button admin-danger-link admin-invite-cleanup-button" disabled={!inviteCodes.some((inviteCode) => inviteCode.status !== 'active') || deleteBusy} onClick={handleDeleteInactiveInviteCodes}><Trash2 size={13} /> 全部删除</button>}</div></div>
        <label className="admin-search admin-admin-list-search"><Search size={14} /><input value={inviteQuery} onChange={(event) => setInviteQuery(event.target.value)} placeholder="搜索邀请码、届次、方向或状态" aria-label="搜索邀请码" /></label>
-       {inviteCodes.length ? (visibleInviteCodes.length ? <div className="admin-invite-rows">{visibleInviteCodes.map((inviteCode) => <article className="admin-invite-row" key={inviteCode.id}><div className="admin-invite-main"><div className="admin-invite-row-head"><code>{inviteCode.code}</code></div><div className="admin-invite-meta"><span>{inviteCode.cohort ? `${inviteCode.cohort} 届 · ${inviteCode.direction ?? '待分配方向'}` : '兑换后待分配方向'}</span><span>{inviteCode.usedCount} / {inviteCode.maxUses} 次</span><span>{inviteCode.status === 'active' ? formatInviteExpiry(inviteCode.expiresAt) : `截止 ${new Date(inviteCode.expiresAt).toLocaleString('zh-CN')}`}</span><time>创建于 {new Date(inviteCode.createdAt).toLocaleString('zh-CN')}</time></div></div><div className="admin-row-actions"><span className={`admin-invite-status ${inviteCode.status}`}><i /> {inviteStatusLabels[inviteCode.status]}</span><button className="admin-link-button" onClick={() => void handleCopyInviteCode(inviteCode.code)}><Copy size={13} /> 复制</button>{inviteCode.status === 'active' ? <button className="admin-link-button admin-danger-link" onClick={() => handleRevokeInviteCode(inviteCode.id)}><ShieldAlert size={13} /> 撤销</button> : <button className="admin-link-button admin-danger-link" onClick={() => handleDeleteInviteCode(inviteCode)}><Trash2 size={13} /> 删除</button>}</div></article>)}</div> : <div className="admin-empty admin-invite-filter-empty"><KeyRound size={20} /><strong>{inviteCodes.length && visibleInviteCodes.length === 0 ? '没有匹配的邀请码' : '没有有效邀请码'}</strong><span>{inviteCodes.length && visibleInviteCodes.length === 0 ? '换个关键词或切换筛选范围再试试。' : '切换到“全部”可以查看并清理已过期或已撤销的记录。'}</span></div>) : <div className="admin-empty admin-invite-empty"><KeyRound size={22} /><strong>还没有邀请码</strong><span>设置有效期和使用次数后，生成第一张加入凭证。</span></div>}
+       {inviteCodes.length ? (visibleInviteCodes.length ? <div className="admin-invite-rows">{visibleInviteCodes.map((inviteCode) => <article className="admin-invite-row" key={inviteCode.id}><div className="admin-invite-main"><div className="admin-invite-row-head"><code>{inviteCode.code}</code></div><div className="admin-invite-meta"><span>{inviteCode.cohort ? `${inviteCode.cohort} 届 · ${inviteCode.direction ?? '待分配方向'}` : '兑换后待分配方向'}</span><span>{inviteCode.usedCount} / {inviteCode.maxUses} 次</span><span>{inviteCode.status === 'active' ? formatInviteExpiry(inviteCode.expiresAt) : `截止 ${new Date(inviteCode.expiresAt).toLocaleString('zh-CN')}`}</span><time>创建于 {new Date(inviteCode.createdAt).toLocaleString('zh-CN')}</time></div></div><div className="admin-row-actions"><span className={`admin-invite-status ${inviteCode.status}`}><i /> {inviteStatusLabels[inviteCode.status]}</span><button className="admin-link-button" onClick={() => void handleCopyInviteCode(inviteCode.code)}><Copy size={13} /> 复制</button>{inviteCode.status === 'active' ? <button className="admin-link-button admin-danger-link" onClick={() => handleRevokeInviteCode(inviteCode.id)}><ShieldAlert size={13} /> 撤销</button> : <button className="admin-link-button admin-danger-link" onClick={() => handleDeleteInviteCode(inviteCode)}><Trash2 size={13} /> 删除</button>}</div></article>)}</div> : <div className="admin-empty admin-invite-filter-empty"><KeyRound size={20} /><strong>{inviteCodes.length && visibleInviteCodes.length === 0 ? '没有匹配的邀请码' : inviteFilter === 'active' ? '没有有效邀请码' : '没有失效邀请码'}</strong><span>{inviteCodes.length && visibleInviteCodes.length === 0 ? '换个关键词或切换筛选范围再试试。' : inviteFilter === 'active' ? '生成邀请码后会显示在这里。' : '过期、撤销或次数用完的邀请码会显示在这里。'}</span></div>) : <div className="admin-empty admin-invite-empty"><KeyRound size={22} /><strong>还没有邀请码</strong><span>设置有效期和使用次数后，生成第一张加入凭证。</span></div>}
      </section>
    </div>
   }
@@ -2613,7 +2653,7 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
                 {selectedContribution.project.galleryImages?.length ? <div><strong>展示图片</strong><div className="admin-project-review-gallery">{selectedContribution.project.galleryImages.map((image, index) => { const source = safeImageSource(image); return source ? <img key={index} src={source} alt="项目展示图" /> : null })}</div></div> : null}
               </div>
             </div>}
-            {selectedContribution.submission?.resourceUrl && <a className="admin-contribution-detail-link" href={selectedContribution.submission.resourceUrl} target="_blank" rel="noreferrer"><ArrowUpRight size={14} /> 打开投稿链接</a>}
+            {selectedContribution.submission && (selectedContribution.submission.links?.length ? selectedContribution.submission.links : selectedContribution.submission.resourceUrl ? [{ title: '外部资源', url: selectedContribution.submission.resourceUrl }] : []).map((link, index) => { const url = safeLink(link.url); return url ? <a className="admin-contribution-detail-link" href={url} target="_blank" rel="noreferrer" key={`${link.title}-${index}`}><ArrowUpRight size={14} /><span><strong>{link.title || '打开投稿链接'}</strong>{link.description && <small>{link.description}</small>}</span></a> : null })}
             {selectedContribution.submission?.attachments?.map((attachment) => <div className="admin-contribution-detail-file" key={attachment.assetId ?? attachment.id ?? attachment.url}><FileText size={15} /><span>附件：{attachment.name}{attachment.size ? ' · ' + (attachment.size / 1024 / 1024).toFixed(1) + ' MB' : ''}</span>{safeLink(attachment.url) && <a href={safeLink(attachment.url)} target="_blank" rel="noreferrer"><Download size={13} /> 下载</a>}</div>)}
             {!selectedContribution.submission?.attachments?.length && selectedContribution.submission?.fileName && <div className="admin-contribution-detail-file"><FileText size={15} /><span>附件：{selectedContribution.submission.fileName}</span></div>}
             {selectedContribution.feedback?.contact && <div className="admin-contribution-detail-file"><Mail size={15} /><span>联系方式：{selectedContribution.feedback.contact}</span></div>}
@@ -2729,9 +2769,9 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
     {backgroundOpen && <div className="admin-modal-scrim" role="presentation" onClick={() => setBackgroundOpen(false)}><section className="admin-background-modal" role="dialog" aria-modal="true" aria-labelledby="admin-background-title" onClick={(event) => event.stopPropagation()}><div className="admin-modal-head"><div><p className="eyebrow">PERSONAL BACKGROUND</p><h2 id="admin-background-title">设置个人背景</h2><p>只影响当前成员，不会改变其他人的背景。</p></div><button className="icon-button small" onClick={() => setBackgroundOpen(false)} aria-label="关闭背景设置"><X size={16} /></button></div><div className="admin-background-mode"><div><strong>跟随日夜主题</strong><small>{followTheme ? (theme === 'dark' ? '夜间模式 · 静谧星空' : '白天模式 · 校园晨曦') : '已固定个人背景'}</small></div><button className={`admin-switch ${followTheme ? 'on' : ''}`} onClick={() => onBackgroundPreferenceChange(followTheme ? (theme === 'dark' ? 'mist' : 'campus') : 'follow')} aria-pressed={followTheme}><i /></button></div><div className="admin-background-options">{[{ id: 'campus', label: '校园晨曦' }, { id: 'mist', label: '雾蓝留白' }, { id: 'paper', label: '纸张留白' }].map((option) => <button type="button" className={`admin-background-option ${effectiveBackground === option.id ? 'active' : ''} ${option.id}`} key={option.id} onClick={() => { setGlobalBackground(false); onBackgroundPreferenceChange(option.id as BackgroundPreference); onBackgroundImageChange(null) }}><span className="admin-background-preview" /><span><strong>{option.label}</strong></span>{effectiveBackground === option.id && <CheckCircle2 size={16} />}</button>)}</div><div className="admin-upload-box"><span><ImagePlus size={18} /></span><div><strong>{backgroundFileName || '上传个人背景图片'}</strong><small>支持 JPG、PNG 或 WebP，建议使用 16:9 图片</small></div><input id="admin-background-upload" className="admin-file-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={handleBackgroundUpload} /><label className="secondary-button admin-small-button" htmlFor="admin-background-upload">选择图片</label></div>{backgroundImage && <div className="admin-upload-preview"><img src={backgroundImage} alt="个人背景预览" /><span>本地预览</span></div>}<div className="admin-modal-foot"><span>当前选择：{followTheme ? '跟随日夜主题' : backgroundPreference === 'custom' ? '自定义图片' : selectedBackground === 'campus' ? '校园晨曦' : selectedBackground === 'mist' ? '雾蓝留白' : '纸张留白'}</span><div><button className="secondary-button admin-small-button" onClick={() => setBackgroundOpen(false)}>取消</button><button className="primary-button admin-small-button" onClick={() => void saveBackgroundPreferences()}>保存设置</button></div></div></section></div>}
     {announcementDraft && <AdminAnnouncementModal draft={announcementDraft} scopeOptions={announcementScopeOptions} onChange={setAnnouncementDraft} onClose={() => setAnnouncementDraft(null)} onSave={saveAnnouncement} />}
     {memberDraft && <AdminMemberModal draft={memberDraft} cohortOptions={sortedCohorts.filter((cohort) => isLeader || cohort.year === user.cohort.replace(' 届', '')).map((cohort) => cohort.year)} directionOptions={memberDirectionOptions} onChange={setMemberDraft} onClose={() => setMemberDraft(null)} onSave={saveMember} />}
-    {learningRouteOpen && <AdminLearningRouteModal draft={learningRouteId.startsWith('new-route-') ? createLearningRouteDraft([], { id: learningRouteId, direction: '新方向', title: '新方向学习路线', description: '', nodes: [], featuredProjectIds: [] }) : createLearningRouteDraft(data.learningRoutes.find((route) => route.id === learningRouteId)?.nodes ?? data.learningNodes, data.learningRoutes.find((route) => route.id === learningRouteId) ?? data.learningRoute)} routes={data.learningRoutes} projects={data.projects} onClose={() => setLearningRouteOpen(false)} onSave={saveLearningRoute} onDelete={removeLearningRoute} onSelectRoute={openLearningRouteEditor} onNewRoute={openNewLearningRoute} />}
+    {learningRouteOpen && <AdminLearningRouteModal draft={learningRouteId.startsWith('new-route-') ? createLearningRouteDraft([], { id: learningRouteId, direction: '新方向', title: '新方向学习路线', description: '', nodes: [], featuredProjectIds: [] }) : createLearningRouteDraft(data.learningRoutes.find((route) => route.id === learningRouteId)?.nodes ?? data.learningNodes, data.learningRoutes.find((route) => route.id === learningRouteId) ?? data.learningRoute)} routes={data.learningRoutes} projects={data.projects} resources={data.resources} onClose={() => setLearningRouteOpen(false)} onSave={saveLearningRoute} onDelete={removeLearningRoute} onSelectRoute={openLearningRouteEditor} onNewRoute={openNewLearningRoute} />}
     {contentDraft && <AdminContentModal draft={contentDraft} onChange={setContentDraft} onClose={() => setContentDraft(null)} onSave={saveContent} />}
-     {cohortManagerOpen && <AdminCohortManager initialCohortId={cohortManagerInitialId} allowedCohortId={isLeader ? undefined : adminCohorts[0]?.id} onClose={() => { setCohortManagerOpen(false); setCohortManagerInitialId(undefined) }} />}
+     {cohortManagerOpen && <AdminCohortManager initialCohortId={cohortManagerInitialId} allowedCohortId={isLeader ? undefined : adminCohorts[0]?.id} managedMembers={data.members} membersManaged={data.membersManaged} onClose={() => { setCohortManagerOpen(false); setCohortManagerInitialId(undefined) }} />}
      {photoManagerOpen && <AdminPhotoManager allowedCohortId={isLeader ? undefined : adminCohorts[0]?.id} onClose={() => setPhotoManagerOpen(false)} />}
     {copyManagerOpen && <AdminCopyManager onClose={() => setCopyManagerOpen(false)} />}
     {promptManagerOpen && <AdminPromptManagerModal items={data.prompts.filter((item) => item.status !== 'archived')} onClose={() => setPromptManagerOpen(false)} onSave={async (id, input) => id ? updatePrompt(id, input) : createPrompt(input)} onDelete={deletePrompt} />}

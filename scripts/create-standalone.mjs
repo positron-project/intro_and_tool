@@ -48,6 +48,8 @@ const MIME_BY_EXT = {
   '.jpeg': 'image/jpeg',
   '.gif': 'image/gif',
   '.svg': 'image/svg+xml',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
 }
 
 const assetRefs = new Set()
@@ -57,6 +59,11 @@ for (const text of [script, style]) {
   for (const match of text.matchAll(/['"(](?:\.\.?\/|\/)assets\/([A-Za-z0-9._/-]+)['")]/g)) {
     assetRefs.add(match[1])
   }
+}
+// CSS assets imported from src/assets are emitted beside the stylesheet, so
+// their URLs are relative to dist/assets rather than prefixed with /assets/.
+for (const match of style.matchAll(/url\((['"]?)(?:\.\/)?([^'")]+\.(?:woff2?|ttf|otf))\1\)/g)) {
+  assetRefs.add(match[2])
 }
 
 const inlined = []
@@ -81,7 +88,14 @@ for (const asset of assetRefs) {
     }
   }
   const dataUri = `data:${mime};base64,${buffer.toString('base64')}`
-  for (const prefix of [`../assets/${asset}`, `./assets/${asset}`, `/assets/${asset}`]) {
+  for (const prefix of [
+    `../assets/${asset}`,
+    `./assets/${asset}`,
+    `/assets/${asset}`,
+    `../${asset}`,
+    `./${asset}`,
+    `/${asset}`,
+  ]) {
     script = script.replaceAll(prefix, dataUri)
     style = style.replaceAll(prefix, dataUri)
   }

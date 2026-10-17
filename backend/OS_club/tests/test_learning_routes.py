@@ -15,12 +15,16 @@ def make_node_data():
         "projects": 0,
         "description": "学习语法和基础工具",
         "projectIds": [],
+        "resourceIds": ["resource-python-guide"],
         "resourceLinks": [
             {"id": "doc-python", "title": "Python 官方教程", "url": "https://docs.python.org/3/"}
         ],
         "videoLinks": [
             {"id": "video-one", "title": "第一课", "url": "https://example.com/video/1"},
             {"id": "video-two", "title": "第二课", "url": "https://example.com/video/2"},
+        ],
+        "cloudDriveLinks": [
+            {"id": "drive-one", "title": "课程资料包", "url": "https://pan.example.com/share/1", "description": "提取码 abcd"}
         ],
     }
 
@@ -38,6 +42,8 @@ class LearningRouteLinkSchemaTests(unittest.TestCase):
         saved_node = request.nodes[0].model_dump(by_alias=True)
 
         self.assertEqual(saved_node["resourceLinks"][0]["title"], "Python 官方教程")
+        self.assertEqual(saved_node["resourceIds"], ["resource-python-guide"])
+        self.assertEqual(saved_node["cloudDriveLinks"][0]["description"], "提取码 abcd")
         self.assertEqual(
             [link["title"] for link in saved_node["videoLinks"]],
             ["第一课", "第二课"],
@@ -47,6 +53,8 @@ class LearningRouteLinkSchemaTests(unittest.TestCase):
         request = LearningRouteUpdateRequest.model_validate({"nodes": [make_node_data()]})
 
         self.assertEqual(len(request.nodes[0].resource_links), 1)
+        self.assertEqual(request.nodes[0].resource_ids, ["resource-python-guide"])
+        self.assertEqual(request.nodes[0].cloud_drive_links[0].url, "https://pan.example.com/share/1")
         self.assertEqual(len(request.nodes[0].video_links), 2)
 
     def test_rejects_non_http_links(self):
@@ -110,6 +118,8 @@ class LearningRouteLinkCrudTests(unittest.IsolatedAsyncioTestCase):
         route = await create_learning_route(db, create_request)
 
         self.assertEqual(route.nodes[0]["resourceLinks"][0]["id"], "doc-python")
+        self.assertEqual(route.nodes[0]["resourceIds"], ["resource-python-guide"])
+        self.assertEqual(route.nodes[0]["cloudDriveLinks"][0]["description"], "提取码 abcd")
         self.assertEqual(len(route.nodes[0]["videoLinks"]), 2)
         self.assertEqual(db.commit_count, 1)
 
@@ -120,6 +130,8 @@ class LearningRouteLinkCrudTests(unittest.IsolatedAsyncioTestCase):
             updated_route.nodes[0]["resourceLinks"][0]["url"],
             "https://docs.python.org/3/",
         )
+        self.assertEqual(updated_route.nodes[0]["resourceIds"], ["resource-python-guide"])
+        self.assertEqual(updated_route.nodes[0]["cloudDriveLinks"][0]["url"], "https://pan.example.com/share/1")
         self.assertEqual(
             [link["id"] for link in updated_route.nodes[0]["videoLinks"]],
             ["video-one", "video-two"],

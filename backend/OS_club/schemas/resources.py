@@ -15,6 +15,7 @@ schemas 只负责：
 
 from datetime import datetime
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -85,6 +86,55 @@ class ResourceAttachment(BaseModel):
     )
 
 
+class ResourceLink(BaseModel):
+    """资源外链及其用途说明，供资源详情页逐条展示。"""
+
+    title: str = Field(
+        min_length=1,
+        max_length=160,
+    )
+
+    url: str = Field(
+        min_length=1,
+        max_length=500,
+    )
+
+    description: str | None = Field(
+        default=None,
+        max_length=500,
+    )
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+    )
+
+    @field_validator("title", "url", mode="before")
+    @classmethod
+    def trim_required_text(cls, value: str) -> str:
+        """去掉链接标题和地址两端空格，避免保存后展示出错。"""
+
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def trim_description(cls, value: str | None) -> str | None:
+        """用途说明可选；全空格按未填写处理。"""
+
+        if isinstance(value, str):
+            return value.strip() or None
+        return value
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, value: str) -> str:
+        """只保存浏览器可打开的 HTTP 或 HTTPS 外链。"""
+
+        parsed = urlsplit(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("链接地址必须是 http 或 https 地址")
+        return value
+
+
 class ResourceCreateRequest(BaseModel):
     """
     创建资源时接收的数据。
@@ -135,6 +185,11 @@ class ResourceCreateRequest(BaseModel):
         default=None,
         alias="resourceUrl",
         max_length=500,
+    )
+
+    # 多个外链保存在 JSON 列中；resource_url 继续保留，兼容旧版前端。
+    links: list[ResourceLink] = Field(
+        default_factory=list,
     )
 
     download_url: str | None = Field(
@@ -210,6 +265,10 @@ class ResourceUpdateRequest(BaseModel):
         max_length=500,
     )
 
+    # PATCH 时未提供 links 表示不改；传空数组表示清空所有链接。
+    # 不接受 null，避免写入数据库的 NOT NULL JSON 字段。
+    links: list[ResourceLink] = Field(default_factory=list)
+
     download_url: str | None = Field(
         default=None,
         alias="downloadUrl",
@@ -269,6 +328,10 @@ class ResourceResponse(BaseModel):
     resource_url: str | None = Field(
         default=None,
         alias="resourceUrl",
+    )
+
+    links: list[ResourceLink] = Field(
+        default_factory=list,
     )
 
     download_url: str | None = Field(

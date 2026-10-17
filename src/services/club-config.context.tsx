@@ -19,7 +19,6 @@ export interface CohortTeamRecord {
   description: string
   accent: string
   members: CohortMemberRecord[]
-  memberCapacity?: number | null
 }
 
 export interface CohortRecord {
@@ -80,7 +79,7 @@ const now = () => new Date().toISOString()
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T
 
 const defaultTeams2029: CohortTeamRecord[] = [
-  { id: 'algorithm', name: '算法组', memberCapacity: 6, description: '用算法、模型与实验，把问题拆成可验证的答案。', accent: 'violet', members: [
+  { id: 'algorithm', name: '算法组', description: '用算法、模型与实验，把问题拆成可验证的答案。', accent: 'violet', members: [
     { id: 'algorithm-lead', name: '算法组长', role: '组长', direction: '方向规划 · 代码评审', initials: '组长', accent: 'violet' },
     { id: 'algorithm-owner', name: '算法负责人', role: '负责人', direction: '模型实验 · 资料沉淀', initials: '负责', accent: 'blue' },
     { id: 'algorithm-member-1', name: '算法组员 01', role: '组员', direction: 'Python · 机器学习', initials: '01', accent: 'mint' },
@@ -88,7 +87,7 @@ const defaultTeams2029: CohortTeamRecord[] = [
     { id: 'algorithm-member-3', name: '算法组员 03', role: '组员', direction: '深度学习 · 复现', initials: '03', accent: 'rose' },
     { id: 'algorithm-member-4', name: '算法组员 04', role: '组员', direction: 'Agent · Prompt', initials: '04', accent: 'blue' },
   ] },
-  { id: 'project', name: '项目组', memberCapacity: 7, description: '把想法推到真实场景，负责协作、交付和持续迭代。', accent: 'blue', members: [
+  { id: 'project', name: '项目组', description: '把想法推到真实场景，负责协作、交付和持续迭代。', accent: 'blue', members: [
     { id: 'project-lead', name: '项目组长', role: '组长', direction: '项目规划 · 协作推进', initials: '组长', accent: 'blue' },
     { id: 'project-owner', name: '项目负责人', role: '负责人', direction: '需求拆解 · 发布管理', initials: '负责', accent: 'mint' },
     { id: 'project-member-1', name: '项目组员 01', role: '组员', direction: '前端工程 · 交互', initials: '01', accent: 'violet' },
@@ -97,7 +96,7 @@ const defaultTeams2029: CohortTeamRecord[] = [
     { id: 'project-member-4', name: '项目组员 04', role: '组员', direction: '部署 · 运维', initials: '04', accent: 'blue' },
     { id: 'project-member-5', name: '项目组员 05', role: '组员', direction: '视觉 · 内容', initials: '05', accent: 'mint' },
   ] },
-  { id: 'cybersecurity', name: '网安组', memberCapacity: 2, description: '关注安全研究、攻防实践与系统风险防护。', accent: 'rose', members: [
+  { id: 'cybersecurity', name: '网安组', description: '关注安全研究、攻防实践与系统风险防护。', accent: 'rose', members: [
     { id: 'cybersecurity-lead', name: '网安组长', role: '组长', direction: '安全研究 · 方向规划', initials: '组长', accent: 'rose' },
     { id: 'cybersecurity-owner', name: '网安负责人', role: '负责人', direction: '攻防实践 · 风险防护', initials: '负责', accent: 'orange' },
   ] },
@@ -105,10 +104,8 @@ const defaultTeams2029: CohortTeamRecord[] = [
 
 /* Every cohort always has the three core directions. Only 2029 carries
    sample members; other cohorts start with real-member slots empty. */
-// New cohorts start with the three required directions but no pre-filled
-// capacity. Capacity is an administrator-owned setting entered in the team
-// editor, not sample data copied from the current cohort.
-const defaultTeamTemplates: CohortTeamRecord[] = defaultTeams2029.map(({ members: _members, memberCapacity: _memberCapacity, ...team }) => ({ ...team, members: [] }))
+// 新届次只创建固定小组信息；人数一律从成员账号实时统计，不预填数字。
+const defaultTeamTemplates: CohortTeamRecord[] = defaultTeams2029.map(({ members: _members, ...team }) => ({ ...team, members: [] }))
 const requiredTeamIds = new Set(defaultTeamTemplates.map((team) => team.id))
 
 const normalizeTeamName = (name: string) => name.replace(/[\s·_-]/g, '').toLowerCase()
@@ -213,12 +210,7 @@ export function ClubConfigProvider({ children }: { children: ReactNode }) {
       const result = input.id ? await apiUpdateCohort(input.id, input) : await apiCreateCohort(input)
       const returnedTeams = Array.isArray(result.teams) ? result.teams : []
       const existingTeams = dedupeTeams(returnedTeams.length ? returnedTeams : previous?.teams ?? [])
-      // Some backend deployments create the three core teams during cohort
-      // creation and apply their own sample capacities. A new cohort must
-      // start with member counts unset, so clear those server defaults once.
-      const newCohortTeams = isNew && existingTeams.some((team) => team.memberCapacity != null)
-        ? await Promise.all(existingTeams.map((team) => team.memberCapacity == null ? Promise.resolve(team) : apiUpdateTeam(result.id, team.id, { memberCapacity: null })))
-        : existingTeams
+      const newCohortTeams = existingTeams
       const missingDefaultTeams = isNew
         ? defaultTeamTemplates.filter((team) => !newCohortTeams.some((currentTeam) => teamIdentity(currentTeam) === teamIdentity(team)))
         : []
@@ -249,7 +241,7 @@ export function ClubConfigProvider({ children }: { children: ReactNode }) {
       return result
     }
     let result: CohortTeamRecord | undefined
-    setState((current) => { const currentCohort = current.cohorts.find((item) => item.id === cohortId); if (!currentCohort) return current; const hasCapacityPatch = Object.prototype.hasOwnProperty.call(input, 'memberCapacity'); result = { id: existing?.id ?? input.id ?? `${cohortId}-team-${Date.now()}`, name: input.name, description: input.description ?? existing?.description ?? '', accent: input.accent ?? existing?.accent ?? 'blue', members: input.members ?? existing?.members ?? [], memberCapacity: hasCapacityPatch ? input.memberCapacity : existing?.memberCapacity }; return { ...current, cohorts: current.cohorts.map((item) => item.id === cohortId ? { ...item, teams: existing ? item.teams.map((team) => team.id === existing.id ? result! : team) : [...item.teams, result!], updatedAt: now() } : item) } }); return result
+    setState((current) => { const currentCohort = current.cohorts.find((item) => item.id === cohortId); if (!currentCohort) return current; result = { id: existing?.id ?? input.id ?? `${cohortId}-team-${Date.now()}`, name: input.name, description: input.description ?? existing?.description ?? '', accent: input.accent ?? existing?.accent ?? 'blue', members: input.members ?? existing?.members ?? [] }; return { ...current, cohorts: current.cohorts.map((item) => item.id === cohortId ? { ...item, teams: existing ? item.teams.map((team) => team.id === existing.id ? result! : team) : [...item.teams, result!], updatedAt: now() } : item) } }); return result
   }, [state.cohorts])
   const removeTeam = useCallback(async (cohortId: string, teamId: string) => {
     const target = state.cohorts.find((cohort) => cohort.id === cohortId)?.teams.find((team) => team.id === teamId)

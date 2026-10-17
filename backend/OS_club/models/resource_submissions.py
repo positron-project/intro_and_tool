@@ -99,6 +99,13 @@ class ResourceSubmission(Base):
         nullable=True,
     )
 
+    # 保存投稿人填写的多条外部链接，审核通过时会一并复制到正式资源。
+    links: Mapped[list] = mapped_column(
+        JSON,
+        default=list,
+        nullable=False,
+    )
+
     # 上传文件名称。
     file_name: Mapped[str | None] = mapped_column(
         String(255),

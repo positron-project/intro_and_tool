@@ -50,12 +50,28 @@ export default defineConfig(({ mode }) => {
     // double-click dist/index.html, while remaining valid in the dev server.
     base: './',
     build: {
-      chunkSizeWarningLimit: 600,
+      // Standalone intentionally inlines the whole app into one classic file;
+      // keep the normal multi-chunk budget strict while allowing that artifact's
+      // known single-bundle size without a misleading warning.
+      chunkSizeWarningLimit: isStandalone ? 1200 : 600,
       rollupOptions: {
         output: isStandalone
           ? { inlineDynamicImports: true }
           : {
               manualChunks: (id) => {
+                const normalizedId = id.replaceAll('\\', '/')
+                if (
+                  normalizedId.includes('/src/components/admin/AdminPage.tsx') ||
+                  normalizedId.includes('/src/components/admin-modals.tsx')
+                ) {
+                  return 'page-admin'
+                }
+                if (
+                  normalizedId.includes('/src/components/interviews.tsx') ||
+                  normalizedId.includes('/src/components/prompt-modals.tsx')
+                ) {
+                  return 'page-tools'
+                }
                 if (id.includes('node_modules/framer-motion')) {
                   return 'vendor-motion'
                 }

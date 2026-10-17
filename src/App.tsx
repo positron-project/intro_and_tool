@@ -20,6 +20,7 @@ import {
   Clock3,
   Code2,
   Compass,
+  CloudDownload,
   Copy,
   Download,
   ExternalLink,
@@ -81,6 +82,7 @@ import { createContributionSubmission, deleteContributionSubmission, listContrib
 import { createFeedbackMessage, listFeedbackMessages } from './services/feedback.service'
 import type { FeedbackMessage } from './services/feedback.service'
 import { MAX_RESOURCE_ATTACHMENTS, uploadAsset, validateResourceAttachmentFiles } from './services/upload.service'
+import { ResourceLinksEditor } from './components/ResourceLinksEditor'
 import { isRemoteClubConfigEnabled } from './services/club-config.service'
 import { listMyProjectJoinRequests, listOwnedProjectJoinRequests, listProjectJoinRequests, reviewProjectJoinRequest, submitProjectJoinRequest, type ProjectJoinRequest } from './services/project.service'
 import { competitionDateLabel, competitionNextMilestone, competitionStage, getCompetitionReminder, setCompetitionReminder } from './services/competition.service'
@@ -91,8 +93,9 @@ import { listAllInterviewReviewQueue, listMyInterviewSubmissions } from './servi
 import { submitPrompt } from './services/prompt.service'
 import { deleteAllReadMyNotifications, deleteMyNotification, getMyUnreadNotificationCount, listMyNotifications, markAllMyNotificationsRead, markMyNotificationRead, type ServerNotification } from './services/notifications.service'
 import { useAuth } from './services/auth.context'
-import type { AIMessage, AnnouncementCategory, Citation, CompetitionEvent, ContributionSubmission, ContentCategory, InterviewExperience, InterviewSubmission, LearningNode, Project, ProjectCategory, PromptTemplate, Resource, ResourceAttachment } from './types'
+import type { AIMessage, AnnouncementCategory, Citation, CompetitionEvent, ContributionSubmission, ContentCategory, InterviewExperience, InterviewSubmission, LearningNode, Project, ProjectCategory, PromptTemplate, Resource, ResourceAttachment, ResourceLink } from './types'
 import { PromptSubmissionModal } from './components/prompt-modals'
+import ResourceMarkdown from './components/ResourceMarkdown'
 import { InterviewPage, InterviewSubmissionRows } from './components/interviews'
 import { TurnstileWidget } from './components/turnstile-widget'
 import { ExpandedHomePage } from './components/home/ExpandedHomePage'
@@ -565,7 +568,7 @@ function ContributionSubmissionModal({ onClose, onSubmitted }: { onClose: () => 
   const [accessMode, setAccessMode] = useState<'external_link' | 'attachment' | 'article'>('external_link')
   const [tags, setTags] = useState('')
   const [visibility, setVisibility] = useState<'public' | 'members' | 'contributors'>('members')
-  const [resourceUrl, setResourceUrl] = useState('')
+  const [links, setLinks] = useState<ResourceLink[]>([])
   const [content, setContent] = useState('')
   const [uploadedAttachments, setUploadedAttachments] = useState<ResourceAttachment[]>([])
   const [uploadingAttachments, setUploadingAttachments] = useState(false)
@@ -598,14 +601,16 @@ function ContributionSubmissionModal({ onClose, onSubmitted }: { onClose: () => 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!title.trim() || !description.trim()) { setError('请填写资料标题和说明'); return }
-    if (accessMode === 'external_link' && !resourceUrl.trim()) { setError('请填写可访问的资源链接'); return }
+    const resourceLinks = links.filter((link) => link.title.trim() || link.url.trim() || link.description?.trim()).map((link) => ({ title: link.title.trim(), url: link.url.trim(), description: link.description?.trim() || undefined }))
+    if (accessMode === 'external_link' && !resourceLinks.length) { setError('请至少添加一个外部链接'); return }
+    if (accessMode === 'external_link' && resourceLinks.some((link) => !link.title || !link.url)) { setError('请填写每条链接的名称和地址'); return }
     if (accessMode === 'attachment' && !uploadedAttachments.length) { setError('请至少上传一个附件'); return }
     if (uploadingAttachments) { setError('附件上传完成后再提交'); return }
     if (accessMode === 'article' && !content.trim()) { setError('请填写站内阅读正文'); return }
     setSubmitting(true)
     setError('')
     try {
-      await createContributionSubmission({ submitterId: user.id, submitterName: user.name, title: title.trim(), description: description.trim(), category, resourceType, accessMode, tags: tags.split(/[,，]/).map((item) => item.trim()).filter(Boolean), visibility, resourceUrl: resourceUrl.trim() || undefined, attachments: accessMode === 'attachment' ? uploadedAttachments : undefined, content: content.trim() || undefined })
+      await createContributionSubmission({ submitterId: user.id, submitterName: user.name, title: title.trim(), description: description.trim(), category, resourceType, accessMode, tags: tags.split(/[,，]/).map((item) => item.trim()).filter(Boolean), visibility, resourceUrl: accessMode === 'external_link' ? resourceLinks[0]?.url : undefined, links: accessMode === 'external_link' ? resourceLinks : undefined, attachments: accessMode === 'attachment' ? uploadedAttachments : undefined, content: content.trim() || undefined })
       setSuccess('投稿已提交，管理员审核通过后会进入资源库。')
       onSubmitted?.()
       window.setTimeout(onClose, 1400)
@@ -616,7 +621,7 @@ function ContributionSubmissionModal({ onClose, onSubmitted }: { onClose: () => 
     }
   }
 
-  return <div className="admin-modal-scrim contribution-modal-scrim" role="presentation" onClick={onClose}><section className="admin-editor-modal contribution-modal" role="dialog" aria-modal="true" aria-labelledby="contribution-title" onClick={(event) => event.stopPropagation()}><div className="admin-modal-head"><div><p className="eyebrow">RESOURCE / SUBMIT</p><h2 id="contribution-title">贡献一份资料</h2><p>提交的链接、附件或正文会原样进入审核，审核通过后才公开。</p></div><button className="icon-button small" onClick={onClose} aria-label="关闭投稿窗口"><X size={16} /></button></div><form className="admin-editor-form" onSubmit={submit}><label><span>资料标题</span><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例如：FastAPI 数据库连接笔记" autoFocus /></label><div className="admin-editor-form-grid"><label><span>资料分类</span><select value={category} onChange={(event) => setCategory(event.target.value)}>{resourceCategories.filter((item) => item.enabled).map((item) => <option key={item.id} value={item.key}>{item.label}</option>)}</select></label><label><span>资源类型</span><select value={resourceType} onChange={(event) => setResourceType(event.target.value as typeof resourceType)}><option value="article">文档 / 文章</option><option value="video">视频</option><option value="course">课程</option><option value="link">链接</option><option value="tool">工具</option><option value="repository">代码仓库</option><option value="file">文件</option></select></label></div><div className="admin-editor-form-grid"><label><span>提供方式</span><select value={accessMode} onChange={(event) => setAccessMode(event.target.value as typeof accessMode)}><option value="external_link">外部链接</option><option value="attachment">上传附件</option><option value="article">站内阅读</option></select></label><label><span>建议可见范围</span><select value={visibility} onChange={(event) => setVisibility(event.target.value as typeof visibility)}><option value="public">全站公开</option><option value="members">成员可见</option><option value="contributors">组员可见</option></select></label></div><label><span>资料说明</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={4} placeholder="说明这份资料解决什么问题，适合谁使用" /></label>{accessMode === 'external_link' && <label><span>资源链接</span><input type="url" value={resourceUrl} onChange={(event) => setResourceUrl(event.target.value)} placeholder="https://..." /></label>}{accessMode === 'attachment' && <div className="contribution-file-field"><label htmlFor="resource-contribution-files"><span>资源附件</span></label><input id="resource-contribution-files" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.txt,.md,.png,.jpg,.jpeg,.webp" multiple disabled={uploadingAttachments || apiConfig.contentSource !== 'api'} onChange={uploadSelectedFiles} /><small>{uploadingAttachments ? '正在上传附件，请稍候…' : apiConfig.contentSource === 'api' ? '最多 ' + MAX_RESOURCE_ATTACHMENTS + ' 个文件，单个不超过 20 MB' : '连接后端后可上传文件'}</small>{uploadError && <small className="admin-upload-error">{uploadError}</small>}{uploadedAttachments.length > 0 && <ul className="resource-upload-list">{uploadedAttachments.map((attachment, index) => <li className="resource-upload-item" key={attachment.assetId ?? attachment.url}><span><FileText size={14} /><span>{attachment.name}<small>{(attachment.size ?? 0) > 0 ? ((attachment.size ?? 0) / 1024 / 1024).toFixed(1) + ' MB' : '已上传'}</small></span></span><button type="button" className="admin-link-button admin-danger-link" onClick={() => setUploadedAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))}>移除</button></li>)}</ul>}</div>}{accessMode === 'article' && <label><span>站内正文</span><textarea value={content} onChange={(event) => setContent(event.target.value)} rows={8} placeholder="输入将由后端保存的 Markdown 或纯文本正文" /></label>}<label><span>标签（逗号分隔）</span><input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="FastAPI, 数据库, 入门" /></label>{error && <p className="login-error" role="alert">{error}</p>}{success && <p className="login-success" role="status">{success}</p>}<div className="admin-modal-foot"><span>投稿人：{user.name} · {roleLabels[user.role] ?? user.role}</span><div><button type="button" className="secondary-button admin-small-button" onClick={onClose}>取消</button><button type="submit" className="primary-button admin-small-button" disabled={submitting}>{submitting ? '提交中…' : '提交审核'}</button></div></div></form></section></div>
+  return <div className="admin-modal-scrim contribution-modal-scrim" role="presentation" onClick={onClose}><section className="admin-editor-modal contribution-modal" role="dialog" aria-modal="true" aria-labelledby="contribution-title" onClick={(event) => event.stopPropagation()}><div className="admin-modal-head"><div><p className="eyebrow">RESOURCE / SUBMIT</p><h2 id="contribution-title">贡献一份资料</h2><p>提交的链接、附件或正文会原样进入审核，审核通过后才公开。</p></div><button className="icon-button small" onClick={onClose} aria-label="关闭投稿窗口"><X size={16} /></button></div><form className="admin-editor-form" onSubmit={submit}><label><span>资料标题</span><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例如：FastAPI 数据库连接笔记" autoFocus /></label><div className="admin-editor-form-grid"><label><span>资料分类</span><select value={category} onChange={(event) => setCategory(event.target.value)}>{resourceCategories.filter((item) => item.enabled).map((item) => <option key={item.id} value={item.key}>{item.label}</option>)}</select></label><label><span>资源类型</span><select value={resourceType} onChange={(event) => setResourceType(event.target.value as typeof resourceType)}><option value="article">文档 / 文章</option><option value="video">视频</option><option value="course">课程</option><option value="link">链接</option><option value="tool">工具</option><option value="repository">代码仓库</option><option value="file">文件</option></select></label></div><div className="admin-editor-form-grid"><label><span>提供方式</span><select value={accessMode} onChange={(event) => setAccessMode(event.target.value as typeof accessMode)}><option value="external_link">外部链接</option><option value="attachment">上传附件</option><option value="article">站内阅读</option></select></label><label><span>建议可见范围</span><select value={visibility} onChange={(event) => setVisibility(event.target.value as typeof visibility)}><option value="public">全站公开</option><option value="members">成员可见</option><option value="contributors">组员可见</option></select></label></div><label><span>资料说明</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={4} placeholder="说明这份资料解决什么问题，适合谁使用" /></label>{accessMode === 'external_link' && <ResourceLinksEditor value={links} onChange={setLinks} />}{accessMode === 'attachment' && <div className="contribution-file-field"><label htmlFor="resource-contribution-files"><span>资源附件</span></label><input id="resource-contribution-files" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.txt,.md,.png,.jpg,.jpeg,.webp" multiple disabled={uploadingAttachments || apiConfig.contentSource !== 'api'} onChange={uploadSelectedFiles} /><small>{uploadingAttachments ? '正在上传附件，请稍候…' : apiConfig.contentSource === 'api' ? '最多 ' + MAX_RESOURCE_ATTACHMENTS + ' 个文件，单个不超过 20 MB' : '连接后端后可上传文件'}</small>{uploadError && <small className="admin-upload-error">{uploadError}</small>}{uploadedAttachments.length > 0 && <ul className="resource-upload-list">{uploadedAttachments.map((attachment, index) => <li className="resource-upload-item" key={attachment.assetId ?? attachment.url}><span><FileText size={14} /><span>{attachment.name}<small>{(attachment.size ?? 0) > 0 ? ((attachment.size ?? 0) / 1024 / 1024).toFixed(1) + ' MB' : '已上传'}</small></span></span><button type="button" className="admin-link-button admin-danger-link" onClick={() => setUploadedAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))}>移除</button></li>)}</ul>}</div>}{accessMode === 'article' && <label><span>站内正文</span><textarea value={content} onChange={(event) => setContent(event.target.value)} rows={8} placeholder="输入将由后端保存的 Markdown 或纯文本正文" /></label>}<label><span>标签（逗号分隔）</span><input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="FastAPI, 数据库, 入门" /></label>{error && <p className="login-error" role="alert">{error}</p>}{success && <p className="login-success" role="status">{success}</p>}<div className="admin-modal-foot"><span>投稿人：{user.name} · {roleLabels[user.role] ?? user.role}</span><div><button type="button" className="secondary-button admin-small-button" onClick={onClose}>取消</button><button type="submit" className="primary-button admin-small-button" disabled={submitting}>{submitting ? '提交中…' : '提交审核'}</button></div></div></form></section></div>
 }
 
 function AccountClosureModal({ onClose, onClosed }: { onClose: () => void; onClosed: () => void }) {
@@ -1852,9 +1857,10 @@ function LearningPage({ onOpenProject, initialRouteId }: { onOpenProject: (proje
 }
 
 function LearningNodeCard({ node: learningNode, index, onOpenProject }: { node: LearningNode; index: number; onOpenProject: (project: Project) => void }) {
-  const { data: { projects } } = useContent()
+  const { data: { projects, resources } } = useContent()
   const { user } = useAuth()
   const nodeProjects = (learningNode.projectIds ?? []).map((id) => projects.find((project) => project.id === id)).filter((project): project is Project => Boolean(project)).filter((project) => canViewContent(user, project.visibility))
+  const nodeResources = (learningNode.resourceIds ?? []).map((id) => resources.find((resource) => resource.id === id)).filter((resource): resource is Resource => Boolean(resource)).filter((resource) => canViewContent(user, resource.visibility) && (!resource.status || resource.status === 'published'))
   const node = { ...learningNode, projects: nodeProjects.length }
   const resourceLinks = node.resourceLinks ?? []
   const videoLinks = node.videoLinks ?? (node.videoTitle || node.videoUrl ? [{ id: `legacy-video-${node.id}`, title: node.videoTitle ?? '', url: node.videoUrl ?? '' }] : [])
@@ -1863,10 +1869,12 @@ function LearningNodeCard({ node: learningNode, index, onOpenProject }: { node: 
     <div className="node-card">
       <div className="node-card-heading"><div><span className="node-status">学习节点 {String(index + 1).padStart(2, '0')}</span><h3>{node.title}</h3></div><span className="node-duration"><Clock3 size={13} /> {node.duration}</span></div>
       {node.description && <p>{node.description}</p>}
-      {(nodeProjects.length > 0 || resourceLinks.length > 0 || videoLinks.length > 0) && <div className="node-learning-links">
+      {(nodeProjects.length > 0 || nodeResources.length > 0 || resourceLinks.length > 0 || videoLinks.length > 0 || (node.cloudDriveLinks?.length ?? 0) > 0) && <div className="node-learning-links">
         {nodeProjects.map((project) => <button type="button" key={project.id} className="learning-link-chip project-entry" onClick={() => onOpenProject(project)} aria-label={`打开项目：${project.name}`} title={`打开项目：${project.name}`}><Rocket size={13} /><span>{project.name}</span><ArrowUpRight size={12} /></button>)}
+        {nodeResources.map((resource) => <a className="learning-link-chip library-resource-entry" key={resource.id} href={`#/resources/${encodeURIComponent(resource.id)}`} aria-label={`打开资源库资料：${resource.title}`} title={`打开资源库资料：${resource.title}`}><Folder size={13} /><span>{resource.title}</span><ArrowUpRight size={12} /></a>)}
         {resourceLinks.map((link) => { const url = safeLink(link.url); const title = link.title.trim() || '打开文档'; return url && <a className="learning-link-chip" key={link.id} href={url} target="_blank" rel="noopener noreferrer" aria-label={`打开文档：${title}`} title={`打开文档：${title}`}><FileText size={13} /><span>{title}</span><ExternalLink size={12} /></a> })}
         {videoLinks.map((link) => { const url = safeLink(link.url); const title = link.title.trim() || '观看教程'; return url && <a className="learning-link-chip" key={link.id} href={url} target="_blank" rel="noopener noreferrer" aria-label={`打开视频：${title}`} title={`打开视频：${title}`}><PlayCircle size={13} /><span>{title}</span><ExternalLink size={12} /></a> })}
+        {(node.cloudDriveLinks ?? []).map((link) => { const url = safeLink(link.url); const title = link.title.trim() || '打开网盘资料'; return url && <a className="learning-link-chip learning-drive-link" key={link.id} href={url} target="_blank" rel="noopener noreferrer" aria-label={`打开网盘资料：${title}`} title={link.description ? `${title} · ${link.description}` : title}><CloudDownload size={13} /><span>{title}</span>{link.description?.trim() && <small>{link.description}</small>}<ExternalLink size={12} /></a> })}
       </div>}
     </div>
   </motion.div>
@@ -2467,6 +2475,25 @@ function resolveResourceFileUrl(value?: string) {
   }
 }
 
+function resolveResourceDownloadUrl(attachment: ResourceAttachment) {
+  const uploadedAssetId = attachment.assetId || (() => {
+    try {
+      const fileUrl = new URL(attachment.url, apiConfig.baseUrl || window.location.origin)
+      return fileUrl.pathname.split('/').pop()
+    } catch {
+      return undefined
+    }
+  })()
+
+  // 上传文件通过同源 API 路由返回 attachment 响应，避免跨域时浏览器忽略 download 属性。
+  if (uploadedAssetId && /^[a-f0-9]{32}\.(png|jpg|webp)$/i.test(uploadedAssetId)) {
+    const filename = new URLSearchParams({ filename: attachment.name })
+    return `/api/uploads/${encodeURIComponent(uploadedAssetId)}/download?${filename.toString()}`
+  }
+
+  return resolveResourceFileUrl(attachment.url)
+}
+
 function resourceFileKind(attachment: ResourceAttachment, url?: string) {
   const value = `${attachment.mimeType ?? ''} ${attachment.name} ${url ?? ''}`.toLowerCase()
   if (value.includes('application/pdf') || /\.pdf(?:$|[?#])/.test(value)) return 'pdf'
@@ -2488,7 +2515,8 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
   const [previewIndex, setPreviewIndex] = useState(0)
   const [viewRecorded, setViewRecorded] = useState(false)
   const [resourceViews, setResourceViews] = useState<number | undefined>(resource?.views)
-  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle')
+  const [copiedLinkIndex, setCopiedLinkIndex] = useState<number | null>(null)
+  const [copyErrorLinkIndex, setCopyErrorLinkIndex] = useState<number | null>(null)
 
   useEffect(() => {
     setResourceViews(resource?.views)
@@ -2499,10 +2527,13 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
     void recordResourceView(resource.id).then(setResourceViews).catch(() => setViewRecorded(false))
   }, [recordResourceView, resource, user, viewRecorded])
   useEffect(() => {
-    if (copyState === 'idle') return undefined
-    const timer = window.setTimeout(() => setCopyState('idle'), 1800)
+    if (copiedLinkIndex === null && copyErrorLinkIndex === null) return undefined
+    const timer = window.setTimeout(() => {
+      setCopiedLinkIndex(null)
+      setCopyErrorLinkIndex(null)
+    }, 1800)
     return () => window.clearTimeout(timer)
-  }, [copyState])
+  }, [copiedLinkIndex, copyErrorLinkIndex])
 
   if (!resource && loading) return <div className="page resource-detail-page"><div className="resource-detail-state"><RefreshCw size={18} className="spin" /><strong>正在加载资源</strong><span>正在读取资源详情。</span></div></div>
   if (!resource) return <div className="page resource-detail-page"><div className="resource-detail-state"><Folder size={22} /><strong>找不到这份资源</strong><span>资源可能已下架，或链接不再有效。</span><button type="button" className="secondary-button" onClick={() => onNavigate('#/resources')}><ChevronLeft size={15} /> 返回资源库</button></div></div>
@@ -2518,18 +2549,24 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
   const activeAttachment = attachments[previewIndex] ?? attachments[0]
   const activeFileUrl = activeAttachment ? resolveResourceFileUrl(activeAttachment.url) : undefined
   const activeFileKind = activeAttachment ? resourceFileKind(activeAttachment, activeFileUrl) : 'file'
-  const externalUrl = resolveResourceFileUrl(resource.resourceUrl)
+  const resourceLinkSource = resource.links?.some((link) => link.url.trim()) ? resource.links : resource.resourceUrl ? [{ title: '外部资源', url: resource.resourceUrl }] : resource.links ?? []
+  const externalLinks = resourceLinkSource.flatMap((link) => {
+    const url = resolveResourceFileUrl(link.url)
+    return url ? [{ ...link, resolvedUrl: url }] : []
+  })
   const views = Math.max(0, Math.trunc(resourceViews ?? resource.views ?? 0))
   const backToList = () => {
     if (canReturnToList && window.history.length > 1) window.history.back()
     else onNavigate('#/resources')
   }
-  const copyResourceLink = async () => {
+  const copyExternalLink = async (index: number, url: string) => {
     try {
-      await navigator.clipboard.writeText(window.location.href)
-      setCopyState('copied')
+      await navigator.clipboard.writeText(url)
+      setCopiedLinkIndex(index)
+      setCopyErrorLinkIndex(null)
     } catch {
-      setCopyState('error')
+      setCopiedLinkIndex(null)
+      setCopyErrorLinkIndex(index)
     }
   }
 
@@ -2542,39 +2579,33 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
         <p>{resource.description}</p>
         <div className="resource-detail-tags"><Tag tone="blue">{category}</Tag>{resource.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}</div>
       </div>
-      <div className="resource-detail-primary-actions">
-        {accessMode === 'external_link' && externalUrl && <a className="primary-button" href={externalUrl} target="_blank" rel="noreferrer"><ExternalLink size={15} /> 打开资源</a>}
-        {accessMode === 'attachment' && activeAttachment && activeFileUrl && <a className="primary-button" href={activeFileUrl} download={activeAttachment.name}><Download size={15} /> 下载文件</a>}
-        {copyState === 'copied' && <span className="resource-detail-copy-status" role="status">链接已复制</span>}
-        {copyState === 'error' && <span className="resource-detail-copy-status is-error" role="status">复制失败</span>}
-        <button type="button" className="secondary-button" onClick={() => void copyResourceLink()}><Copy size={14} /> 复制链接</button>
-      </div>
     </header>
 
     <div className="resource-detail-layout">
       <main className="resource-detail-main">
         {accessMode === 'article' ? <section className="resource-reader" aria-label="资源正文">
           <div className="resource-reader-head"><span><BookOpen size={15} /> 正文</span><small>{resource.content ? `${resource.content.length.toLocaleString()} 字符` : '内容待补充'}</small></div>
-          {resource.content ? <article className="resource-reader-content">{resource.content}</article> : <div className="resource-detail-state compact"><FileText size={20} /><strong>正文暂未提供</strong><span>请查看资源说明，或联系投稿人补充内容。</span></div>}
+          {resource.content ? <article className="resource-reader-content"><ResourceMarkdown content={resource.content} /></article> : <div className="resource-detail-state compact"><FileText size={20} /><strong>正文暂未提供</strong><span>请查看资源说明，或联系投稿人补充内容。</span></div>}
         </section> : accessMode === 'attachment' ? <section className="resource-file-viewer" aria-label="资源文件预览">
-          <div className="resource-file-viewer-head"><span>{activeAttachment?.name ?? '资源附件'}</span><span>{activeAttachment?.size ? `${(activeAttachment.size / 1024 / 1024).toFixed(1)} MB` : activeAttachment?.mimeType || '附件预览'}</span></div>
+          <div className="resource-file-viewer-head"><span>{activeAttachment?.name ?? '资源附件'}</span><span>{activeAttachment?.size ? `${(activeAttachment.size / 1024 / 1024).toFixed(1)} MB` : activeAttachment?.mimeType || '附件预览'}</span>{activeAttachment && activeFileUrl && <a className="resource-file-download" href={resolveResourceDownloadUrl(activeAttachment)} download={activeAttachment.name}><Download size={14} /> 下载此文件</a>}</div>
           {activeAttachment && activeFileUrl && activeFileKind === 'image' && <div className="resource-image-stage"><img src={activeFileUrl} alt={activeAttachment.name} /></div>}
           {activeAttachment && activeFileUrl && activeFileKind === 'pdf' && <iframe className="resource-pdf-frame" src={activeFileUrl} title={`${resource.title} PDF 预览`} />}
-          {activeAttachment && (!activeFileUrl || activeFileKind === 'file') && <div className="resource-file-fallback"><span><FileText size={25} /></span><strong>{activeAttachment.name}</strong><small>{activeAttachment.mimeType || resource.type}{activeAttachment.size ? ` · ${(activeAttachment.size / 1024 / 1024).toFixed(1)} MB` : ''}</small>{activeFileUrl ? <a className="secondary-button" href={activeFileUrl} download={activeAttachment.name}><Download size={14} /> 下载并查看</a> : <small>文件地址暂不可用，请联系管理员检查资源附件。</small>}</div>}
+          {activeAttachment && (!activeFileUrl || activeFileKind === 'file') && <div className="resource-file-fallback"><span><FileText size={25} /></span><strong>{activeAttachment.name}</strong><small>{activeFileUrl ? '此文件格式暂不支持网页预览，请使用上方按钮下载后查看。' : '文件地址暂不可用，请联系管理员检查资源附件。'}</small></div>}
           {!activeAttachment && <div className="resource-file-fallback"><span><Folder size={25} /></span><strong>尚未添加资源文件</strong><small>请查看资源说明，或联系管理员补充附件。</small></div>}
           {attachments.length > 1 && <div className="resource-attachment-list" aria-label="资源附件列表">{attachments.map((attachment, index) => <button type="button" key={`${attachment.assetId ?? attachment.id ?? attachment.url}-${index}`} className={index === previewIndex ? 'active' : ''} onClick={() => setPreviewIndex(index)}><FileText size={15} /><span><strong>{attachment.name}</strong><small>{attachment.mimeType || '附件'}{attachment.size ? ` · ${(attachment.size / 1024 / 1024).toFixed(1)} MB` : ''}</small></span>{index === previewIndex && <Check size={14} />}</button>)}</div>}
-        </section> : <section className="resource-link-destination">
-          <div className="resource-link-mark"><ExternalLink size={21} /></div><div><p className="eyebrow">EXTERNAL RESOURCE</p><h2>资源托管在外部网站</h2><p>为保障来源网站的安全与兼容性，这里不会直接嵌入第三方页面。打开后将在新标签页访问。</p>{externalUrl ? <a className="primary-button" href={externalUrl} target="_blank" rel="noreferrer"><ExternalLink size={15} /> 打开外部资源</a> : <span className="resource-link-unavailable">当前资源尚未配置有效链接</span>}</div>
+        </section> : <section className="resource-link-destination" aria-labelledby="resource-link-heading">
+          <div className="resource-link-section-head"><div className="resource-link-mark"><ExternalLink size={19} /></div><div><p className="eyebrow">LINKS / {externalLinks.length}</p><h2 id="resource-link-heading">可用链接</h2><p>每条链接都可以单独打开或复制。</p></div></div>
+          {externalLinks.length ? <div className="resource-link-list">{externalLinks.map((link, index) => <article className="resource-link-item" key={`${link.title}-${index}`}>
+            <div className="resource-link-item-copy"><span className="resource-link-item-domain">{new URL(link.resolvedUrl).host}</span><strong>{link.title || '打开外部资源'}</strong>{link.description && <small>{link.description}</small>}</div>
+            <div className="resource-link-item-actions"><a className="resource-link-open" href={link.resolvedUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={14} /> 打开链接</a><button type="button" className="resource-link-copy" aria-live="polite" onClick={() => void copyExternalLink(index, link.resolvedUrl)}><Copy size={13} /> {copiedLinkIndex === index ? '已复制' : copyErrorLinkIndex === index ? '复制失败' : '复制此链接'}</button></div>
+          </article>)}</div> : <span className="resource-link-unavailable">当前资源尚未配置有效链接</span>}
         </section>}
-        {accessMode !== 'article' && resource.description && <section className="resource-detail-description"><p className="eyebrow">ABOUT THIS RESOURCE</p><h2>资源说明</h2><p>{resource.description}</p></section>}
       </main>
 
       <aside className="resource-detail-aside">
         <div className="resource-detail-aside-head"><span>资源信息</span><FavoriteButton targetType="resource" targetId={resource.id} initialCount={resource.favoriteCount} initialFavorited={resource.isFavorited} /></div>
         <dl className="resource-detail-facts"><div><dt>贡献者</dt><dd>{resource.author || '小组成员'}</dd></div><div><dt>最近更新</dt><dd>{updatedLabel}</dd></div><div><dt>浏览</dt><dd><Eye size={14} /> {views.toLocaleString()}</dd></div><div><dt>收藏</dt><dd><Star size={14} /> {(resource.favoriteCount ?? 0).toLocaleString()}</dd></div><div><dt>资源类型</dt><dd>{resource.type}</dd></div><div><dt>访问方式</dt><dd>{accessMode === 'article' ? '站内阅读' : accessMode === 'attachment' ? '站内文件' : '外部链接'}</dd></div></dl>
         {resource.sourceName && <div className="resource-detail-source"><span>来源</span><strong>{resource.sourceName}</strong></div>}
-        {accessMode === 'external_link' && externalUrl && <a className="resource-detail-side-link" href={externalUrl} target="_blank" rel="noreferrer"><ExternalLink size={14} /> 前往资源网站 <ArrowUpRight size={13} /></a>}
-        {accessMode === 'attachment' && activeAttachment && activeFileUrl && <a className="resource-detail-side-link" href={activeFileUrl} download={activeAttachment.name}><Download size={14} /> 下载当前文件 <ArrowUpRight size={13} /></a>}
       </aside>
     </div>
   </div>
