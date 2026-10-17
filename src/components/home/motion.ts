@@ -41,6 +41,14 @@ export const SHIFT = {
  *  它同时也是「内容比标题晚多久出现」—— 调它就能把上滑整体往后推。 */
 export const STAGGER = 0.09
 
+/**
+ * 首屏元素的统一起手延迟（秒）——加载页遮罩开始淡出后，再等这么久首屏才起手。
+ * 遮罩 600ms 淡出、onComplete 与其同一刻触发，元素直接起手会被遮罩盖掉大半；
+ * 首屏各元素的 delay 都在这个基准上叠加（原链 0 / 0.18 / 0.34 / 0.5 整体后移）。
+ * 只给首屏用，不映射 CSS 的 --motion-* 变量。
+ */
+export const HERO_ENTER_DELAY = 0.5
+
 export interface EnterOptions {
   /** 进场延迟（秒）；同组内按阅读顺序以 STAGGER 递增 */
   delay?: number

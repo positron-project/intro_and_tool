@@ -131,6 +131,21 @@ async def add_project_favorite_info(
     return response
 
 
+async def build_project_response(
+    db: AsyncSession,
+    project: Project,
+) -> ProjectResponse:
+    """返回统一成员 ID 与准确成员数，兼容尚未编辑的旧项目数据。"""
+
+    response = ProjectResponse.model_validate(project)
+    response.member_ids = await normalize_project_member_ids(
+        db,
+        project.member_ids,
+    )
+    response.member_count = len(response.member_ids)
+    return response
+
+
 @router.get(
     "",
     response_model=list[ProjectResponse],
