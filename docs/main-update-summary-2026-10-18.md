@@ -73,6 +73,8 @@
 - 前端通过 `VITE_TURNSTILE_ENABLED` 控制是否显示 Turnstile 控件，后端通过 `TURNSTILE_ENABLED` 控制是否执行服务端校验。
 - 原有本地未提交修改已保留；未跟踪的 IDE 配置和本地环境文件没有写入本总结，也没有提交敏感值。
 
+> 说明：本次推送包含主分支整合提交和本总结文档。数据库、Turnstile 和本地开发开关的补充修改仍保留在当前工作区，尚未提交到远程分支。
+
 ## 四、后续检查建议
 
 1. 安装 `backend/OS_club/requirements.txt` 中的依赖。
