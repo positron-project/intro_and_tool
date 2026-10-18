@@ -2,8 +2,8 @@
 
 **整理日期：** 2026-10-18  
 **远程主分支：** `origin/main`  
-**主分支最新提交：** `c101406`（`docs: update main branch change log`）
-**主分支推送结果：** `b42ecda..c101406` 快进更新成功
+**主分支代码基准提交：** `c7ba098`（`feat: authenticate external email API requests`）
+**远程分支同步状态：** `main` 与 `feature/email-api-sending` 已同步，文档随同步提交更新
 
 ## 一、主分支近期更新
 
@@ -79,7 +79,7 @@
 
 ## 三、本次整合结果
 
-- `origin/main` 已从 `b42ecda` 快进到 `c101406`；功能分支 `feature/email-api-sending` 与主分支指向同一提交。
+- `origin/main` 已从 `b42ecda` 快进到包含 `c7ba098` 的同步版本；功能分支 `feature/email-api-sending` 与主分支指向同一版本。
 - 主分支的新首页、资源库、学习路线、管理员编辑器和测试文件已进入当前分支。
 - 邮件验证码发送已改为带 Bearer API Key 的第三方邮件服务调用，默认发件人仍为“南航计算机科技小组 <no_reply@stcnchu.com>”。
 - 本地数据库配置改为从 `backend/.env` 或 `backend/OS_club/.env` 的 `DATABASE_URL` 读取，不再把数据库密码写死在代码中。
@@ -90,7 +90,7 @@
 
 ## 四、完整提交记录
 
-从原主分支 `b42ecda` 到当前主分支 `c101406` 的更新链如下：
+从原主分支 `b42ecda` 到邮件 API 鉴权代码提交 `c7ba098` 的更新链如下：
 
 | 提交 | 类型 | 内容 |
 | --- | --- | --- |
@@ -103,7 +103,7 @@
 | `c7ba098` | 功能 | 为邮件 API 请求增加 Bearer API Key 鉴权 |
 | `c101406` | 文档 | 更新主分支变更记录，补充鉴权和完整提交链 |
 
-上述提交已推送到 `origin/main` 和 `origin/feature/email-api-sending`。
+上述业务提交和文档提交已推送到 `origin/main` 和 `origin/feature/email-api-sending`；后续文档同步提交只修正本记录，不改变业务代码。
 
 ## 五、后续检查建议
 
