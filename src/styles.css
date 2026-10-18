@@ -8649,3 +8649,31 @@ html[data-theme='dark'] .visual-cover-label {
 .avatar > img { width: 100%; height: 100%; display: block; border-radius: inherit; object-fit: cover; }
 
 .avatar > img { width: 100%; height: 100%; display: block; border-radius: inherit; object-fit: cover; }
+
+/* Keep node-level add/delete actions next to the learning stage they affect. */
+.admin-route-node { grid-template-columns: 30px minmax(0, 1fr); }
+.learning-node-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-bottom: 9px; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
+.learning-node-actions .admin-link-button { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 7px; border-radius: 6px; }
+.learning-node-actions .admin-link-button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+@media (max-width: 560px) {
+  .admin-route-node { grid-template-columns: 25px minmax(0, 1fr); }
+  .learning-node-actions { justify-content: flex-start; gap: 4px; }
+}
+
+.admin-project-milestone-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: -2px; }
+.admin-project-milestone-actions > span { color: var(--text-muted); font-family: var(--mono); font-size: 9px; font-weight: 700; }
+.admin-project-milestone-actions > div { display: flex; align-items: center; gap: 10px; }
+.admin-project-milestone-actions .admin-link-button { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 7px; border-radius: 6px; }
+.admin-project-milestone-actions .admin-link-button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+@media (max-width: 560px) {
+  .admin-project-milestone-actions > div { gap: 4px; }
+  .admin-project-milestone-actions .admin-link-button { padding-inline: 4px; font-size: 8px; }
+}
+.admin-project-member-search { width: 100%; margin: 8px 0 7px; }
+.admin-project-member-search-clear { display: inline-flex; width: 22px; height: 22px; flex: 0 0 auto; align-items: center; justify-content: center; color: var(--text-muted); background: transparent; border-radius: 5px; }
+.admin-project-member-search-clear:hover { color: var(--text); background: var(--surface); }
+.admin-project-member-empty { grid-column: 1 / -1; padding: 8px; color: var(--text-muted); font-size: 9px; }
+.admin-editor-form label.admin-project-member-search { flex-direction: row; align-items: center; gap: 7px; min-height: 32px; padding: 0 9px; }
+.admin-editor-form .admin-project-member-search input,
+.admin-editor-form .admin-project-member-search input:focus { width: 100%; min-width: 0; height: auto; padding: 0; border: 0; border-radius: 0; outline: 0; background: transparent; box-shadow: none; }
+.admin-project-member-search > svg { flex: 0 0 auto; }

@@ -135,9 +135,24 @@ function collectionIcon(kind: AdminCollectionKind) {
 
 function ProjectDetailEditor({ draft, update, members }: { draft: CollectionDraft; update: (patch: Partial<CollectionDraft>) => void; members: Member[] }) {
   const [uploadError, setUploadError] = React.useState('')
+  const [memberQuery, setMemberQuery] = React.useState('')
   const updateMilestone = (id: string, patch: Partial<ProjectMilestone>) => update({ milestones: draft.milestones.map((item) => item.id === id ? { ...item, ...patch } : item) })
-  const addMilestone = () => update({ milestones: [...draft.milestones, { id: `milestone-${Date.now()}`, year: String(new Date().getFullYear()), title: '', summary: '', status: '计划中' }] })
-  const removeMilestone = (id: string) => update({ milestones: draft.milestones.filter((item) => item.id !== id) })
+  const createMilestone = (): ProjectMilestone => ({ id: `milestone-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, year: String(new Date().getFullYear()), title: '', summary: '', status: '计划中' })
+  const addMilestone = () => update({ milestones: [...draft.milestones, createMilestone()] })
+  const addMilestoneAfter = (id: string) => {
+    const index = draft.milestones.findIndex((item) => item.id === id)
+    if (index < 0) return
+    const milestones = [...draft.milestones]
+    milestones.splice(index + 1, 0, createMilestone())
+    update({ milestones })
+  }
+  const removeMilestone = (id: string) => {
+    const milestone = draft.milestones.find((item) => item.id === id)
+    if (!milestone) return
+    const hasContent = Boolean(milestone.title.trim() || milestone.summary.trim() || milestone.year !== String(new Date().getFullYear()) || (milestone.status && milestone.status !== '计划中'))
+    if (hasContent && !window.confirm(`确定删除“${milestone.title.trim() || milestone.year + ' 年阶段'}”吗？删除后需要保存项目才会生效。`)) return
+    update({ milestones: draft.milestones.filter((item) => item.id !== id) })
+  }
   const updateLog = (id: string, patch: Partial<ProjectLogEntry>) => update({ logs: draft.logs.map((item) => item.id === id ? { ...item, ...patch } : item) })
   const addLog = () => update({ logs: [...draft.logs, { id: `log-${Date.now()}`, date: new Date().toLocaleDateString('zh-CN'), title: '', detail: '', author: '', authorInitials: '' }] })
   const removeLog = (id: string) => update({ logs: draft.logs.filter((item) => item.id !== id) })
@@ -145,12 +160,14 @@ function ProjectDetailEditor({ draft, update, members }: { draft: CollectionDraf
     const memberIds = toggleProjectMember(draft.memberIds, member, members)
     update({ memberIds, members: String(memberIds.length) })
   }
+  const normalizedMemberQuery = memberQuery.trim().toLocaleLowerCase()
+  const filteredMembers = members.filter((member) => !normalizedMemberQuery || `${member.name} ${member.cohort} ${member.direction}`.toLocaleLowerCase().includes(normalizedMemberQuery))
   const uploadCover = async (event: React.ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; if (!isSupportedImage(file)) { setUploadError('请上传 PNG、JPG 或 WebP 图片，且大小不超过 10 MB。'); event.target.value = ''; return } setUploadError(''); if (apiConfig.contentSource === 'api') { try { const asset = await uploadAsset(file, { folder: 'projects', alt: draft.title.trim() || '项目封面' }); update({ coverImage: asset.url }); } catch (error) { setUploadError(error instanceof Error ? error.message : '封面上传失败，请稍后重试。') } finally { event.target.value = '' } return } const reader = new FileReader(); reader.onerror = () => setUploadError('封面读取失败，请重新选择文件。'); reader.onload = () => { update({ coverImage: String(reader.result) }); event.target.value = '' }; reader.readAsDataURL(file) }
   return <>
     <section className="admin-project-editor-section"><div className="admin-route-node-head"><div><p className="eyebrow">PROJECT PROFILE</p><h3>项目详情与入口</h3></div><span>公开页面同步</span></div><div className="admin-editor-form-grid"><label><span>项目地址标识</span><input value={draft.slug} onChange={(event) => update({ slug: event.target.value.replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase() })} placeholder="例如：ai-campus" /></label><label><span>GitHub 地址</span><input type="url" value={draft.githubUrl} onChange={(event) => update({ githubUrl: event.target.value })} placeholder="https://github.com/..." /></label></div><div className="admin-editor-form-grid"><label><span>项目文档地址</span><input type="url" value={draft.docsUrl} onChange={(event) => update({ docsUrl: event.target.value })} placeholder="https://... 或 #/resources/..." /></label><label><span>在线演示地址</span><input type="url" value={draft.demoUrl} onChange={(event) => update({ demoUrl: event.target.value })} placeholder="https://..." /></label></div><label><span>Issue / 反馈地址</span><input type="url" value={draft.issueUrl} onChange={(event) => update({ issueUrl: event.target.value })} placeholder="https://github.com/.../issues" /></label><label><span>项目完整介绍</span><textarea value={draft.intro} onChange={(event) => update({ intro: event.target.value })} rows={4} placeholder="介绍项目目标、解决的问题、使用方式和当前进展" /></label><div className="admin-project-cover-editor"><div className="admin-project-cover-preview">{draft.coverImage ? <img src={draft.coverImage} alt="项目封面预览" /> : <Rocket size={22} />}</div><div><strong>项目封面</strong><small>用于项目卡片与详情页，可上传 JPG、PNG 或 WebP。</small>{uploadError && <small className="admin-upload-error">{uploadError}</small>}<input id="admin-project-cover" className="admin-file-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={uploadCover} /><label className="secondary-button admin-small-button" htmlFor="admin-project-cover">{draft.coverImage ? '更换封面' : '上传封面'}</label>{draft.coverImage && <button type="button" className="admin-link-button admin-danger-link" onClick={() => update({ coverImage: '' })}>移除封面</button>}</div></div></section>
-    <section className="admin-project-editor-section"><div className="admin-route-node-head"><div><p className="eyebrow">PROJECT HISTORY</p><h3>项目族谱</h3></div><button type="button" className="secondary-button admin-small-button" onClick={addMilestone}><Plus size={14} /> 添加阶段</button></div><div className="admin-project-repeat-list">{draft.milestones.map((item) => <article className="admin-project-repeat-card" key={item.id}><div className="admin-editor-form-grid"><label><span>年份</span><input value={item.year} onChange={(event) => updateMilestone(item.id, { year: event.target.value })} placeholder="2026" /></label><label><span>阶段状态</span><select value={item.status ?? '计划中'} onChange={(event) => updateMilestone(item.id, { status: event.target.value as ProjectMilestone['status'] })}><option>已完成</option><option>进行中</option><option>计划中</option></select></label></div><label><span>阶段名称</span><input value={item.title} onChange={(event) => updateMilestone(item.id, { title: event.target.value })} placeholder="例如：Agent v3" /></label><label><span>阶段说明</span><input value={item.summary} onChange={(event) => updateMilestone(item.id, { summary: event.target.value })} placeholder="技术栈、产出或版本说明" /></label><button type="button" className="admin-link-button admin-danger-link" onClick={() => removeMilestone(item.id)}><Trash2 size={13} /> 删除阶段</button></article>)}{draft.milestones.length === 0 && <div className="admin-empty admin-project-repeat-empty"><Route size={18} /><span>还没有项目阶段，点击“添加阶段”开始记录。</span></div>}</div></section>
+    <section className="admin-project-editor-section"><div className="admin-route-node-head"><div><p className="eyebrow">PROJECT HISTORY</p><h3>项目族谱</h3></div><button type="button" className="secondary-button admin-small-button" onClick={addMilestone}><Plus size={14} /> 添加阶段</button></div><div className="admin-project-repeat-list">{draft.milestones.map((item, index) => <article className="admin-project-repeat-card" key={item.id}><div className="admin-project-milestone-actions"><span>阶段 {String(index + 1).padStart(2, '0')}</span><div><button type="button" className="admin-link-button" onClick={() => addMilestoneAfter(item.id)} aria-label={`在第 ${index + 1} 个项目阶段下方添加阶段`}><Plus size={13} /> 下方添加</button><button type="button" className="admin-link-button admin-danger-link" onClick={() => removeMilestone(item.id)} aria-label={`删除第 ${index + 1} 个项目阶段`}><Trash2 size={13} /> 删除阶段</button></div></div><div className="admin-editor-form-grid"><label><span>年份</span><input value={item.year} onChange={(event) => updateMilestone(item.id, { year: event.target.value })} placeholder="2026" /></label><label><span>阶段状态</span><select value={item.status ?? '计划中'} onChange={(event) => updateMilestone(item.id, { status: event.target.value as ProjectMilestone['status'] })}><option>已完成</option><option>进行中</option><option>计划中</option></select></label></div><label><span>阶段名称</span><input value={item.title} onChange={(event) => updateMilestone(item.id, { title: event.target.value })} placeholder="例如：Agent v3" /></label><label><span>阶段说明</span><input value={item.summary} onChange={(event) => updateMilestone(item.id, { summary: event.target.value })} placeholder="技术栈、产出或版本说明" /></label></article>)}{draft.milestones.length === 0 && <div className="admin-empty admin-project-repeat-empty"><Route size={18} /><span>还没有项目阶段，点击“添加阶段”开始记录。</span></div>}</div></section>
     <section className="admin-project-editor-section"><div className="admin-route-node-head"><div><p className="eyebrow">SHIP LOG</p><h3>开发日志</h3></div><button type="button" className="secondary-button admin-small-button" onClick={addLog}><Plus size={14} /> 添加日志</button></div><div className="admin-project-repeat-list">{draft.logs.map((item) => <article className="admin-project-repeat-card" key={item.id}><div className="admin-editor-form-grid"><label><span>日期</span><input value={item.date} onChange={(event) => updateLog(item.id, { date: event.target.value })} placeholder="05-16" /></label><label><span>作者</span><input value={item.author ?? ''} onChange={(event) => updateLog(item.id, { author: event.target.value })} placeholder="成员姓名" /></label></div><label><span>日志标题</span><input value={item.title} onChange={(event) => updateLog(item.id, { title: event.target.value })} placeholder="完成了什么" /></label><label><span>日志内容</span><textarea value={item.detail} onChange={(event) => updateLog(item.id, { detail: event.target.value })} rows={2} placeholder="补充改动内容和影响" /></label><button type="button" className="admin-link-button admin-danger-link" onClick={() => removeLog(item.id)}><Trash2 size={13} /> 删除日志</button></article>)}{draft.logs.length === 0 && <div className="admin-empty admin-project-repeat-empty"><ScrollText size={18} /><span>还没有开发日志，点击“添加日志”开始记录。</span></div>}</div></section>
-    <section className="admin-project-editor-section"><div className="admin-route-node-head"><div><p className="eyebrow">PROJECT CREW</p><h3>协作成员与招募</h3></div><span>{draft.memberIds.length} 人已加入</span></div><div className="admin-member-picker">{members.map((member) => <label key={member.id}><input type="checkbox" checked={isProjectMemberSelected(draft.memberIds, member, members)} onChange={() => toggleMember(member)} /><span><strong>{member.name}</strong><small>{member.cohort} · {member.direction}</small></span></label>)}{members.length === 0 && <small>暂无成员资料，请先在成员账号中添加成员。</small>}</div><label className="admin-check-field"><input type="checkbox" checked={draft.joinEnabled} onChange={(event) => update({ joinEnabled: event.target.checked })} /><span>开放项目加入申请</span></label><label><span>招募说明</span><input value={draft.joinNote} onChange={(event) => update({ joinNote: event.target.value })} placeholder="例如：欢迎熟悉 Python、前端或知识库方向的成员参与" /></label></section>
+    <section className="admin-project-editor-section"><div className="admin-route-node-head"><div><p className="eyebrow">PROJECT CREW</p><h3>协作成员与招募</h3></div><span>{draft.memberIds.length} 人已加入</span></div><label className="admin-search admin-project-member-search"><Search size={14} /><input type="search" value={memberQuery} onChange={(event) => setMemberQuery(event.target.value)} placeholder="搜索姓名、届次或方向" aria-label="搜索协作成员" />{memberQuery && <button type="button" className="admin-project-member-search-clear" onClick={() => setMemberQuery('')} aria-label="清除成员搜索"><X size={13} /></button>}</label><div className="admin-member-picker">{filteredMembers.map((member) => <label key={member.id}><input type="checkbox" checked={isProjectMemberSelected(draft.memberIds, member, members)} onChange={() => toggleMember(member)} /><span><strong>{member.name}</strong><small>{member.cohort} · {member.direction}</small></span></label>)}{members.length === 0 && <small>暂无成员资料，请先在成员账号中添加成员。</small>}{members.length > 0 && filteredMembers.length === 0 && <small className="admin-project-member-empty">没有匹配的成员，换个姓名、届次或方向试试。</small>}</div><label className="admin-check-field"><input type="checkbox" checked={draft.joinEnabled} onChange={(event) => update({ joinEnabled: event.target.checked })} /><span>开放项目加入申请</span></label><label><span>招募说明</span><input value={draft.joinNote} onChange={(event) => update({ joinNote: event.target.value })} placeholder="例如：欢迎熟悉 Python、前端或知识库方向的成员参与" /></label></section>
     <section className="admin-project-editor-section"><div className="admin-route-node-head"><div><p className="eyebrow">PROJECT DOWNLOAD</p><h3>项目文件</h3></div><span>可选</span></div><label><span>项目文件下载地址</span><input type="url" value={draft.downloadUrl} onChange={(event) => update({ downloadUrl: event.target.value })} placeholder="ZIP、安装包或其他文件地址" /></label></section>
   </>
 }
@@ -450,8 +467,29 @@ export function AdminLearningRouteModal({ draft: initialDraft, routes = [], proj
     return availableResources.filter((resource) => !query || `${resource.title} ${resource.category} ${resource.type} ${resource.tags.join(' ')}`.toLowerCase().includes(query))
   }
   const updateNode = (id: string, patch: Partial<LearningNode>) => setDraft((current) => ({ ...current, nodes: current.nodes.map((node) => node.id === id ? { ...node, ...patch } : node) }))
-  const addNode = () => setDraft((current) => ({ ...current, nodes: [...current.nodes, { id: `node-${Date.now()}`, title: '', duration: '2 周', resources: 0, projects: 0, description: '', projectIds: [] }] }))
-  const removeNode = (id: string) => setDraft((current) => ({ ...current, nodes: current.nodes.filter((node) => node.id !== id) }))
+  const createNode = (): LearningNode => ({ id: `node-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, title: '', duration: '2 周', resources: 0, projects: 0, description: '', projectIds: [] })
+  const addNode = () => setDraft((current) => ({ ...current, nodes: [...current.nodes, createNode()] }))
+  const addNodeAfter = (id: string) => setDraft((current) => {
+    const nodeIndex = current.nodes.findIndex((node) => node.id === id)
+    if (nodeIndex < 0) return current
+    const nodes = [...current.nodes]
+    nodes.splice(nodeIndex + 1, 0, createNode())
+    return { ...current, nodes }
+  })
+  const removeNode = (id: string) => {
+    const node = draft.nodes.find((item) => item.id === id)
+    if (!node) return
+    const hasContent = Boolean(
+      node.title.trim() || node.description?.trim() ||
+      node.resourceLinks?.some((link) => link.title.trim() || link.url.trim()) ||
+      node.videoLinks?.some((link) => link.title.trim() || link.url.trim()) ||
+      node.videoTitle?.trim() || node.videoUrl?.trim() ||
+      node.cloudDriveLinks?.some((link) => link.title.trim() || link.url.trim() || link.description?.trim()) ||
+      node.resourceIds?.length || node.projectIds?.length,
+    )
+    if (hasContent && !window.confirm(`确定删除“${node.title.trim() || '未命名节点'}”吗？删除后需要保存路线才会生效。`)) return
+    setDraft((current) => ({ ...current, nodes: current.nodes.filter((item) => item.id !== id) }))
+  }
   const updateNodeLinks = (nodeId: string, field: 'resourceLinks' | 'videoLinks' | 'cloudDriveLinks', links: LearningLink[]) => {
     const patch: Partial<LearningNode> = { [field]: links }
     if (field === 'videoLinks') {
@@ -472,6 +510,10 @@ export function AdminLearningRouteModal({ draft: initialDraft, routes = [], proj
         {draft.nodes.map((node, index) => <article className="admin-route-node" key={node.id}>
           <div className="admin-route-node-index">{String(index + 1).padStart(2, '0')}</div>
           <div className="admin-route-node-fields">
+            <div className="learning-node-actions">
+              <button type="button" className="admin-link-button" onClick={() => addNodeAfter(node.id)} aria-label={`在第 ${index + 1} 个学习节点下方添加节点`}><Plus size={13} /> 下方添加</button>
+              <button type="button" className="admin-link-button admin-danger-link" onClick={() => removeNode(node.id)} aria-label={`删除第 ${index + 1} 个学习节点`}><Trash2 size={13} /> 删除节点</button>
+            </div>
             <div className="admin-editor-form-grid">
               <label><span>节点标题</span><input value={node.title} onChange={(event) => updateNode(node.id, { title: event.target.value })} placeholder="例如：Python 基础与工程习惯" /></label>
               <label><span>预计时长</span><input value={node.duration} onChange={(event) => updateNode(node.id, { duration: event.target.value })} placeholder="2 周" /></label>
@@ -514,7 +556,6 @@ export function AdminLearningRouteModal({ draft: initialDraft, routes = [], proj
               <div className="admin-project-picker compact">{projects.map((project) => <label key={project.id}><input type="checkbox" checked={(node.projectIds ?? []).includes(project.id)} onChange={() => updateNode(node.id, { projectIds: toggleProject(node.projectIds ?? [], project.id) })} /><span>{project.name}</span></label>)}</div>
             </section>
           </div>
-          <button type="button" className="admin-route-node-remove admin-danger-link" onClick={() => removeNode(node.id)} aria-label={`删除第 ${index + 1} 个学习节点`}><Trash2 size={14} /></button>
         </article>)}
       </div>
       {draft.nodes.length === 0 && <div className="admin-empty admin-route-empty"><Route size={20} /><strong>还没有学习节点</strong><span>点击“添加节点”，从第一阶段开始搭建路线。</span></div>}</div>
