@@ -1447,27 +1447,32 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/uploads/files/{id}/{name}:
+  /api/uploads/{asset_id}/download:
     parameters:
-      - name: id
+      - name: asset_id
         in: path
         required: true
+        description: 上传接口返回的文件 ID
         schema: { type: string }
-      - name: name
-        in: path
-        required: true
-        description: 原始文件名（仅用于友好 URL）
-        schema: { type: string }
+      - name: filename
+        in: query
+        required: false
+        description: 浏览器下载时使用的文件名
+        schema: { type: string, maxLength: 180 }
     get:
       tags: [Uploads]
-      summary: 下载上传文件
+      summary: 下载公开上传文件
       operationId: downloadAsset
       security: []
       responses:
         '200':
-          description: 文件流
+          description: 以附件形式返回文件流
           content:
-            image/*:
+            image/jpeg:
+              schema: { type: string, format: binary }
+            image/png:
+              schema: { type: string, format: binary }
+            image/webp:
               schema: { type: string, format: binary }
             application/octet-stream:
               schema: { type: string, format: binary }
@@ -1659,6 +1664,31 @@ components:
         resources: { type: integer }
         projects: { type: integer }
         description: { type: string }
+        projectIds: { type: array, items: { type: string } }
+        resourceIds:
+          type: array
+          description: 关联资源库资源的编号；点击后跳转对应资源详情。
+          items: { type: string }
+        resourceLinks:
+          type: array
+          items: { $ref: '#/components/schemas/LearningLink' }
+        videoLinks:
+          type: array
+          items: { $ref: '#/components/schemas/LearningLink' }
+        cloudDriveLinks:
+          type: array
+          description: 学习节点的网盘资料链接，可包含提取码等说明。
+          items: { $ref: '#/components/schemas/LearningLink' }
+        videoTitle: { type: string, nullable: true }
+        videoUrl: { type: string, format: uri, nullable: true }
+    LearningLink:
+      type: object
+      required: [id, url]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        url: { type: string, format: uri, description: 仅允许 http 或 https 地址 }
+        description: { type: string, nullable: true, maxLength: 500 }
     Project:
       allOf:
         - $ref: '#/components/schemas/ContentRecord'
@@ -1730,6 +1760,36 @@ components:
             updated: { type: string }
             views: { type: integer }
             accent: { type: string }
+            accessMode: { type: string, enum: [external_link, attachment, article] }
+            visibility: { type: string, enum: [public, members, contributors] }
+            resourceUrl: { type: string, format: uri, nullable: true, description: 旧版单链接字段，保留兼容 }
+            links:
+              type: array
+              description: 资源外链列表；每个链接有标题、地址和可选用途说明。
+              items: { $ref: '#/components/schemas/ResourceLink' }
+            downloadUrl: { type: string, nullable: true }
+            content: { type: string, nullable: true }
+            attachments:
+              type: array
+              items: { $ref: '#/components/schemas/ResourceAttachment' }
+    ResourceLink:
+      type: object
+      required: [title, url]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 160 }
+        url: { type: string, format: uri, maxLength: 500, description: 仅允许 http 或 https 地址 }
+        description: { type: string, nullable: true, maxLength: 500 }
+    ResourceAttachment:
+      type: object
+      required: [name, url]
+      properties:
+        id: { type: string, nullable: true }
+        assetId: { type: string, nullable: true }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        url: { type: string, format: uri }
+        mimeType: { type: string, nullable: true }
+        size: { type: integer, minimum: 0, nullable: true }
+        sortOrder: { type: integer, minimum: 0 }
     Interview:
       allOf:
         - $ref: '#/components/schemas/ContentRecord'

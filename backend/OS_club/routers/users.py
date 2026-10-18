@@ -1,13 +1,20 @@
-import secrets
-from datetime import datetime, timedelta
+import asyncio
+import logging
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.db_conf import get_database #获取数据库会话；
+from crud.email_codes import (
+    EMAIL_CODE_COOLDOWN_SECONDS,
+    EMAIL_CODE_EXPIRE_MINUTES,
+    create_email_verification_code,
+    consume_latest_email_verification_code,
+    expire_email_verification_code,
+    has_recent_email_verification_code,
+)
 from models.users import User #导入用户表模型；
-from models.email_codes import EmailVerificationCode
 from crud.invites import redeem_invite_code     #调用 crud/invites.py 中已经写好的邀请码兑换逻辑。
 from schemas.users import RegisterRequest, UserInfoResponse, ProfileUpdateRequest
 from schemas.invites import InviteCodeRedeemRequest #接收前端传来的邀请码
@@ -24,167 +31,130 @@ from crud.users import (
 from utils.auth import get_current_user
 from schemas.auth import (
     EmailCodeSendRequest,
-    LoginRequest,
     LoginCodeRequest,
+    LoginRequest,
     LoginResponse,
     PasswordChangeRequest,
-    RegistrationCodeResult,
+    RegistrationEmailCodeSendRequest,
 )
-from utils.email_api import EmailApiError, send_verification_email
-from utils.turnstile import TurnstileUnavailable, verify_turnstile_token
+from utils.email_sender import send_verification_email
+from utils.turnstile import TurnstileVerificationError, verify_turnstile_token
 
 
 router = APIRouter(
     prefix="/api/auth",
     tags=["auth"],
 )
-
-VERIFICATION_CODE_TTL_SECONDS = 10 * 60
-VERIFICATION_CODE_COOLDOWN_SECONDS = 60
+logger = logging.getLogger(__name__)
 
 
-async def _require_turnstile(token: str, request: Request) -> None:
-    remote_ip = request.client.host if request.client else None
+async def _verify_turnstile_or_raise(token: str) -> None:
+    """向 Cloudflare 核验 token；无法核验和核验失败都停止后续操作。"""
+
     try:
-        verified = await verify_turnstile_token(token, remote_ip)
-    except TurnstileUnavailable as error:
+        is_valid = await verify_turnstile_token(token)
+    except TurnstileVerificationError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="人机校验服务暂不可用",
-        ) from error
-    if not verified:
+            detail=str(exc),
+        ) from exc
+
+    if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="人机校验未通过，请重试",
+            detail="人机验证未通过，请重新验证",
         )
 
 
-async def _send_verification_code(
+async def _send_email_verification_code(
     db: AsyncSession,
     email: str,
     purpose: str,
-) -> RegistrationCodeResult:
-    now = datetime.utcnow()
-    latest_result = await db.execute(
-        select(EmailVerificationCode)
-        .where(
-            EmailVerificationCode.email == email,
-            EmailVerificationCode.purpose == purpose,
-        )
-        .order_by(EmailVerificationCode.created_at.desc())
-        .limit(1)
-    )
-    latest_code = latest_result.scalars().first()
-    if latest_code and latest_code.created_at:
-        elapsed = (now - latest_code.created_at).total_seconds()
-        if elapsed < VERIFICATION_CODE_COOLDOWN_SECONDS:
-            retry_after = max(1, int(VERIFICATION_CODE_COOLDOWN_SECONDS - elapsed))
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="验证码发送过于频繁，请稍后再试",
-                headers={"Retry-After": str(retry_after)},
-            )
+) -> dict[str, int]:
+    """检查冷却时间、保存验证码并发送邮件。"""
 
-    code = f"{secrets.randbelow(1_000_000):06d}"
-    verification = EmailVerificationCode(
-        email=email,
-        code=code,
-        purpose=purpose,
-        expires_at=now + timedelta(seconds=VERIFICATION_CODE_TTL_SECONDS),
+    if await has_recent_email_verification_code(db, email, purpose):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"请等待 {EMAIL_CODE_COOLDOWN_SECONDS} 秒后再获取验证码",
+        )
+
+    verification_code = await create_email_verification_code(
+        db,
+        email,
+        purpose,
     )
-    db.add(verification)
-    await db.flush()
     try:
-        await send_verification_email(email, code, purpose)
-    except EmailApiError as error:
-        await db.rollback()
-        response_status = (
-            status.HTTP_503_SERVICE_UNAVAILABLE
-            if error.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-            else status.HTTP_502_BAD_GATEWAY
+        # 邮件 API 请求是同步网络操作，放进工作线程避免阻塞异步事件循环。
+        await asyncio.to_thread(
+            send_verification_email,
+            email,
+            verification_code.code,
+            purpose,
         )
+    except Exception as exc:
+        logger.exception("Email API request failed for purpose=%s", purpose)
+        await expire_email_verification_code(db, verification_code)
         raise HTTPException(
-            status_code=response_status,
+            status_code=status.HTTP_502_BAD_GATEWAY,
             detail="邮件发送失败，请稍后重试",
-        ) from error
+        ) from exc
 
-    await db.commit()
-    return RegistrationCodeResult(expires_in_seconds=VERIFICATION_CODE_TTL_SECONDS)
-
-
-async def _consume_verification_code(
-    db: AsyncSession,
-    email: str,
-    purpose: str,
-    code: str,
-) -> None:
-    now = datetime.utcnow()
-    result = await db.execute(
-        select(EmailVerificationCode)
-        .where(
-            EmailVerificationCode.email == email,
-            EmailVerificationCode.purpose == purpose,
-            EmailVerificationCode.code == code,
-            EmailVerificationCode.used_at.is_(None),
-            EmailVerificationCode.expires_at > now,
-        )
-        .order_by(EmailVerificationCode.created_at.desc())
-        .limit(1)
-    )
-    verification = result.scalars().first()
-    if verification is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="邮箱验证码不正确或已过期",
-        )
-    verification.used_at = now
+    return {"expiresInSeconds": EMAIL_CODE_EXPIRE_MINUTES * 60}
 
 
-@router.post(
-    "/register/send-code",
-    response_model=RegistrationCodeResult,
-    status_code=status.HTTP_202_ACCEPTED,
-)
-async def send_registration_code(
-    code_request: EmailCodeSendRequest,
-    request: Request,
+
+# 发送注册验证码接口
+@router.post("/register/send-code")
+async def send_registration_email_code(
+    request_data: RegistrationEmailCodeSendRequest,
     db: AsyncSession = Depends(get_database),
 ):
-    await _require_turnstile(code_request.turnstile_token, request)
-    email = str(code_request.email).lower()
-    existing_user = await db.execute(select(User.id).where(User.email == email))
-    if existing_user.scalar_one_or_none() is not None:
+    """核验人机 token 后，向尚未注册的邮箱发送注册码。"""
+
+    await _verify_turnstile_or_raise(request_data.turnstile_token)
+    email = str(request_data.email).strip().lower()
+
+    existing_user = await db.scalar(
+        select(User.id).where(User.email == email)
+    )
+    if existing_user is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="该邮箱已注册",
         )
-    return await _send_verification_code(db, email, "register")
+
+    return await _send_email_verification_code(
+        db,
+        email,
+        "register",
+    )
 
 
-@router.post(
-    "/login/send-code",
-    response_model=RegistrationCodeResult,
-    status_code=status.HTTP_202_ACCEPTED,
-)
-async def send_login_code(
-    code_request: EmailCodeSendRequest,
-    request: Request,
+
+# 发送登录验证码接口
+@router.post("/login/send-code")
+async def send_login_email_code(
+    request_data: EmailCodeSendRequest,
     db: AsyncSession = Depends(get_database),
 ):
-    await _require_turnstile(code_request.turnstile_token, request)
-    email = str(code_request.email).lower()
-    user = await get_user_by_email(db, email)
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="该邮箱尚未注册",
-        )
-    if user.status != "active":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="当前账号不可用，请联系管理员",
-        )
-    return await _send_verification_code(db, email, "login")
+    """核验人机 token 后，向已注册且可用的邮箱发送登录码。"""
+
+    await _verify_turnstile_or_raise(request_data.turnstile_token)
+    email = str(request_data.email).strip().lower()
+
+    user = await db.scalar(
+        select(User).where(User.email == email)
+    )
+    # 对未注册或不可用账号返回相同结果，避免通过接口探测邮箱是否注册。
+    if user is None or user.status != "active":
+        return {"expiresInSeconds": EMAIL_CODE_EXPIRE_MINUTES * 60}
+
+    return await _send_email_verification_code(
+        db,
+        email,
+        "login",
+    )
 
 
 @router.post( #注册用户接口
@@ -194,18 +164,9 @@ async def send_login_code(
 )
 async def register(
     register_data: RegisterRequest, #只用于接收注册数据
-    request: Request,
     db: AsyncSession = Depends(get_database),
 ):
-    await _require_turnstile(register_data.turnstile_token, request)
     email = str(register_data.email).lower() #统一邮箱格式 把邮箱转成字符串并转换为小写 避免当成两个邮箱
-
-    await _consume_verification_code(
-        db,
-        email,
-        "register",
-        register_data.verification_code,
-    )
 
     result = await db.execute( #检查重复用户 查询用户名或邮箱是否已经存在。
         select(User).where(
@@ -218,6 +179,20 @@ async def register(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, #查询用户名或邮箱是否已经存在。 返回 409 错误，表示发生数据冲突。
             detail="用户名或邮箱已存在",
+        )
+
+    await _verify_turnstile_or_raise(register_data.turnstile_token)
+
+    code_is_valid = await consume_latest_email_verification_code(
+        db,
+        email,
+        register_data.verification_code,
+        "register",
+    )
+    if not code_is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="邮箱验证码不正确、已过期或已使用",
         )
 
     user = User( #创建用户对象
@@ -235,17 +210,20 @@ async def register(
 
 
 
-#登入
+#密码登入
 @router.post(
     "/login",
     response_model=LoginResponse,
 )
 async def login(
     login_data: LoginRequest,
-    request: Request,
     db: AsyncSession = Depends(get_database),
 ):
-    await _require_turnstile(login_data.turnstile_token, request)
+    # 前端传来的 token 只是待核验凭证，不代表验证已经可信地通过。
+    # 必须由后端使用只保存在服务器上的密钥向 Cloudflare 核验，避免有人绕过网页直接调用登录接口。
+    # 将核验放在查用户和校验密码之前，也能阻止未完成人机验证的请求反复尝试账号密码。
+    await _verify_turnstile_or_raise(login_data.turnstile_token)
+
     user = await authenticate_user(
         db,
         str(login_data.email),
@@ -284,39 +262,58 @@ async def login(
     )
 
 
+
+# 验证码登入
 @router.post(
     "/login/code",
     response_model=LoginResponse,
 )
-async def login_with_code(
+async def login_with_email_code(
     login_data: LoginCodeRequest,
-    request: Request,
     db: AsyncSession = Depends(get_database),
 ):
-    await _require_turnstile(login_data.turnstile_token, request)
-    email = str(login_data.email).lower()
-    user = await get_user_by_email(db, email)
-    if user is None:
+    """核验 Turnstile 和邮箱验证码后创建登录令牌。"""
+
+    await _verify_turnstile_or_raise(login_data.turnstile_token)
+    email = str(login_data.email).strip().lower()
+
+    user = await db.scalar(
+        select(User).where(User.email == email)
+    )
+    if user is None or user.status != "active":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="邮箱或验证码不正确",
-        )
-    if user.status != "active":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="当前账号不可用，请联系管理员",
+            detail="邮箱或验证码错误",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
-    await _consume_verification_code(
+    code_is_valid = await consume_latest_email_verification_code(
         db,
         email,
-        "login",
         login_data.verification_code,
+        "login",
     )
-    token = await create_login_token(db, user.id)
-    return LoginResponse(access_token=token, user=user)
+    if not code_is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="邮箱或验证码错误",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = await create_login_token(
+        db,
+        user.id,
+    )
+
+    return LoginResponse(
+        access_token=token,
+        user=user,
+    )
 
 
+"""个人中心相关接口"""
+
+# 查自己
 @router.get(
     "/me",
     response_model=UserInfoResponse,
@@ -327,6 +324,7 @@ async def get_current_user_info(
     return current_user
 
 
+#注销自己
 @router.delete(
     "/me",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -394,6 +392,7 @@ async def redeem_current_user_invite(
 
 
 
+#改资料
 @router.patch(
     "/me",
     response_model=UserInfoResponse,
@@ -410,7 +409,7 @@ async def update_current_user_profile(
     )
 
 
-
+# 退出登录
 @router.post(
     "/logout",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -445,6 +444,7 @@ async def logout(
 
 
 
+#改密码
 @router.patch(
     "/me/password",
     status_code=status.HTTP_204_NO_CONTENT,

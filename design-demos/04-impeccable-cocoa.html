@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="theme-light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>计算机科技小组 · 项目组 (Impeccable 极简发丝工坊 - 大字开阔版)</title>
+  <style>
+    :root {
+      /* Impeccable Kinpaku + Cocoa Palette */
+      --ks-kinpaku: #C99738;
+      --ks-kinpaku-hover: #D8A649;
+      --ks-kinpaku-glow: rgba(201, 151, 56, 0.25);
+      --ks-patina: #2E8B57;
+      --ks-berry: #B91C1C;
+
+      /* Light Mode (Default) - Warm Milk Foam & Nama Chocolate */
+      --bg-canvas: #F8F5EE;
+      --bg-surface: #FFFFFF;
+      --bg-subtle: #EFE8DB;
+      --text-primary: #180F0A;
+      --text-secondary: #4D392E;
+      --text-muted: #826E63;
+      --border-hairline: rgba(70, 40, 25, 0.15);
+      --border-focus: rgba(201, 151, 56, 0.5);
+    }
+
+    html.theme-dark {
+      /* Dark Mode - Deep Roasted Cocoa & Gold Leaf */
+      --bg-canvas: #0A0604;
+      --bg-surface: #120B07;
+      --bg-subtle: #1A110B;
+      --text-primary: #F8F5EE;
+      --text-secondary: #C4B3A9;
+      --text-muted: #7E6D64;
+      --border-hairline: rgba(229, 184, 105, 0.16);
+      --border-focus: rgba(201, 151, 56, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      padding-bottom: 120px;
+    }
+
+    /* Top Preserved Notice */
+    .hero-preserve-banner {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-hairline);
+      padding: 14px 40px;
+      font-size: 13.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .hero-preserve-banner strong {
+      color: var(--ks-kinpaku);
+      letter-spacing: 0.5px;
+    }
+    .banner-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .theme-toggle-btn {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-hairline);
+      color: var(--text-primary);
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: monospace;
+      font-weight: 600;
+    }
+    .theme-toggle-btn:hover {
+      border-color: var(--ks-kinpaku);
+    }
+
+    /* Expansive Container: 左右侧留白不能太大 (Width 94%, max 1400px) */
+    .atelier-container {
+      width: 94%;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    /* Section Structure - 纯开放式，零外框卡片 */
+    .atelier-section {
+      padding: 88px 0;
+      border-bottom: 1px solid var(--border-hairline);
+    }
+    .atelier-section:last-of-type {
+      border-bottom: none;
+    }
+
+    /* Typography & Hierarchy: 大字突出 */
+    .section-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: "Space Grotesk", monospace;
+      font-size: 12.5px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--ks-kinpaku);
+      margin-bottom: 24px;
+    }
+    .section-eyebrow .eyebrow-mark {
+      width: 7px;
+      height: 7px;
+      background: var(--ks-kinpaku);
+      border-radius: 50%;
+    }
+
+    /* Massive Editorial Headline */
+    h2.editorial-title {
+      font-size: clamp(38px, 4.4vw, 58px);
+      font-weight: 850;
+      line-height: 1.15;
+      letter-spacing: -1.2px;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+      text-wrap: pretty;
+    }
+    h2.editorial-title em {
+      font-style: normal;
+      color: var(--ks-kinpaku);
+      font-weight: 850;
+    }
+
+    p.editorial-lead {
+      font-size: clamp(17px, 1.4vw, 21px);
+      line-height: 1.7;
+      color: var(--text-secondary);
+      max-width: 960px;
+      margin-bottom: 48px;
+      text-wrap: pretty;
+    }
+
+    /* ========================================================
+       SECTION 02: THE ATELIER MANIFESTO (Flush 3-Column Plinth)
+       ======================================================== */
+    .manifesto-quote-strip {
+      padding: 24px 0;
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+      margin-bottom: 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .manifesto-quote-strip p {
+      font-size: clamp(20px, 1.8vw, 25px);
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.4px;
+    }
+    .manifesto-quote-strip span.author {
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ks-kinpaku);
+    }
+
+    .plinth-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+    }
+    .plinth-cell {
+      padding: 40px 36px 44px;
+      border-right: 1px solid var(--border-hairline);
+      transition: background-color 0.2s ease;
+    }
+    .plinth-cell:first-child {
+      padding-left: 0;
+    }
+    .plinth-cell:last-child {
+      border-right: none;
+      padding-right: 0;
+    }
+    .plinth-cell:hover {
+      background: rgba(201, 151, 56, 0.03);
+    }
+    .plinth-num {
+      font-family: "Space Grotesk", monospace;
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--ks-kinpaku);
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 14px;
+      line-height: 1;
+    }
+    .plinth-cell h3 {
+      font-size: 23px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+      letter-spacing: -0.4px;
+    }
+    .plinth-cell p {
+      font-size: 15.5px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* ========================================================
+       SECTION 03: THE SPRINT PROTOCOL (Flush Table, No Cards)
+       ======================================================== */
+    .sprint-table {
+      width: 100%;
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .sprint-step {
+      padding: 40px 32px;
+      border-right: 1px solid var(--border-hairline);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 270px;
+    }
+    .sprint-step:first-child {
+      padding-left: 0;
+    }
+    .sprint-step:last-child {
+      border-right: none;
+      padding-right: 0;
+    }
+    .step-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 16px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .step-phase-code {
+      color: var(--ks-kinpaku);
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+    .step-status-chip {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .sprint-step h4 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      letter-spacing: -0.3px;
+    }
+    .sprint-step p {
+      font-size: 14.5px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .sprint-step .step-output {
+      margin-top: 28px;
+      font-family: monospace;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      border-top: 1px dashed var(--border-hairline);
+      padding-top: 14px;
+    }
+
+    /* ========================================================
+       SECTION 04: CURRENT BUILD · 重点工程攻坚 (完全去卡片化！)
+       ======================================================== */
+    .build-top-line {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .live-status-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ks-patina);
+      font-weight: 800;
+    }
+    .live-status-dot::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ks-patina);
+    }
+    .version-tag-text {
+      color: var(--text-muted);
+    }
+
+    /* 大字突出指标栏 (Huge Figures) */
+    .metrics-expansive-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+      padding: 24px 0;
+      margin: 36px 0 44px;
+    }
+    .metric-item strong {
+      display: block;
+      font-size: clamp(42px, 4.2vw, 64px);
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      color: var(--text-primary);
+      font-family: "Space Grotesk", sans-serif;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .metric-item span {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Architecture Flow - 完全零卡片！纯开放式发丝三联流水线 */
+    .arch-flow-open-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+      margin-bottom: 40px;
+    }
+    .arch-flow-col {
+      padding: 36px 32px;
+      border-right: 1px solid var(--border-hairline);
+      transition: background-color 0.2s ease;
+    }
+    .arch-flow-col:first-child {
+      padding-left: 0;
+    }
+    .arch-flow-col:last-child {
+      border-right: none;
+      padding-right: 0;
+    }
+    .arch-flow-col:hover {
+      background: rgba(201, 151, 56, 0.03);
+    }
+    .flow-layer-code {
+      font-family: "Space Grotesk", monospace;
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: var(--ks-kinpaku);
+      display: block;
+      margin-bottom: 12px;
+    }
+    .arch-flow-col h4 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      letter-spacing: -0.3px;
+    }
+    .arch-flow-col p {
+      font-size: 14.5px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    .build-footer-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding-top: 8px;
+    }
+    .tech-token-stream {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .token-chip {
+      font-family: monospace;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 5px 12px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-hairline);
+      border-radius: 4px;
+      color: var(--text-secondary);
+    }
+    .btn-group {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .impeccable-btn-primary {
+      background: var(--text-primary);
+      color: var(--bg-canvas);
+      border: 1px solid var(--text-primary);
+      padding: 12px 26px;
+      font-size: 14.5px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+    .impeccable-btn-primary:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+    .impeccable-btn-link {
+      color: var(--text-primary);
+      font-size: 14.5px;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 5px;
+      cursor: pointer;
+    }
+
+    /* ========================================================
+       SECTION 05: VINTAGE RELAY (Chronological Editorial Shelf)
+       ======================================================== */
+    .relay-shelf-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+    }
+    .relay-column {
+      padding: 40px 36px 44px;
+      border-right: 1px solid var(--border-hairline);
+    }
+    .relay-column:first-child {
+      padding-left: 0;
+    }
+    .relay-column:last-child {
+      border-right: none;
+      padding-right: 0;
+    }
+    .relay-year-label {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 42px;
+      font-weight: 900;
+      color: var(--ks-kinpaku);
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+      line-height: 1;
+    }
+    .relay-epoch-name {
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    .relay-tech-spec {
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+    .relay-column p.relay-text {
+      font-size: 14.5px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      margin-bottom: 24px;
+    }
+    .legacy-handover-box {
+      border-top: 1px dashed var(--border-hairline);
+      padding-top: 16px;
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .legacy-handover-box strong {
+      color: var(--ks-kinpaku);
+      font-family: monospace;
+      font-size: 11.5px;
+      letter-spacing: 1px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* ========================================================
+       SECTION 06: JOIN THE ATELIER (3-Track Entrance Doors)
+       ======================================================== */
+    .doors-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+    }
+    .door-col {
+      padding: 44px 36px;
+      border-right: 1px solid var(--border-hairline);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 290px;
+      transition: background-color 0.2s;
+      cursor: pointer;
+    }
+    .door-col:first-child {
+      padding-left: 0;
+    }
+    .door-col:last-child {
+      border-right: none;
+      padding-right: 0;
+    }
+    .door-col:hover {
+      background: rgba(201, 151, 56, 0.04);
+    }
+    .door-track-num {
+      font-family: "Space Grotesk", monospace;
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--ks-kinpaku);
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+      line-height: 1;
+    }
+    .door-col h4 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+      letter-spacing: -0.4px;
+    }
+    .door-col p {
+      font-size: 14.5px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .door-action-link {
+      margin-top: 32px;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--ks-kinpaku);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    @media (max-width: 960px) {
+      .plinth-grid-3, .sprint-table, .metrics-expansive-row, .arch-flow-open-grid, .relay-shelf-3, .doors-grid {
+        grid-template-columns: 1fr;
+      }
+      .plinth-cell, .sprint-step, .arch-flow-col, .relay-column, .door-col {
+        border-right: none;
+        border-bottom: 1px solid var(--border-hairline);
+        padding: 32px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen 0 Hero Preserved Notification -->
+  <header class="hero-preserve-banner">
+    <div><strong>[SCREEN 01 · HERO 保留屏]</strong> 此处完全继承原有粒子引力场与全校大门主图，保持不变。以下呈现<strong>去卡片化 · 大字突出 · 开阔视域</strong>的项目组专版：</div>
+    <div class="banner-actions">
+      <button class="theme-toggle-btn" id="themeBtn" onclick="toggleTheme()">切换至深色生巧模式</button>
+    </div>
+  </header>
+
+  <main class="atelier-container">
+
+    <!-- Screen 02: The Atelier Manifesto -->
+    <section class="atelier-section" id="story-club">
+      <div class="section-eyebrow"><span class="eyebrow-mark"></span> 02 / THE ATELIER · 计算机科技小组 · 项目组</div>
+      
+      <h2 class="editorial-title">
+        我们不造玩具 Demo。<br />
+        <em>只淬炼能真实跑在校园里的数字基建。</em>
+      </h2>
+      <p class="editorial-lead">
+        工程不需要冷冰冰的说教。在项目组，复杂的微服务、向量检索与 Agent 架构化为一行行清晰可信的代码。像手工生巧般注重细节、尊重系统与长久运行。
+      </p>
+
+      <div class="manifesto-quote-strip">
+        <p>“代码是写给人看的，附带能在机器上运行。而我们更在乎，它是否能解决校园里的真问题。”</p>
+        <span class="author">STCNCHU CS PROJECT ATELIER · 2026</span>
+      </div>
+
+      <!-- 3-Column Plinth Grid (Flush, No Cards, Big Numerals) -->
+      <div class="plinth-grid-3">
+        <div class="plinth-cell">
+          <span class="plinth-num">01</span>
+          <h3>真实工业级上下文</h3>
+          <p>从不布置没有回响的模拟期末作业。每一位新成员都直接参与维护真实运行中的校园生产环境，在真实的 Docker 容器与向量集群里获得工程实战手感。</p>
+        </div>
+
+        <div class="plinth-cell">
+          <span class="plinth-num">02</span>
+          <h3>结对研讨与严格审校</h3>
+          <p>工坊式传帮带。大二带大一、组长带组员。每一个 Pull Request 都在真实的 Code Review 与自动化测试中反复推敲，在对抗中淬炼工程肌肉。</p>
+        </div>
+
+        <div class="plinth-cell">
+          <span class="plinth-num">03</span>
+          <h3>代际接力与长效交付</h3>
+          <p>毕业不是项目的终点。六届成员积累下详尽的架构决策记录与运维规范，让每一次重构都站在上一代的工程肩膀上向更深处探索。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 03: The Sprint Protocol -->
+    <section class="atelier-section" id="story-loop">
+      <div class="section-eyebrow"><span class="eyebrow-mark"></span> 03 / THE PROTOCOL · 项目敏捷孵化闭环</div>
+
+      <h2 class="editorial-title">从一个校园痛点，到全校上线的<em>四步工程协议</em></h2>
+      <p class="editorial-lead">
+        告别无休止的空谈。项目组遵循严谨的工坊冲刺流程，确保从想法提出到最终全校部署，每一步都清晰可验证。
+      </p>
+
+      <!-- Flush Bento Table (4 Steps) -->
+      <div class="sprint-table">
+        <div class="sprint-step">
+          <div>
+            <div class="step-label-row">
+              <span class="step-phase-code">01 · SOURCING</span>
+              <span class="step-status-chip">技能对齐</span>
+            </div>
+            <h4>原料甄选与基石对齐</h4>
+            <p>快速突破 Python 核心工程习惯、FastAPI 路由规范与 Git 工作流，建立团队统一技术语言。</p>
+          </div>
+          <div class="step-output">产出 &rarr; 技术栈与路线基石完成</div>
+        </div>
+
+        <div class="sprint-step">
+          <div>
+            <div class="step-label-row">
+              <span class="step-phase-code">02 · CONCHING</span>
+              <span class="step-status-chip">架构拆解</span>
+            </div>
+            <h4>需求共创与架构推敲</h4>
+            <p>拒绝假大空，深挖校园真实痛点，在白板前反复推演 API 契约、数据表结构与 LangGraph 调度流程。</p>
+          </div>
+          <div class="step-output">产出 &rarr; PRD 规范与数据库设计</div>
+        </div>
+
+        <div class="sprint-step">
+          <div>
+            <div class="step-label-row">
+              <span class="step-phase-code">03 · TEMPERING</span>
+              <span class="step-status-chip">敏捷编码</span>
+            </div>
+            <h4>双人结对与严格审查</h4>
+            <p>每周敏捷 Sprint 迭代，单元测试与自动化流水线全绿，组长逐行审校边界条件与性能损耗。</p>
+          </div>
+          <div class="step-output">产出 &rarr; CI/CD 自动化全绿通过</div>
+        </div>
+
+        <div class="sprint-step">
+          <div>
+            <div class="step-label-row">
+              <span class="step-phase-code">04 · PACKAGING</span>
+              <span class="step-status-chip">校园交付</span>
+            </div>
+            <h4>全校上线与资产封存</h4>
+            <p>平稳部署至校园机房服务器，将系统架构决策书与运维手记归档，无缝交棒给下一代成员。</p>
+          </div>
+          <div class="step-output" style="color:var(--ks-patina); font-weight:700;">✔ 状态 &rarr; 校园平稳运行中</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 04: Current Build (完全去卡片化！大字指标与发丝架构流) -->
+    <section class="atelier-section" id="story-build">
+      <div class="section-eyebrow"><span class="eyebrow-mark"></span> 04 / CURRENT BUILD · 重点工程攻坚</div>
+
+      <div class="build-top-line">
+        <span class="live-status-dot">生产活跃迭代中</span>
+        <span class="version-tag-text">2026 · Agent v3 架构体系</span>
+      </div>
+
+      <h2 class="editorial-title" style="font-size:clamp(44px, 4.8vw, 64px); margin-bottom:18px;">
+        校园 AI 智能助手
+      </h2>
+      <p class="editorial-lead" style="max-width:1100px; margin-bottom:0;">
+        项目组 2026 重磅旗舰：将教务通知、历届选课经验、竞赛规程与项目代码文档，全面重构成具备自主意图推理、工具调度与精准溯源输出的校园数字中枢。
+      </p>
+
+      <!-- 大字突出指标栏 (Huge Figures) -->
+      <div class="metrics-expansive-row">
+        <div class="metric-item">
+          <strong>12 位</strong>
+          <span>跨年级主力共建成员</span>
+        </div>
+        <div class="metric-item">
+          <strong>380+</strong>
+          <span>Git 提交精密演进</span>
+        </div>
+        <div class="metric-item">
+          <strong>100%</strong>
+          <span>架构与代码全开源透明</span>
+        </div>
+      </div>
+
+      <!-- 架构数据流 (零卡片！纯发丝网格无缝平铺) -->
+      <div class="arch-flow-open-grid">
+        <div class="arch-flow-col">
+          <span class="flow-layer-code">01 / INGESTION & EMBEDDING</span>
+          <h4>多模态知识切片与向量索引</h4>
+          <p>动态索引教务规章、历届项目文档与竞赛题库，实现毫秒级混合召回（Dense Vector + BM25），自动化切片与向量流水线入库。</p>
+        </div>
+
+        <div class="arch-flow-col">
+          <span class="flow-layer-code">02 / LANGGRAPH COGNITIVE ENGINE</span>
+          <h4>动态状态机意图路由与工具执行</h4>
+          <p>支持多步深度思考闭环、动态调度校园地图/空闲机房查询工具，并加入严谨的幻觉对抗与评测集 Benchmark 约束。</p>
+        </div>
+
+        <div class="arch-flow-col">
+          <span class="flow-layer-code">03 / TRACEABLE PRESENTATION</span>
+          <h4>透明溯源输出与知识节点直达</h4>
+          <p>每一句回答均带权威文件切片出处，学生可一键跳转至相关知识库节点或项目代码仓库，实现所见即所得的学习闭环。</p>
+        </div>
+      </div>
+
+      <!-- 底部操作与技术流 -->
+      <div class="build-footer-bar">
+        <div class="tech-token-stream">
+          <span class="token-chip">Python 3.12</span>
+          <span class="token-chip">FastAPI</span>
+          <span class="token-chip">LangGraph</span>
+          <span class="token-chip">Vue 3</span>
+          <span class="token-chip">PostgreSQL / pgvector</span>
+          <span class="token-chip">Docker</span>
+        </div>
+
+        <div class="btn-group">
+          <button class="impeccable-btn-primary">
+            查看项目完整架构
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 8h10M9 4l4 4-4 4"/>
+            </svg>
+          </button>
+          <a class="impeccable-btn-link">体验在线对话系统 ➔</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 05: Vintage Relay -->
+    <section class="atelier-section" id="story-relay">
+      <div class="section-eyebrow"><span class="eyebrow-mark"></span> 05 / VINTAGE RELAY · 历届传承年轮</div>
+
+      <h2 class="editorial-title">历届项目在时光里的<em>代际演进</em></h2>
+      <p class="editorial-lead">
+        在这里，项目不随毕业解散。一代人的毕业成果，化作下一代人的工程起点，跨越技术周期的洗礼。
+      </p>
+
+      <!-- 3-Column Shelf (Flush, Big Years, No Cards) -->
+      <div class="relay-shelf-3">
+        <div class="relay-column">
+          <div class="relay-year-label">2024</div>
+          <div class="relay-epoch-name">校园问答 v1</div>
+          <div class="relay-tech-spec">Vue 2 · Flask · SQLite</div>
+          <p class="relay-text">突破从 0 到 1 的荒原。针对新生资料检索痛点，完成第一代校园规则匹配与静态问答对。</p>
+          <div class="legacy-handover-box">
+            <strong>传承资产</strong>
+            奠定了首批 1200+ 校园精校问答对与自动化爬虫套件。
+          </div>
+        </div>
+
+        <div class="relay-column">
+          <div class="relay-year-label">2025</div>
+          <div class="relay-epoch-name">RAG 知识向量中枢 v2</div>
+          <div class="relay-tech-spec">FastAPI · pgvector · Microservices</div>
+          <p class="relay-text">全面升级为大模型检索增强架构，打通微服务集群，首次实现基于语义切片的校园知识问答。</p>
+          <div class="legacy-handover-box">
+            <strong>传承资产</strong>
+            确立了后端服务规范、向量数据库流水线与高并发微服务框架。
+          </div>
+        </div>
+
+        <div class="relay-column">
+          <div class="relay-year-label">2026</div>
+          <div class="relay-epoch-name">Agent 智能协同体 v3</div>
+          <div class="relay-tech-spec">LangGraph · Multi-Agent · Eval Bench</div>
+          <p class="relay-text">从被动回答跨越到主动意图编排与自动化工具调度，当前由第四代主力成员持续迭代推进。</p>
+          <div class="legacy-handover-box">
+            <strong style="color:var(--ks-patina);">正在开放</strong>
+            现已开放大一、大二新生 Issue 认领与全栈/算法协作席位。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 06: Join The Atelier -->
+    <section class="atelier-section" id="story-join">
+      <div class="section-eyebrow"><span class="eyebrow-mark"></span> 06 / JOIN THE ATELIER · 认领你的工位</div>
+
+      <h2 class="editorial-title">无论起点在何处，<br /><em>项目组都有为你准备的位置。</em></h2>
+      <p class="editorial-lead">
+        只要你对代码怀抱敬畏、渴望动手做出真正有用的软件，从认领一个 Good First Issue 开始，与同侪一起书写大学工程篇章。
+      </p>
+
+      <!-- 3-Track Entrance Doors (Flush, Big Track Numbers) -->
+      <div class="doors-grid">
+        <div class="door-col">
+          <div>
+            <div class="door-track-num">01</div>
+            <h4>认领第一个新生 Issue</h4>
+            <p>专为大一、大二设计的平缓入门任务：包含前端交互修复、API 参数验证与文档调优。学长提供一对一 Code Review 支持。</p>
+          </div>
+          <span class="door-action-link">
+            查阅友好 Issue 列表
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M3 8h10M9 4l4 4-4 4"/>
+            </svg>
+          </span>
+        </div>
+
+        <div class="door-col">
+          <div>
+            <div class="door-track-num">02</div>
+            <h4>自荐你的新项目提案</h4>
+            <p>发现学校里有什么痛点可以被代码解决？向项目组提交你的 Idea，我们将为你调配前后端与算法队友，一起孵化上线。</p>
+          </div>
+          <span class="door-action-link">
+            提交项目孵化方案
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M3 8h10M9 4l4 4-4 4"/>
+            </svg>
+          </span>
+        </div>
+
+        <div class="door-col">
+          <div>
+            <div class="door-track-num">03</div>
+            <h4>查阅历届 68 个开源项目</h4>
+            <p>探索项目组六年来沉淀的全部真实代码仓库、架构演进图与设计决策手记。站在学长学姐的肩膀上看得更远。</p>
+          </div>
+          <span class="door-action-link">
+            进入历届项目控制台
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M3 8h10M9 4l4 4-4 4"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const btn = document.getElementById('themeBtn');
+      if (html.classList.contains('theme-light')) {
+        html.classList.remove('theme-light');
+        html.classList.add('theme-dark');
+        btn.textContent = '切换至暖奶霜模式';
+      } else {
+        html.classList.remove('theme-dark');
+        html.classList.add('theme-light');
+        btn.textContent = '切换至深色生巧模式';
+      }
+    }
+  </script>
+</body>
+</html>

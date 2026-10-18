@@ -5,7 +5,7 @@ import { useContent } from '../services/content.context'
 import { canViewContent } from '../services/auth.service'
 import { listFavorites, toggleFavorite } from '../services/favorite.service'
 import { createInterviewDraft, deleteMyInterviewSubmission, getInterview, getMyInterviewSubmission, listInterviewPage, listMyInterviewSubmissions, recordInterviewDetailView, reviewInterviewSubmission, submitInterviewDraft, toggleInterviewHelpful, updateInterviewDraft, withdrawMyInterviewSubmission, type InterviewSubmissionInput } from '../services/interview.service'
-import type { ContentCategory, InterviewExperience, InterviewReviewRecord, InterviewRound, InterviewSubmission, Paginated } from '../types'
+import type { InterviewExperience, InterviewReviewRecord, InterviewRound, InterviewSubmission, Paginated } from '../types'
 
 type PageView = 'list' | 'detail' | 'submit' | 'mine'
 

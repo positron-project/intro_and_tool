@@ -1,8 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   announcements as mockAnnouncements,
+  blogPosts as mockBlogPosts,
   citations as mockCitations,
   competitionEvents as mockCompetitionEvents,
+  contactInfo as mockContactInfo,
   growthStats as mockGrowthStats,
   interviews as mockInterviews,
   learningNodes as mockLearningNodes,
@@ -68,8 +70,10 @@ import {
   reviewProject as serviceReviewProject,
   updateResource as serviceUpdateResource,
 } from './content.service'
+import { isBlogSourceEnabled, listBlogPosts } from './blog.service'
 import type {
   Announcement,
+  BlogPost,
   CompetitionEvent,
   CreateInput,
   InterviewExperience,
@@ -91,8 +95,10 @@ import { defaultWorkbenchSettings, getWorkbenchSettings, updateWorkbenchSettings
 
 export interface ContentSnapshot {
   announcements: Announcement[]
+  blogPosts: BlogPost[]
   citations: Citation[]
   competitionEvents: CompetitionEvent[]
+  contactInfo: typeof mockContactInfo
   growthStats: typeof mockGrowthStats
   interviews: InterviewExperience[]
   learningNodes: LearningNode[]
@@ -118,6 +124,7 @@ export interface ContentContextValue {
   loading: boolean
   error: string | null
   refresh: () => Promise<void>
+  updateMemberProfileInCache: (userId: string | number, profile: Pick<Member, 'name' | 'initials' | 'avatarUrl'>) => void
   createAnnouncement: (input: CreateInput<Announcement>) => Promise<Announcement>
   updateAnnouncement: (id: string, patch: UpdateInput<Announcement>) => Promise<Announcement>
   deleteAnnouncement: (id: string) => Promise<void>
@@ -168,8 +175,10 @@ function copy<T>(value: T): T {
 function fallbackContent(): ContentSnapshot {
   return {
     announcements: copy(mockAnnouncements),
+    blogPosts: copy(mockBlogPosts),
     citations: copy(mockCitations),
     competitionEvents: copy(mockCompetitionEvents),
+    contactInfo: copy(mockContactInfo),
     growthStats: copy(mockGrowthStats),
     interviews: copy(mockInterviews),
     learningNodes: copy(mockLearningNodes),
@@ -196,9 +205,13 @@ function fallbackContent(): ContentSnapshot {
 function emptyContent(): ContentSnapshot {
   return {
     announcements: [],
+    // 唯一例外：博客区按产品决策保留演示数据（见 docs/decisions-blog-platform.md），
+    // 因为博客内容来自独立的 Halo 站点，未接入/不可用时不该把首页这一节留空。
+    blogPosts: copy(mockBlogPosts),
     citations: [],
     competitionEvents: [],
-    growthStats: [],
+    contactInfo: copy(mockContactInfo),
+    growthStats: copy(mockGrowthStats),
     interviews: [],
     learningNodes: [],
     learningRoute: { id: '', title: '', direction: '', description: '', nodes: [], featuredProjectIds: [] },
@@ -311,6 +324,15 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     setLoading(isRemoteContentEnabled)
     setError(null)
+    // 博客来自独立的 Halo 站点，失败不能拖累官网其他内容，所以单独发、单独提交。
+    // 这里立即接住失败：下面要等 12 个请求全部 settle 之后才 await 它，
+    // 中间这段时间没有 handler，会先触发一次 unhandled rejection。
+    const blogRequest = isBlogSourceEnabled()
+      ? listBlogPosts().then(
+          (posts) => ({ ok: true as const, posts }),
+          () => ({ ok: false as const, posts: [] as BlogPost[] }),
+        )
+      : null
     const results = await Promise.allSettled([
       listLearningRoutes(),
       listProjects(),
@@ -364,6 +386,33 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       ? isRemoteContentEnabled ? `内容服务暂时无法加载：${failures.join('、')}。当前不会显示演示数据，请检查后端接口。` : `部分内容暂时使用本地数据：${failures.join('、')}`
       : null)
     setLoading(false)
+
+    // 博客单独提交：放在最后 await，Halo 慢或连不上都不会拖住上面那批内容的渲染。
+    // 空列表是正常空态（新站还没发文），保留 emptyContent() 塞入的演示数据、不报错。
+    if (blogRequest) {
+      const blog = await blogRequest
+      if (blog.ok) {
+        if (blog.posts.length) setData((current) => ({ ...current, blogPosts: copy(blog.posts) }))
+      } else {
+        setError((current) => `${current ?? ''}博客站暂时连不上，博客区先显示演示数据，其余内容不受影响。`)
+      }
+    }
+  }, [])
+
+  const updateMemberProfileInCache = useCallback((userId: string | number, profile: Pick<Member, 'name' | 'initials' | 'avatarUrl'>) => {
+    setData((current) => {
+      let changed = false
+      const members = current.members.map((member) => {
+        if (member.userId == null || String(member.userId) !== String(userId)) return member
+        if (member.name === profile.name && member.initials === profile.initials && member.avatarUrl === profile.avatarUrl) return member
+        changed = true
+        return { ...member, ...profile }
+      })
+      if (!changed) return current
+      const next = { ...current, members }
+      persistContent(next)
+      return next
+    })
   }, [])
 
   useEffect(() => { void refresh() }, [refresh])
@@ -565,7 +614,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     return result
   }, [])
 
-  const value = useMemo(() => ({ data, loading, error, refresh, createAnnouncement, updateAnnouncement, deleteAnnouncement, createMember, updateMember, deleteMember, createProject, updateProject, deleteProject, createPrompt, updatePrompt, deletePrompt, recordProjectView, listProjectReviewQueue, reviewProject, createProjectCategory, updateProjectCategory, deleteProjectCategory, createResourceCategory, updateResourceCategory, deleteResourceCategory, createResource, updateResource, deleteResource, recordResourceView, createInterview, updateInterview, deleteInterview, recordInterviewView, createInterviewCategory, updateInterviewCategory, deleteInterviewCategory, createCompetition, updateCompetition, deleteCompetition, createLearningRoute, updateLearningRoute, deleteLearningRoute, updateWorkbench }), [data, loading, error, refresh, createAnnouncement, updateAnnouncement, deleteAnnouncement, createMember, updateMember, deleteMember, createProject, updateProject, deleteProject, createPrompt, updatePrompt, deletePrompt, recordProjectView, listProjectReviewQueue, reviewProject, createProjectCategory, updateProjectCategory, deleteProjectCategory, createResourceCategory, updateResourceCategory, deleteResourceCategory, createResource, updateResource, deleteResource, recordResourceView, createInterview, updateInterview, deleteInterview, recordInterviewView, createInterviewCategory, updateInterviewCategory, deleteInterviewCategory, createCompetition, updateCompetition, deleteCompetition, createLearningRoute, updateLearningRoute, deleteLearningRoute, updateWorkbench])
+  const value = useMemo(() => ({ data, loading, error, refresh, updateMemberProfileInCache, createAnnouncement, updateAnnouncement, deleteAnnouncement, createMember, updateMember, deleteMember, createProject, updateProject, deleteProject, createPrompt, updatePrompt, deletePrompt, recordProjectView, listProjectReviewQueue, reviewProject, createProjectCategory, updateProjectCategory, deleteProjectCategory, createResourceCategory, updateResourceCategory, deleteResourceCategory, createResource, updateResource, deleteResource, recordResourceView, createInterview, updateInterview, deleteInterview, recordInterviewView, createInterviewCategory, updateInterviewCategory, deleteInterviewCategory, createCompetition, updateCompetition, deleteCompetition, createLearningRoute, updateLearningRoute, deleteLearningRoute, updateWorkbench }), [data, loading, error, refresh, updateMemberProfileInCache, createAnnouncement, updateAnnouncement, deleteAnnouncement, createMember, updateMember, deleteMember, createProject, updateProject, deleteProject, createPrompt, updatePrompt, deletePrompt, recordProjectView, listProjectReviewQueue, reviewProject, createProjectCategory, updateProjectCategory, deleteProjectCategory, createResourceCategory, updateResourceCategory, deleteResourceCategory, createResource, updateResource, deleteResource, recordResourceView, createInterview, updateInterview, deleteInterview, recordInterviewView, createInterviewCategory, updateInterviewCategory, deleteInterviewCategory, createCompetition, updateCompetition, deleteCompetition, createLearningRoute, updateLearningRoute, deleteLearningRoute, updateWorkbench])
   return <ContentContext.Provider value={value}>{children}</ContentContext.Provider>
 }
 

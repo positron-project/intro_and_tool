@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>方向三：有机生巧极简主义 (Organic Melt & Snap)</title>
+  <style>
+    :root {
+      --bg-cream: #FAF6F0;
+      --bg-milk-layer: #FFFFFF;
+      --choco-nama: #331F17;
+      --choco-velvet: #4A2E22;
+      --choco-light: #734835;
+      --caramel-soft: #D9822B;
+      --cocoa-powder: #966B55;
+      --strawberry-accent: #C2410C;
+      --shadow-nama: 0 10px 30px -5px rgba(51, 31, 23, 0.08), 0 0 1px rgba(51, 31, 23, 0.2);
+      --shadow-tablet: inset 0 2px 4px rgba(255, 255, 255, 0.6), 0 6px 16px rgba(51, 31, 23, 0.06);
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: var(--bg-cream);
+      color: var(--choco-nama);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.6;
+      padding-bottom: 90px;
+    }
+    .hero-preserve-banner {
+      background: var(--choco-nama);
+      color: #FFF;
+      padding: 12px 24px;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .hero-preserve-banner .tag {
+      background: var(--caramel-soft);
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .demo-wrapper {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+    .section-card {
+      margin-bottom: 72px;
+      background: var(--bg-milk-layer);
+      border-radius: 24px;
+      padding: 44px;
+      box-shadow: var(--shadow-nama);
+      border: 1px solid rgba(115, 72, 53, 0.1);
+      position: relative;
+    }
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #F3ECE2;
+      color: var(--choco-velvet);
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+    }
+    .pill-badge .cocoa-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--caramel-soft);
+    }
+    h2.section-heading {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.3;
+      color: var(--choco-nama);
+      margin-bottom: 12px;
+    }
+    p.section-lead {
+      font-size: 16px;
+      color: var(--cocoa-powder);
+      margin-bottom: 32px;
+      max-width: 720px;
+    }
+
+    /* Section 02: Manifesto & Pillars */
+    .manifesto-callout {
+      background: linear-gradient(135deg, #F6EFE6 0%, #EFE4D6 100%);
+      border-radius: 18px;
+      padding: 26px 32px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .manifesto-callout h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--choco-nama);
+    }
+    .manifesto-callout p {
+      font-size: 14px;
+      color: var(--choco-light);
+      margin-top: 4px;
+    }
+    .values-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .nama-tile {
+      background: #FDFBF8;
+      border-radius: 18px;
+      padding: 26px;
+      border: 1px solid rgba(115, 72, 53, 0.08);
+      box-shadow: var(--shadow-tablet);
+      transition: all 0.2s ease;
+    }
+    .nama-tile:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(51, 31, 23, 0.08);
+    }
+    .nama-tile-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #F3ECE2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    .nama-tile h4 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--choco-nama);
+    }
+    .nama-tile p {
+      font-size: 14px;
+      color: #6E5347;
+      line-height: 1.6;
+    }
+
+    /* Section 03: Loop Steps */
+    .steps-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .step-tile {
+      background: #F8F3ED;
+      border-radius: 16px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .step-num-bubble {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--choco-nama);
+      color: #FFF;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      line-height: 28px;
+      margin-bottom: 12px;
+    }
+    .step-tile h4 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .step-tile p {
+      font-size: 13px;
+      color: #6E5347;
+      line-height: 1.5;
+    }
+
+    /* Section 04: Flagship Build */
+    .build-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 32px;
+      align-items: center;
+    }
+    .pill-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .status-pill {
+      background: #ECFDF5;
+      color: #047857;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+    .version-pill {
+      background: #FEF3C7;
+      color: #B45309;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+    .stat-ribbon {
+      display: flex;
+      gap: 24px;
+      background: #F7EFE6;
+      border-radius: 14px;
+      padding: 16px 24px;
+      margin: 22px 0;
+    }
+    .stat-ribbon strong {
+      display: block;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--choco-nama);
+    }
+    .stat-ribbon span {
+      font-size: 12px;
+      color: var(--choco-light);
+    }
+    .tech-stack-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0 24px;
+    }
+    .soft-pill {
+      background: #F3ECE2;
+      color: var(--choco-velvet);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 8px;
+    }
+    .btn-warm-choco {
+      background: var(--choco-nama);
+      color: #FFF;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(51, 31, 23, 0.2);
+      transition: all 0.2s;
+    }
+    .btn-warm-choco:hover {
+      background: var(--choco-velvet);
+      transform: translateY(-2px);
+    }
+    .btn-soft-caramel {
+      background: #F3ECE2;
+      color: var(--choco-nama);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-left: 12px;
+    }
+
+    /* Right Preview Glass Box */
+    .preview-box {
+      background: #3B241A;
+      color: #FFF;
+      border-radius: 20px;
+      padding: 26px;
+      box-shadow: 0 16px 36px rgba(51, 31, 23, 0.25);
+    }
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #D9C3B5;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 18px;
+    }
+    .flow-card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+    }
+    .flow-card .cat {
+      font-size: 10px;
+      color: var(--caramel-soft);
+      font-weight: 700;
+    }
+    .flow-card h5 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #FFF;
+      margin: 2px 0;
+    }
+    .flow-card small {
+      font-size: 12px;
+      color: #D4C3B8;
+    }
+
+    /* Relay Row */
+    .relay-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .relay-card {
+      background: #FDFBF8;
+      border-radius: 18px;
+      padding: 26px;
+      border: 1px solid rgba(115, 72, 53, 0.08);
+      box-shadow: var(--shadow-tablet);
+    }
+    .relay-card.active {
+      background: #FAF3E8;
+      border-color: var(--caramel-soft);
+    }
+    .relay-card .year {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--caramel-soft);
+    }
+    .relay-card h4 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 6px 0 8px;
+    }
+    .relay-card p {
+      font-size: 13px;
+      color: #6E5347;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    .relay-badge-box {
+      background: #EFE4D6;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--choco-nama);
+    }
+
+    /* Join Us */
+    .join-tiles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .join-tile {
+      background: #F8F3ED;
+      border-radius: 18px;
+      padding: 30px 24px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .join-tile:hover {
+      background: #F1E8DC;
+      transform: translateY(-3px);
+    }
+    .join-tile-tag {
+      font-size: 11px;
+      font-weight: 800;
+      background: var(--choco-nama);
+      color: #FFF;
+      padding: 3px 10px;
+      border-radius: 999px;
+      display: inline-block;
+      margin-bottom: 14px;
+    }
+    .join-tile h4 {
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .join-tile p {
+      font-size: 13px;
+      color: #6E5347;
+      line-height: 1.55;
+      margin-bottom: 16px;
+    }
+    .join-tile-action {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--caramel-soft);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen 0 Hero Preserved Notification -->
+  <div class="hero-preserve-banner">
+    <div><strong>[SCREEN 01 · HERO 保留屏]</strong> 此处完全继承原有粒子网格与校园大门主图。以下为有机生巧极简主义重构的项目组板块：</div>
+    <span class="tag">HERO KEPT</span>
+  </div>
+
+  <div class="demo-wrapper">
+
+    <!-- Screen 02: The Atelier Manifesto -->
+    <section class="section-card" id="story-club">
+      <div class="pill-badge"><span class="cocoa-dot"></span> 02 / THE ATELIER · 计算机科技小组 · 项目组</div>
+      <h2 class="section-heading">融化复杂技术，凝固卓越工程。<br />在这里，和同侪一起造出有温度的产品。</h2>
+      <p class="section-lead">我们相信工程不需要冷冰冰的说教。在项目组，复杂的微服务、向量检索与 Agent 架构化为一行行清晰可信的代码，温暖每一个使用它的南航科院师生。</p>
+
+      <div class="manifesto-callout">
+        <div>
+          <h3>“让代码拥有手工生巧般的细腻质感”</h3>
+          <p>每一个项目，都诞生自学生对校园生活的洞察与改变的热忱。</p>
+        </div>
+        <button class="btn-warm-choco" style="padding:8px 18px; font-size:13px;">了解工坊风采</button>
+      </div>
+
+      <div class="values-row">
+        <div class="nama-tile">
+          <div class="nama-tile-icon">☕</div>
+          <h4>真实生产级上下文</h4>
+          <p>从不布置没有意义的模拟试题。每一位新人都直接接入已经平稳运行的校园项目工程仓库，在真刀真枪的业务中快速蜕变。</p>
+        </div>
+        <div class="nama-tile">
+          <div class="nama-tile-icon">🍫</div>
+          <h4>温暖结对与无痛进阶</h4>
+          <p>告别一个人看文档的迷茫与焦虑。资深学长提供一对一的代码审校建议，在每一次 Commit 中感受肉眼可见的成长。</p>
+        </div>
+        <div class="nama-tile">
+          <div class="nama-tile-icon">🌱</div>
+          <h4>可持续的代际接力</h4>
+          <p>六届学长学姐留下的不仅是数万行代码，更是详尽的踩坑复盘与架构手记。每一届成员都在丰厚的沃土上继续生长。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 03: The Sprint Loop -->
+    <section class="section-card" id="story-loop">
+      <div class="pill-badge"><span class="cocoa-dot"></span> 03 / THE SPRINT · 项目组甜蜜孵化闭环</div>
+      <h2 class="section-heading">从一个校园痛点，到可交付系统的四步迭代</h2>
+      <p class="section-lead">项目组独有的“生巧工坊敏捷法”，帮助每一位成员将奇思妙想转化为高可用工程。</p>
+
+      <div class="steps-row">
+        <div class="step-tile">
+          <div>
+            <span class="step-num-bubble">1</span>
+            <h4>技术原料对齐</h4>
+            <p>从 Python、FastAPI、Vue 3 与容器化快速建立团队基石，消除技术信息差。</p>
+          </div>
+          <div style="font-size:12px; color:var(--caramel-soft); font-weight:700; margin-top:12px;">Step 01 完成</div>
+        </div>
+
+        <div class="step-tile">
+          <div>
+            <span class="step-num-bubble">2</span>
+            <h4>需求共创与架构</h4>
+            <p>围坐一堂拆解 Issue，绘制组件交互流与向量数据库架构图，确定冲刺排期。</p>
+          </div>
+          <div style="font-size:12px; color:var(--caramel-soft); font-weight:700; margin-top:12px;">Step 02 完成</div>
+        </div>
+
+        <div class="step-tile">
+          <div>
+            <span class="step-num-bubble">3</span>
+            <h4>结对冲刺与审查</h4>
+            <p>双人结对编程，自动化 CI 校验单元测试，组长细致 Review 每条边界条件。</p>
+          </div>
+          <div style="font-size:12px; color:var(--caramel-soft); font-weight:700; margin-top:12px;">Step 03 完成</div>
+        </div>
+
+        <div class="step-tile">
+          <div>
+            <span class="step-num-bubble">4</span>
+            <h4>全校发布与传承</h4>
+            <p>容器部署交付校园用户，输出完整的接口文档与架构总结，成为下一代的起点。</p>
+          </div>
+          <div style="font-size:12px; color:#059669; font-weight:700; margin-top:12px;">✔ 校园持续运行</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 04: Flagship Project -->
+    <section class="section-card" id="story-build">
+      <div class="pill-badge"><span class="cocoa-dot"></span> 04 / CURRENT BUILD · 重点工程攻坚</div>
+      
+      <div class="build-layout">
+        <div>
+          <div class="pill-group">
+            <span class="status-pill">● 活跃迭代中</span>
+            <span class="version-pill">2026 · Agent v3 架构</span>
+          </div>
+
+          <h2 class="section-heading" style="font-size:28px;">校园 AI 智能助手</h2>
+          <p style="font-size:15px; color:#6E5347; line-height:1.6; margin-bottom:16px;">
+            项目组倾力打造的校园智能中枢：汇聚全校历届教务通知、课程心得与竞赛资料，利用 LangGraph 调度工具链，为同学提供毫秒级、可追溯出处的校园智能服务。
+          </p>
+
+          <div class="stat-ribbon">
+            <div>
+              <strong>12 位</strong>
+              <span>跨年级共建成员</span>
+            </div>
+            <div style="width:1px; background:#DFC9B6;"></div>
+            <div>
+              <strong>380+</strong>
+              <span>Git 提交记录</span>
+            </div>
+            <div style="width:1px; background:#DFC9B6;"></div>
+            <div>
+              <strong>100%</strong>
+              <span>开源代码与文档</span>
+            </div>
+          </div>
+
+          <div class="tech-stack-row">
+            <span class="soft-pill">Python</span>
+            <span class="soft-pill">FastAPI</span>
+            <span class="soft-pill">LangGraph</span>
+            <span class="soft-pill">Vue 3</span>
+            <span class="soft-pill">pgvector</span>
+            <span class="soft-pill">Docker</span>
+          </div>
+
+          <div>
+            <button class="btn-warm-choco">查看项目详情 ➔</button>
+            <button class="btn-soft-caramel">试用 AI 助手</button>
+          </div>
+        </div>
+
+        <div class="preview-box">
+          <div class="preview-header">
+            <span>CAMPUS AGENT ARCHITECTURE</span>
+            <span style="color:#34D399;">● RUNNING</span>
+          </div>
+
+          <div class="flow-card">
+            <span class="cat">INPUT LAYER / 知识输入</span>
+            <h5>校园多源数据向量索引</h5>
+            <small>教务通知 · 选课心得 · 竞赛规程自动化切片入库</small>
+          </div>
+
+          <div class="flow-card" style="background:rgba(217, 130, 43, 0.15); border-color:var(--caramel-soft);">
+            <span class="cat" style="color:#FBBF24;">CORE ENGINE / 认知中枢</span>
+            <h5>LangGraph 意图编排与工具路由</h5>
+            <small>混合检索（向量 + BM25）+ 动态工具分发调度</small>
+          </div>
+
+          <div class="flow-card">
+            <span class="cat">OUTPUT LAYER / 交互呈现</span>
+            <h5>可溯源回答与学习直达</h5>
+            <small>来源可查证，支持一键跳转知识库与对应项目 Issue</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 05: Vintage Relay -->
+    <section class="section-card" id="story-relay">
+      <div class="pill-badge"><span class="cocoa-dot"></span> 05 / VINTAGE RELAY · 历届知识接力</div>
+      <h2 class="section-heading">一代人的成果，化作下一代人的地基</h2>
+      <p class="section-lead">项目组六年来沉淀的技术谱系，记录着从简单工具到智能化平台的演进足迹。</p>
+
+      <div class="relay-cards-grid">
+        <div class="relay-card">
+          <div class="year">2024</div>
+          <h4>校园问答 v1</h4>
+          <p>以解决新生资料检索难为初心，首次构建校园问答静态知识库，完成第一代数据爬取。</p>
+          <div class="relay-badge-box">沉淀资产：第一代高质量校园问答语料库</div>
+        </div>
+
+        <div class="relay-card">
+          <div class="year">2025</div>
+          <h4>RAG 知识向量中枢 v2</h4>
+          <p>升级为大模型 RAG 架构，引入向量数据库，实现基于文档切片的精准语义匹配。</p>
+          <div class="relay-badge-box">沉淀资产：pgvector 知识流水线与后端微服务</div>
+        </div>
+
+        <div class="relay-card active">
+          <div class="year">2026</div>
+          <h4>Agent 智能协同体 v3</h4>
+          <p>拥抱 LangGraph 与智能体自主决策，从被动应答跨入主动调度，当前正由第四代主力共建。</p>
+          <div class="relay-badge-box" style="background:#FDE68A;">开放席位：大一/大二 Issue 认领通道中</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 06: Join Us -->
+    <section class="section-card" id="story-join">
+      <div class="pill-badge"><span class="cocoa-dot"></span> 06 / JOIN US · 开启你的工坊之旅</div>
+      <h2 class="section-heading">加入项目组，和同侪把想法变成现实</h2>
+      <p class="section-lead">无论你处于哪个阶段，只要有一颗热爱编程、愿意动手创造的心，这里就是你的主场。</p>
+
+      <div class="join-tiles-grid">
+        <div class="join-tile">
+          <span class="join-tile-tag">START</span>
+          <h4>认领第一个 Issue</h4>
+          <p>针对新手量身定做的初阶任务，从一行修复到一个小组件，学长带你完成第一次 PR 合并。</p>
+          <span class="join-tile-action">探索新手任务 ➔</span>
+        </div>
+
+        <div class="join-tile">
+          <span class="join-tile-tag">BUILD</span>
+          <h4>提出你的创新项目</h4>
+          <p>你觉得学校有什么系统可以做得更好？带上你的点子，项目组出人出服务器帮你一起做出来。</p>
+          <span class="join-tile-action">发起项目孵化 ➔</span>
+        </div>
+
+        <div class="join-tile">
+          <span class="join-tile-tag">EXPLORE</span>
+          <h4>浏览 68 个开源项目</h4>
+          <p>查阅项目组历届所有项目的代码库、架构图与接口文档，汲取宝贵的工程实践经验。</p>
+          <span class="join-tile-action">进入项目库中心 ➔</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

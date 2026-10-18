@@ -69,12 +69,6 @@ function normalizePage(payload: unknown, page: number, pageSize: number): Pagina
   throw new Error('面经列表接口返回格式不正确')
 }
 
-function normalizeSubmissionList(payload: unknown): InterviewSubmission[] {
-  if (Array.isArray(payload)) return payload as InterviewSubmission[]
-  if (payload && typeof payload === 'object' && Array.isArray((payload as { items?: unknown }).items)) return (payload as { items: InterviewSubmission[] }).items
-  throw new Error('面经投稿接口返回格式不正确')
-}
-
 function normalizeSubmissionPage(payload: unknown, page: number, pageSize: number): Paginated<InterviewSubmission> {
   if (Array.isArray(payload)) return { items: payload as InterviewSubmission[], page: { page, pageSize, total: payload.length } }
   if (payload && typeof payload === 'object' && Array.isArray((payload as { items?: unknown }).items)) {

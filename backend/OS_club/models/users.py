@@ -3,7 +3,7 @@
  @Author : 加个真朋友
 @Description : 
 """
-from datetime import datetime
+from datetime import datetime       #导入 Python 内置的时间日期对象，用来给数据库字段赋值时间
 
 from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column
@@ -36,15 +36,16 @@ class User(Base):
         nullable=True,
     )
 
-    avatar_url: Mapped[str | None] = mapped_column(
+    avatar_url: Mapped[str | None] = mapped_column(     #头像地址字段
         String(255),
         nullable=True,
     )
 
-    bio: Mapped[str | None] = mapped_column(
+    bio: Mapped[str | None] = mapped_column(        #个人简介字段
         String(500),
         nullable=True,
     )
+
 
     # 用户角色：
     # Member      普通成员

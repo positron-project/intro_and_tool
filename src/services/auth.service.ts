@@ -100,19 +100,6 @@ export const isDemoAuth = apiConfig.contentSource !== 'api'
 export const demoCredentials = Object.freeze({ email: 'leader@example.com', password: DEMO_PASSWORD })
 export const demoOwnerCredentials = Object.freeze({ email: 'owner2029@example.com', password: DEMO_PASSWORD })
 
-/**
- * Local-only compatibility for an API server that has not configured
- * Turnstile yet. The request still goes to FastAPI; this is never enabled on
- * a deployed host or when a real public site key is configured.
- */
-export function isLocalPasswordLoginBypass() {
-  if (isDemoAuth || !import.meta.env.DEV || typeof window === 'undefined') return false
-  const host = window.location.hostname
-  const localHost = host === 'localhost' || host === '127.0.0.1'
-  const siteKey = String(import.meta.env.VITE_TURNSTILE_SITE_KEY ?? '').trim()
-  return localHost && !siteKey
-}
-
 function readDemoSession(): AuthSession | null {
   try {
     const raw = window.localStorage.getItem(DEMO_SESSION_KEY) ?? window.sessionStorage.getItem(DEMO_SESSION_KEY)
@@ -226,7 +213,7 @@ function normalizeBackendSession(session: BackendAuthResponse): AuthSession {
 export async function login(credentials: LoginCredentials): Promise<AuthSession> {
   const email = credentials.email.trim().toLowerCase()
   if (!isValidEmail(email)) throw new Error('请输入合法的邮箱地址')
-  if (!isDemoAuth && !isLocalPasswordLoginBypass() && !credentials.turnstileToken) throw new Error('请先完成验证码校验')
+  if (!isDemoAuth && !credentials.turnstileToken) throw new Error('请先完成验证码校验')
 
   if (isDemoAuth) {
     const accounts = readDemoAccounts()
@@ -313,8 +300,18 @@ export function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email.trim())
 }
 
+const SUPPORTED_REGISTRATION_EMAIL_DOMAINS = new Set(['gmail.com', 'qq.com', '163.com'])
+const SUPPORTED_REGISTRATION_EMAIL_MESSAGE = '注册仅支持 Gmail、QQ 邮箱和 163 邮箱'
+
+export function isSupportedRegistrationEmail(email: string) {
+  const normalized = email.trim().toLowerCase()
+  if (!isValidEmail(normalized)) return false
+  return SUPPORTED_REGISTRATION_EMAIL_DOMAINS.has(normalized.slice(normalized.lastIndexOf('@') + 1))
+}
+
 export async function requestRegistrationCode(email: string, turnstileToken: string): Promise<RegistrationCodeResult> {
   if (!isValidEmail(email)) throw new Error('请输入合法的邮箱地址')
+  if (!isSupportedRegistrationEmail(email)) throw new Error(SUPPORTED_REGISTRATION_EMAIL_MESSAGE)
   if (!isDemoAuth && !turnstileToken) throw new Error('请先完成验证码校验')
   if (!isDemoAuth) return apiRequest<RegistrationCodeResult>('/auth/register/send-code', { method: 'POST', body: { email: email.trim().toLowerCase(), turnstileToken }, withAuth: false })
 
@@ -341,6 +338,7 @@ export async function register(credentials: RegistrationCredentials): Promise<vo
   if (!username) throw new Error('请填写账号名')
   if (username.length < 2 || username.length > 32) throw new Error('账号名长度应为 2–32 个字符')
   if (!isValidEmail(email)) throw new Error('请输入合法的邮箱地址')
+  if (!isSupportedRegistrationEmail(email)) throw new Error(SUPPORTED_REGISTRATION_EMAIL_MESSAGE)
   if (credentials.password.length < 8) throw new Error('密码至少需要 8 位')
   if (!isDemoAuth && !credentials.turnstileToken) throw new Error('请先完成验证码校验')
 

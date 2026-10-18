@@ -13,14 +13,14 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.orm import DeclarativeBase
 
 
-DATABASE_URL = (
+ASYNC_DATABASE_URL = (
     "mysql+asyncmy://root:123456@127.0.0.1:3306/"
     "club_os?charset=utf8mb4"
 )
 
 
 engine = create_async_engine(
-    DATABASE_URL,
+    ASYNC_DATABASE_URL,
     echo=True,
     pool_pre_ping=True,
 )
@@ -37,7 +37,7 @@ class Base(DeclarativeBase):
     pass
 
 
-async def get_database() -> AsyncGenerator[AsyncSession, None]:
+async def get_database():
     async with SessionLocal() as session:
         try:
             yield session

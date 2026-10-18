@@ -1,0 +1,84 @@
+/* ============================================================
+   入口页 02–06 · 与首屏同一套「克制」语言的共用件
+   ------------------------------------------------------------
+   这里只放五节共用的原子件：小标（每节唯一的小面积强调是那条 2px 强调色杠）、
+   区段标题、正文、分隔线。
+   每节自己的留白与栅格仍在各自的 *-section.css 里调。
+
+   由 ExpandedHomePage 在五个区段之后导入，所以能覆盖旧规则；
+   凡是在这里改过的响应式属性，本文件末尾都重新给一遍断点
+   （旧文件里的媒体查询对本文件的声明不再生效）。
+   ============================================================ */
+
+.poster-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  text-transform: uppercase;
+  /* 眉标永远一行：窄列里宁可溢出，也不要折成「WHAT WE / OFFER」两行顶乱左对齐线 */
+  white-space: nowrap;
+  color: var(--poster-ink-3);
+}
+
+.poster-eyebrow::before {
+  content: '';
+  width: 18px;
+  height: 2px;
+  /* 记号杠吃强调色琥珀：全站每一节靠它定位（青蓝留给可交互反馈） */
+  background: var(--poster-amber);
+  /* 「线先落，字后到」：杠从左侧长出来。默认就是终态（首帧不闪），
+     进入视口后由 useRuleIn 给 eyebrow 加上 .is-rule-in 播一次生长，
+     标题再按 STAGGER 跟上。 */
+  transform-origin: left center;
+}
+
+.poster-eyebrow.is-rule-in::before {
+  animation: poster-rule-in var(--motion-dur-element, 400ms) var(--motion-ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+@keyframes poster-rule-in {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* 系统要求减少动态效果时，杠直接给终态（不动画） */
+@media (prefers-reduced-motion: reduce) {
+  .poster-eyebrow.is-rule-in::before {
+    animation: none;
+  }
+}
+
+/* 不需要强调杠的地方（例如卡片内部的小标） */
+.poster-eyebrow--plain::before {
+  display: none;
+}
+
+.poster-section-title {
+  color: var(--poster-ink);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.06;
+}
+
+
+
+
+
+/* ------------------------------------------------------------
+   断点：本文件晚于各区段样式表加载
+   ------------------------------------------------------------ */
+@media (max-width: 900px) {
+  .poster-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+  }
+}

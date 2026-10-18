@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from crud.notifications import create_notification, get_notification_by_dedupe_key
+from crud.project_members import normalize_project_member_ids
 from models.project_join_requests import ProjectJoinRequest
 from models.projects import Project
 from models.users import User
@@ -129,10 +130,10 @@ async def create_join_request(
     if not project.join_enabled:
         raise ValueError("这个项目暂未开放加入申请")
 
-    member_ids = {
-        str(member_id)
-        for member_id in (project.member_ids or [])
-    }
+    member_ids = await normalize_project_member_ids(
+        db,
+        project.member_ids,
+    )
     if str(user.id) in member_ids:
         raise ValueError("你已经是这个项目的成员")
 
@@ -210,12 +211,10 @@ async def review_join_request(
     request.reviewed_at = datetime.now()
 
     if data.status == "approved":
-        # JSON 字段可能同时保存数字和字符串，统一转成字符串后再去重。
-        member_ids: list[str] = []
-        for member_id in project.member_ids or []:
-            normalized_id = str(member_id)
-            if normalized_id not in member_ids:
-                member_ids.append(normalized_id)
+        member_ids = await normalize_project_member_ids(
+            db,
+            project.member_ids,
+        )
 
         if str(request.user_id) not in member_ids:
             member_ids.append(str(request.user_id))

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>四大关键词 · 悬停扫入动效预览</title>
+<style>
+  :root {
+    --home-bg-warm: #FAF8F2;
+    --home-navy: #073F73;
+    --home-navy-deep: #063E70;
+    --home-navy-muted: rgba(7, 63, 115, 0.65);
+    /* 覆盖框底色 = #073F73 的 HSL 色相补色（207° + 180° = 27°）→ #734007 */
+    --about-kw-complement: #734007;
+    /* 覆盖框字体色 = 页面背景色 */
+    --about-kw-on-complement: var(--home-bg-warm);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 72px clamp(24px, 6vw, 92px);
+    background-color: var(--home-bg-warm);
+    background-image:
+      radial-gradient(ellipse 65% 55% at 90% 15%, rgba(183, 221, 229, 0.2) 0%, transparent 65%),
+      radial-gradient(ellipse 55% 65% at 5% 85%, rgba(159, 209, 222, 0.16) 0%, transparent 60%);
+    color: var(--home-navy);
+    font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+    min-height: 100vh;
+  }
+  .hint {
+    max-width: 900px; margin: 0 0 56px;
+    font-size: 14px; line-height: 1.9; color: var(--home-navy-muted);
+  }
+  .hint b { color: var(--home-navy); }
+
+  /* ===== 与 about-section.css 中对应段落保持一致 ===== */
+  .about-keywords-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: clamp(14px, 1.4vw, 22px); align-items: stretch;
+  }
+  .about-kw-item {
+    display: flex; flex-direction: column; align-items: flex-start;
+    position: relative; width: 100%;
+    transition: transform 0.3s ease; cursor: default;
+  }
+  .about-kw-item:hover { transform: translateY(-2px); }
+  .about-kw-body {
+    position: relative; display: block;
+    width: 100%; box-sizing: border-box;
+    padding: clamp(18px, 2.2vh, 26px) clamp(18px, 1.6vw, 26px);
+    isolation: isolate;
+  }
+  .about-kw-en {
+    position: relative; z-index: 1; display: block;
+    font-family: "MiSans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    font-size: clamp(26px, 2.4vw, 40px); font-weight: 850; line-height: 0.95;
+    letter-spacing: -0.025em; color: var(--home-navy); margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .about-kw-zh {
+    position: relative; z-index: 1; display: block;
+    font-size: clamp(13px, 0.95vw, 15px); font-weight: 600;
+    letter-spacing: 0.16em; color: var(--home-navy-muted);
+    transition: opacity 0.2s ease;
+  }
+  .about-kw-sweep {
+    position: absolute; inset: 0; z-index: 2; display: flex;
+    align-items: flex-end;
+    padding: clamp(18px, 2.2vh, 26px) clamp(18px, 1.6vw, 26px);
+    box-sizing: border-box;
+    background-color: var(--about-kw-complement);
+    border-radius: 3px;
+    transform: scaleX(0); transform-origin: left center;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform; pointer-events: none;
+  }
+  .about-kw-sweep-text {
+    display: block;
+    font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+    font-size: clamp(15px, 1.15vw, 18px); font-weight: 700; letter-spacing: 0.08em;
+    white-space: nowrap; color: var(--about-kw-on-complement);
+    opacity: 0; transform: translateX(-8px);
+    transition: opacity 0.28s ease 0.12s, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1) 0.12s;
+  }
+  .about-kw-item:hover .about-kw-sweep { transform: scaleX(1); }
+  .about-kw-item:hover .about-kw-sweep-text { opacity: 1; transform: translateX(0); }
+  /* 标题字仍然存在：抬到覆盖框之上 + difference 与琥珀底做差反相 */
+  .about-kw-item:hover .about-kw-en { z-index: 3; mix-blend-mode: difference; color: #FFFFFF; }
+  .about-kw-item:hover .about-kw-zh { opacity: 0; }
+</style>
+</head>
+<body>
+  <p class="hint">
+    把鼠标移到下面任一框上：<b>从左往右扫入</b>一个覆盖框 → 底色为文字色
+    <b>#073F73 的互补色 #734007</b>，覆盖框内字体为<b>页面背景色 #FAF8F2</b>，
+    文案替换为「我们热爱学习 / 我们积极创造 / 我们善于分享 / 我们致力传承」，
+    同时英文标题字依然存在于框内（靠 difference 混合反相显示）。
+  </p>
+
+  <div class="about-keywords-grid">
+    <div class="about-kw-item">
+      <div class="about-kw-body">
+        <span class="about-kw-en">LEARN</span>
+        <span class="about-kw-zh">学习</span>
+        <span class="about-kw-sweep"><span class="about-kw-sweep-text">我们热爱学习</span></span>
+      </div>
+    </div>
+    <div class="about-kw-item">
+      <div class="about-kw-body">
+        <span class="about-kw-en">BUILD</span>
+        <span class="about-kw-zh">创造</span>
+        <span class="about-kw-sweep"><span class="about-kw-sweep-text">我们积极创造</span></span>
+      </div>
+    </div>
+    <div class="about-kw-item">
+      <div class="about-kw-body">
+        <span class="about-kw-en">SHARE</span>
+        <span class="about-kw-zh">分享</span>
+        <span class="about-kw-sweep"><span class="about-kw-sweep-text">我们善于分享</span></span>
+      </div>
+    </div>
+    <div class="about-kw-item">
+      <div class="about-kw-body">
+        <span class="about-kw-en">PASS ON</span>
+        <span class="about-kw-zh">传承</span>
+        <span class="about-kw-sweep"><span class="about-kw-sweep-text">我们致力传承</span></span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

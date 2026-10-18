@@ -1,0 +1,783 @@
+/* ============================================================
+   高校计算机小组 · 品牌首页重构视觉样式表
+   Visual Language: Bright / Academic / Campus / Minimalist / Poster
+   ============================================================ */
+
+:root {
+  --home-bg-warm: #ffffff;
+  --home-bg-alt: #f7f7f7;
+  --home-navy: #111111;
+  --home-navy-deep: #000000;
+  --home-navy-soft: #111111;
+  --home-navy-muted: rgba(17, 17, 17, 0.65);
+  --home-accent-cyan: #d4d4d4;
+  --home-accent-blue: #c9c9c9;
+  --home-accent-pale: #dedede;
+  --home-accent-line: #c9c9c9;
+}
+
+/* ============================================================
+   首屏视口容器 (统一使用 100svh，去固定 720px，适配移动端和横屏)
+   ============================================================ */
+.home-hero-viewport {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  min-height: 100svh;
+  overflow: hidden;
+  background-color: var(--home-bg-warm);
+  color: var(--home-navy);
+  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   Layer 7: 顶部导航 (SiteHeader)
+   ============================================================ */
+/* 键盘无障碍跳过导航链接 */
+.skip-to-main-link {
+  position: absolute;
+  top: -9999px;
+  left: 24px;
+  z-index: 10000;
+  padding: 10px 18px;
+  background: var(--blue-ink, #111111);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 0 0 6px 6px;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(17, 17, 17, 0.25);
+  transition: top 0.15s ease-out;
+}
+
+.skip-to-main-link:focus {
+  top: 0;
+  outline: 2px solid #c9c9c9;
+  outline-offset: 2px;
+}
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: clamp(76px, 8.5vh, 92px);
+  z-index: 100;
+  background: transparent;
+  box-shadow: none;
+  border-bottom: 1px solid transparent;
+  padding: 0 clamp(24px, 5vw, 76px);
+  box-sizing: border-box;
+  transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              backdrop-filter 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.site-header.is-scrolled {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.08);
+  box-shadow: 0 4px 24px rgba(17, 17, 17, 0.04);
+  height: clamp(66px, 7.5vh, 78px);
+}
+
+.site-header-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+/* 左侧 Logo：圆形标记 + 院校名/小组名上下排布 */
+.site-brand {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 0.9vw, 14px);
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+  user-select: none;
+}
+
+.site-brand:hover {
+  opacity: 0.86;
+}
+
+/* 圆形平滑标记（矢量，已改为站内深海军蓝） */
+.site-brand-mark {
+  display: block;
+  height: clamp(48px, 4vw, 58px);
+  width: auto;
+  flex: none;
+  -webkit-user-drag: none;
+}
+
+/* 右侧文字区块：院校名（上）— 细线 — 小组名（下） */
+.site-brand-lockup {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(3px, 0.5vh, 5px);
+}
+
+.site-brand-college {
+  display: block;
+  height: clamp(15px, 1.05vw, 17.5px);
+  width: auto;
+  opacity: 0.88;
+  -webkit-user-drag: none;
+}
+
+/* 两行之间的简洁分隔：1px 深蓝渐隐细线 */
+.site-brand-rule {
+  display: block;
+  height: 1px;
+  width: 100%;
+  border-radius: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(17, 17, 17, 0.46) 0%,
+    rgba(17, 17, 17, 0.24) 52%,
+    rgba(17, 17, 17, 0.06) 100%
+  );
+}
+
+.site-brand-name {
+  align-self: flex-start;
+  font-size: clamp(13.5px, 0.92vw, 15px);
+  font-weight: 700;
+  color: var(--home-navy);
+  letter-spacing: 0.1em;
+  margin-right: -0.1em;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+/* 中间主要导航项 */
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 1.6vw, 28px);
+  height: 100%;
+}
+
+.site-nav-item {
+  background: none;
+  border: none;
+  padding: 6px 4px;
+  font-size: clamp(13px, 0.92vw, 14.5px);
+  font-weight: 600;
+  color: var(--home-navy);
+  opacity: 0.68;
+  cursor: pointer;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  position: relative;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.site-nav-item:hover,
+.site-nav-item.is-active {
+  opacity: 1;
+  color: var(--home-navy-deep);
+}
+
+.site-nav-item.is-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  background-color: var(--home-navy);
+  border-radius: 2px;
+}
+
+/* 右侧常驻操作区 */
+.site-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 10;
+}
+
+.site-tools-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--home-navy, #111111);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.site-tools-btn:hover {
+  background: var(--home-navy-deep, #111111);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(17, 17, 17, 0.16);
+}
+
+.site-tools-arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.site-tools-btn:hover .site-tools-arrow {
+  transform: translateX(2px);
+}
+
+/* 移动端汉堡切换 */
+.site-mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--home-navy);
+  cursor: pointer;
+  padding: 6px;
+  display: none;
+}
+
+.site-mobile-drawer {
+  display: none;
+}
+
+.site-mobile-tools-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--home-navy, #111111);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 999px;
+  text-decoration: none;
+  margin-top: 10px;
+}
+
+/* ============================================================
+   Layer 6: Hero Typography (主标题与副标题)
+   ============================================================ */
+.hero-content-stage {
+  position: absolute;
+  left: clamp(24px, 6vw, 92px);
+  top: clamp(120px, 20vh, 190px);
+  z-index: 60;
+  max-width: 48vw;
+  pointer-events: auto;
+}
+
+.hero-typography-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero-heading-group {
+  margin: 0;
+  padding: 0;
+}
+
+.hero-main-title {
+  margin: 0;
+  padding: 0;
+  font-size: clamp(76px, 8vw, 132px);
+  font-weight: 900;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  color: var(--home-navy);
+  font-family: "MiSans", "Noto Sans SC", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-title-line {
+  display: block;
+}
+
+/* 副标题 */
+.hero-subtitle-group {
+  margin-top: clamp(24px, 3.2vh, 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero-sub-title {
+  font-size: clamp(26px, 2.3vw, 36px);
+  font-weight: 700;
+  color: var(--home-navy);
+  letter-spacing: -0.015em;
+}
+
+/* 收尾短横线 (宽约 54px，高 2px) */
+
+
+/* 核心价值说明 */
+.hero-value-desc {
+  margin: clamp(14px, 1.8vh, 20px) 0 0 0;
+  max-width: clamp(340px, 36vw, 560px);
+  font-size: clamp(14px, 0.98vw, 16px);
+  line-height: 1.68;
+  color: var(--home-navy);
+  opacity: 0.85;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* 行动按钮群 */
+.hero-cta-group {
+  margin-top: clamp(20px, 2.6vh, 32px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.hero-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--home-navy, #111111);
+  color: #ffffff;
+  font-size: clamp(14px, 0.96vw, 15px);
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 999px;
+  text-decoration: none;
+  box-shadow: 0 4px 18px rgba(17, 17, 17, 0.16);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.02em;
+}
+
+.hero-btn-primary:hover {
+  background: var(--home-navy-deep, #111111);
+  color: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(17, 17, 17, 0.22);
+}
+
+.hero-btn-icon {
+  transition: transform 0.22s ease;
+}
+
+.hero-btn-primary:hover .hero-btn-icon {
+  transform: translate(2px, -2px);
+}
+
+.hero-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--home-navy, #111111);
+  font-size: clamp(14px, 0.96vw, 15px);
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 17, 17, 0.25);
+  text-decoration: none;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.hero-btn-secondary:hover {
+  background: rgba(17, 17, 17, 0.06);
+  border-color: var(--home-navy, #111111);
+  transform: translateY(-2px);
+}
+
+.hero-btn-arrow {
+  transition: transform 0.22s ease;
+}
+
+.hero-btn-secondary:hover .hero-btn-arrow {
+  transform: translateX(3px);
+}
+
+
+
+
+
+
+
+
+
+
+
+/* ============================================================
+   Layer 2 & Layer 5: CampusVisual (建筑线稿与校园实景)
+   ============================================================ */
+.campus-visual-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 建筑与校训石手绘蓝调线稿容器 (Layer 2 & 5) */
+.campus-sketch-container {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: clamp(540px, 62vw, 1080px);
+  height: clamp(460px, 76vh, 860px);
+  z-index: 45;
+  overflow: hidden;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.campus-sketch-img {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: right bottom;
+  opacity: 0.92;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 20px rgba(17, 17, 17, 0.06));
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ============================================================
+   Scroll Down 指示器 (ScrollIndicator)
+   ============================================================ */
+.scroll-indicator {
+  position: absolute;
+  left: clamp(24px, 6vw, 92px);
+  bottom: clamp(24px, 4.2vh, 44px);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--home-navy);
+  transition: opacity 0.25s ease;
+  user-select: none;
+}
+
+.scroll-indicator:hover {
+  opacity: 0.78;
+}
+
+/* 鼠标图形 */
+.scroll-mouse-icon {
+  width: 18px;
+  height: 28px;
+  border: 1.8px solid var(--home-navy);
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+  box-sizing: border-box;
+}
+
+.scroll-mouse-wheel {
+  width: 2.2px;
+  height: 5px;
+  background-color: var(--home-navy);
+  border-radius: 2px;
+}
+
+/* 细竖线与脉冲 */
+.scroll-stem-line {
+  width: 1px;
+  height: 32px;
+  background-color: rgba(17, 17, 17, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.scroll-stem-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 12px;
+  background-color: var(--home-navy);
+}
+
+/* 文本标签 */
+.scroll-text {
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--home-navy);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   响应式断点 (Tablet & Mobile)
+   ============================================================ */
+@media (max-width: 1200px) {
+  .hero-main-title {
+    font-size: clamp(56px, 7.2vw, 92px);
+  }
+  .campus-sketch-container{
+    width: 64vw;
+    height: 65vh;
+  }
+}
+
+@media (max-width: 900px) {
+  .site-nav {
+    display: none;
+  }
+  .site-mobile-toggle {
+    display: block;
+  }
+
+  /* 移动端汉堡抽屉 */
+  .site-mobile-drawer {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #ffffff;
+    padding: 24px clamp(24px, 5vw, 40px);
+    box-shadow: 0 12px 28px rgba(17, 17, 17, 0.08);
+    border-bottom: 1px solid rgba(17, 17, 17, 0.1);
+    box-sizing: border-box;
+    z-index: 100;
+  }
+
+  .site-mobile-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .site-mobile-item {
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--home-navy);
+    padding: 8px 0;
+    cursor: pointer;
+  }
+
+  .site-mobile-item.is-active {
+    color: var(--home-navy-deep);
+  }
+
+  
+
+  /* 移动端与平板：解除 height: 100svh 与 overflow: hidden 的死锁截断，改为自然自适应流式，确保矮屏/横屏内容完整展示 */
+  .hero-content-stage {
+    position: relative;
+    left: 0;
+    top: 0;
+    margin-left: clamp(20px, 4vw, 40px);
+    padding-top: clamp(100px, 14vh, 130px);
+    padding-bottom: 60px;
+    max-width: 88vw;
+  }
+
+  .campus-sketch-container{
+    width: 76vw;
+    height: 52vh;
+    opacity: 0.88;
+  }
+
+  
+}
+
+@media (max-width: 600px) {
+  .home-hero-viewport {
+    height: auto;
+    min-height: 100svh;
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+
+  /* 窄屏品牌区整体缩一档，避免与汉堡按钮互相挤压 */
+  .site-brand {
+    gap: 9px;
+  }
+  .site-brand-mark {
+    height: 42px;
+  }
+  .site-brand-college {
+    height: 12.5px;
+  }
+  .site-brand-name {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    margin-right: -0.08em;
+  }
+
+  .hero-content-stage {
+    position: relative;
+    left: 0;
+    top: 0;
+    margin-left: 20px;
+    margin-right: 20px;
+    padding-top: 96px;
+    padding-bottom: 50px;
+    max-width: calc(100vw - 40px);
+  }
+
+  .hero-main-title {
+    font-size: clamp(38px, 11vw, 56px);
+    line-height: 1.08;
+  }
+
+  .hero-sub-title {
+    font-size: 19px;
+  }
+
+  .hero-value-desc {
+    max-width: 100%;
+    font-size: 13.5px;
+  }
+
+  .hero-cta-group {
+    margin-top: 18px;
+    gap: 10px;
+  }
+
+  
+
+  .campus-sketch-container{
+    width: 92vw;
+    height: 38vh;
+    right: -4vw;
+    bottom: 20px;
+    opacity: 0.75;
+  }
+
+  /* 窄屏下点阵位置略微下移，并降低不透明度，防止与两行大标题及行动按钮重叠 */
+  
+
+  .scroll-indicator {
+    display: none;
+  }
+}
+
+/* 矮屏与横屏机型深度适配 (如 iPhone SE、横屏手机，高 <= 680px)，彻底消除溢出裁切风险 */
+@media (max-height: 680px) {
+  .home-hero-viewport {
+    height: auto !important;
+    min-height: 100svh;
+    overflow-y: visible !important;
+  }
+
+  
+
+  .hero-content-stage {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    padding-top: 85px !important;
+    padding-bottom: 40px !important;
+  }
+
+  .campus-sketch-container{
+    height: 28vh;
+    opacity: 0.45;
+  }
+
+  .hero-main-title {
+    font-size: clamp(34px, 7vw, 48px);
+  }
+
+  .hero-subtitle-group {
+    margin-top: 14px;
+  }
+
+  .hero-value-desc {
+    margin-top: 10px;
+  }
+
+  .hero-cta-group {
+    margin-top: 14px;
+  }
+
+  
+
+  .scroll-indicator {
+    display: none !important;
+  }
+}
+
+/* ============================================================
+   无障碍 (prefers-reduced-motion)
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-stem-pulse, .campus-sketch-container{
+    transition: none !important;
+    animation: none !important;
+  }
+}

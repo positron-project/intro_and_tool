@@ -3,13 +3,14 @@
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.db_conf import get_database
 from models.users import User
 from utils.auth import get_current_user
-from utils.uploads import find_upload_path, is_upload_referenced
+from utils.uploads import find_upload_path, is_upload_referenced, sanitize_filename
 
 
 router = APIRouter(
@@ -103,3 +104,21 @@ async def delete_unused_upload(
         ) from error
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/{asset_id}/download")
+async def download_upload(
+    asset_id: str,
+    filename: str | None = Query(default=None, max_length=180),
+):
+    """以附件方式返回公开上传文件，让浏览器稳定执行下载而非内联预览。"""
+
+    target_path = find_upload_path(asset_id)
+    if target_path is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="上传文件不存在",
+        )
+
+    safe_filename = sanitize_filename(filename or target_path.name, fallback=target_path.name)
+    return FileResponse(target_path, filename=safe_filename)

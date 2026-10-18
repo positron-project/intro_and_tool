@@ -1,0 +1,16 @@
+# 构建产物与手工归档：不参与格式化
+dist/
+backups/
+viz/
+design-demos/
+node_modules/
+playwright-report/
+e2e/.artifacts/
+*.zip
+*.html
+pnpm-lock.yaml
+
+# 既有手写样式（styles.css 8000+ 行、各页面 7 个 css）：整仓格式化会产生数千行
+# 无关 diff，需要时对单个文件手动执行 npx prettier --write <file>
+src/styles.css
+src/components/**/*.css

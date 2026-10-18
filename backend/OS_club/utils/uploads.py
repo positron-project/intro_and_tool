@@ -40,6 +40,31 @@ def upload_asset_id(value: str | None) -> str | None:
     return candidate
 
 
+# 文件名里不允许出现的字符（Windows 与 POSIX 的并集）。
+_INVALID_FILENAME_CHARS = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
+
+
+def sanitize_filename(name: str | None, fallback: str = "download") -> str:
+    """清洗下载文件名：去掉目录部分、非法字符和首尾空白。
+
+    供 routers/uploads.py 的附件下载路由使用，保证 Content-Disposition
+    里的文件名不会带 ../ 或 Windows 禁用字符。
+    """
+
+    value = (name or "").strip()
+    if not value:
+        return fallback
+
+    # 有人会贴 "../../etc/passwd" 这种，先砍掉目录段。
+    value = value.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
+    value = _INVALID_FILENAME_CHARS.sub("_", value).strip(" .")
+
+    if not value or value in {".", ".."}:
+        return fallback
+
+    return value[:150]
+
+
 def find_upload_path(asset_id: str) -> Path | None:
     """只在上传目录允许的子目录中查找文件。"""
 

@@ -1,0 +1,491 @@
+/* ============================================================
+   入口页首屏 · 方向 C「克制」
+   ------------------------------------------------------------
+   暖白画布（--poster-canvas #f9f5ed）+ 墨黑排版；主色是深青蓝 --poster-accent（#0f4c5c），
+   强调色是琥珀 --poster-amber（#b3741a）：青蓝管交互，琥珀管记号（2026-10 YG 指定）。
+   落点与禁令见 docs/homepage-design-style.md「一、入口页档」。
+   本文件在 home-redesign.css 之后加载，用同等特异性覆盖旧色板；
+   旧的暖白/浅蓝/网格装饰规则仍留在原文件里，其他区段还在用那些变量。
+
+   原则：不靠装饰靠留白——去掉辐射渐变、几何色块、流动线、点阵徽标，
+   只留右下角一处圆形裁切的校园线稿作配图。
+   ============================================================ */
+
+/* token 挂在入口页根节点上：顶部导航是首屏的兄弟节点，
+   若只把变量定义在 .home-hero-viewport 里，导航取不到值会回落到
+   styles.css:4846 给 .home-story-scroll 的暖棕色 #3b2c24。 */
+.home-story-scroll {
+  /* 纸（面）：卡片这类「浮起来的白面」继续用它；比画布更白一档，且同样是暖调 */
+  --poster-paper: #fffdf9;
+  /* 画布（底）：整页纸底。2026-10 由淡灰 #f2f3f5 改暖白（YG 指定）；
+     只作用于首屏 / 区段 / 页脚这类整块底色，不动卡片。 */
+  --poster-canvas: #f9f5ed;
+  /* 02 / 04 / 05 的底色读的是 :root 的 --home-bg-warm（home-redesign.css:7），
+     在入口页作用域内一并指到暖白画布，避免两套纸底同屏。 */
+  --home-bg-warm: var(--poster-canvas);
+  /* 02 / 04 / 05 与 06 的正文色读的是 :root 的 --home-navy（#111111），
+     同样在入口页作用域内指到暖墨，免得同屏出现两种黑（h2 暖、h3 冷）。 */
+  --home-navy: var(--poster-ink);
+  /* 墨色与灰阶整体偏暖一档：中性灰落在暖白纸上会反出一层冷调 */
+  --poster-ink: #14110c;
+  --poster-ink-2: #4b443a;
+  --poster-ink-3: #857e73;
+  --poster-line: rgba(28, 22, 14, 0.14);
+  /* 主色：深青蓝（YG 2026-10 指定，替换退役的电光蓝 #2b5cff——它在暖白纸上偏冷偏脆）。
+     它管的是「可交互反馈」：五个值是一套，不要只取其中一个：
+     accent 用于文字 / 1px 线 / 小面积描边；deep 只给主 CTA :hover；
+     on 只给青蓝面（全站唯一实心面 = 主 CTA）上的字；
+     tint 只做条目 hover 的底边线——一律不做填充底；
+     wash 只给首屏背景的柔光渐变（见 .home-hero-viewport 上方注释）。 */
+  --poster-accent: #0f4c5c;
+  --poster-accent-deep: #0a3b48;
+  --poster-accent-on: #ffffff;
+  --poster-accent-tint: rgba(15, 76, 92, 0.14);
+  /* 首屏柔光的峰值洗色：深青蓝 18%，只给 .home-hero-viewport 的背景用。
+     它不是一个面，是纸面受光（暖白纸上是一层冷光，正好压住底色的甜）。 */
+  --poster-accent-wash: rgba(15, 76, 92, 0.18);
+  /* 强调色：琥珀（YG 2026-10 指定）。青蓝管交互，琥珀管「记号」——
+     只落在 18×2 记号杠、导航当前项、03 选中项左杠与大号章节序号这四类上，
+     一律不做填充底、不做渐变。
+     两个值按字号分工：amber 给 ≥26px 的大号序号与 2px 记号杠（非文字档，
+     对暖白画布 ≥3:1）；amber-deep 给 16px 这类小字号序号（需 ≥4.5:1）。 */
+  --poster-amber: #b3741a;
+  --poster-amber-deep: #8f5c10;
+  /* 品牌蓝：院校官方 logo 的蓝（YG 给的参考图实测取色，主蓝 #008cd6）。
+     只给 .site-brand-mark 圆形标记这一个图形服务，不参与文字 / 线 / 状态，
+     它不是「强调色」（强调色是琥珀）——它是校徽自己的身份色。院校名矢量不走这套蓝，
+     用墨黑（YG 2026-10 明确要求改回黑色）。
+     官方稿里图标本体是青 → 蓝的柔和过渡，所以 hi 只当 mask 渐变的起点。 */
+  --poster-brand: #008cd6;
+  --poster-brand-hi: #00a4e1;
+
+  /* 全页唯一左轴：导航、首屏、02–06 与页脚的正文列都从这一条起算
+     （1440 下 86px）。原先 04–06 是 clamp(24px, 5.5vw, 84px)（79px），
+     两者差 7px，2026-10 已统一到这个值上。 */
+  --poster-gutter: clamp(24px, 6vw, 92px);
+  /* 04 行列表的编号栏宽。原来是 clamp(140px, 16vw, 240px)，1440 下 230px
+     里只放两个字符，全是空档；收窄到只容纳序号，编号回到「索引」的量级。
+     （英文小标已从这一栏挪到正文列顶部，所以这里不必再给它留宽度。） */
+  --poster-index-w: clamp(56px, 6vw, 88px);
+  /* 并置块的错位量：05 的右列整体下移这一档，让两栏不是「一刀切平」
+     的对称，而是错开一个台阶。02 曾经也用它让算法组下移，2026-10 按 YG
+     的意见去掉了（右栏凭空多一段留白），现在只有 05 还在消费。 */
+  --poster-offset: 24px;
+
+  /* 动效 token：入口页只有这一套时长 / 位移 / 交错。
+     必须与 src/components/home/motion.ts 的 DUR / SHIFT / STAGGER 对齐
+     （那边是秒，这里是毫秒）。CSS 侧目前只有眉标那条 2px 杠的生长在消费它。 */
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-in: cubic-bezier(0.42, 0, 0.58, 1);
+  --motion-dur-micro: 160ms;
+  --motion-dur-element: 400ms;
+  --motion-dur-block: 850ms;
+  --motion-dur-scene: 900ms;
+  --motion-shift-micro: 4px;
+  --motion-shift-text: 16px;
+  --motion-shift-block: 24px;
+  --motion-stagger: 90ms;
+}
+
+/* 首屏：暖白纸（--poster-canvas）+ 右上角一片深青蓝柔光。
+   ① 柔光本体是纯 CSS 径向渐变，峰值 18%，核心落在页头「工具区 →」那一带；
+      渐变在 68% 处衰减到 0，而标题/正文全在左列（那里 alpha=0），
+      所以文字实际落在纸底上：弱化灰 #857e73 对 #f9f5ed ≈ 3.69:1
+      （淡灰画布那版是 3.11:1，eyebrow 这类灰只够大字用）。
+   ② 顶层那张 3KB 纹理不是装饰。纯 CSS 渐变在 8bit 下会出现 792px 的超长同值
+      色带（等于一整行同一个灰值），乘上这张只剩 10% 对比度的云絮后碎到 168px、
+      灰阶从 1 级变 4 级。必须同层 multiply——当独立不透明层压上去会把整片光
+      替换掉（核心那点青蓝被纹理自身的浅灰洗成近白）。
+   纸底统一由 --poster-canvas 给，02 / 04 / 05 读的 --home-bg-warm 也指到它。 */
+.home-hero-viewport {
+  background-color: var(--poster-canvas);
+  background-image:
+    url('/assets/home-hero-glow.webp'),
+    radial-gradient(104% 48% at 84% 4%, var(--poster-accent-wash), rgba(15, 76, 92, 0) 68%);
+  background-position: center, center;
+  background-size: cover, cover;
+  background-repeat: no-repeat, no-repeat;
+  background-blend-mode: multiply, normal;
+  color: var(--poster-ink);
+}
+
+/* 窄屏首屏会变成长于视口的滚动块，光重新对位：更靠右上、更小一圈 */
+@media (max-width: 600px) {
+  .home-hero-viewport {
+    background-image:
+      url('/assets/home-hero-glow.webp'),
+      radial-gradient(78% 34% at 76% 2%, var(--poster-accent-wash), rgba(15, 76, 92, 0) 70%);
+  }
+}
+
+/* ------------------------------------------------------------
+   顶部导航：去掉浮岛与实心胶囊，回到「一根细线 + 一个箭头」
+   ------------------------------------------------------------ */
+.site-header {
+  padding: 0 clamp(24px, 5vw, 76px);
+}
+
+.site-header.is-scrolled {
+  background: rgba(249, 245, 237, 0.86);
+  /* 用 box-shadow 画线而不是 border：切换时不会产生 1px 位移 */
+  box-shadow: 0 1px 0 var(--poster-line);
+}
+
+/* 03（作品）与 06 + 页脚读的是 --poster-paper，但页底要走暖白画布：
+   paper 留给卡片那种「浮起的白面」，两者别混在一个变量里 */
+/* 这两节自己的 CSS 在 hero-poster.css 之后加载（各区段组件各自 import），
+   同特异性会反超，所以这里挂到入口页根节点上提高优先级 */
+.home-story-scroll .offer-section-viewport,
+.home-story-scroll .join-section-viewport {
+  background-color: var(--poster-canvas);
+}
+
+/* 品牌图形只当 mask，颜色由 CSS 提供，因此不会出现「图形自带另一种蓝」的问题：
+   - 圆形标记取院校官方 logo 的蓝（--poster-brand），并按官方稿图标本体的
+     青 → 蓝过渡叠一层 225° 渐变（参考图实测 #00a4e1 → #008cd6）；
+   - 院校名矢量取墨黑 --poster-ink（2026-10 按 YG 意见从品牌蓝改回黑色）。
+   aspect-ratio 顶替 img 的固有比例（换成 span 后它不再自动生效）。 */
+.site-brand-mark,
+.site-brand-college {
+  background-color: var(--poster-brand);
+  opacity: 1;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.site-brand-mark {
+  background-image: linear-gradient(225deg, var(--poster-brand-hi) 0%, var(--poster-brand) 62%);
+  -webkit-mask-image: url('/assets/brand-mark.svg');
+  mask-image: url('/assets/brand-mark.svg');
+  aspect-ratio: 1;
+}
+
+.site-brand-college {
+  background-color: var(--poster-ink);
+  -webkit-mask-image: url('/assets/college-wordmark.svg');
+  mask-image: url('/assets/college-wordmark.svg');
+  aspect-ratio: 477 / 60;
+}
+
+/* 父级 opacity 会把电光蓝洗成浅蓝，品牌区 hover 改成换色而不是调透明度 */
+.site-brand:hover {
+  opacity: 1;
+}
+
+.site-brand:hover .site-brand-name {
+  color: var(--poster-ink-2);
+}
+
+.site-brand-name {
+  color: var(--poster-ink);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-right: -0.06em;
+}
+
+.site-brand-rule {
+  background: linear-gradient(90deg, rgba(17, 17, 17, 0.34), rgba(17, 17, 17, 0.12) 55%, rgba(17, 17, 17, 0.02));
+}
+
+.site-nav {
+  gap: clamp(18px, 2vw, 34px);
+}
+
+.site-nav-item {
+  color: var(--poster-ink);
+  opacity: 0.5;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding-bottom: 6px;
+}
+
+.site-nav-item:hover {
+  opacity: 0.8;
+  color: var(--poster-ink);
+}
+
+/* 当前项：文字不换色，只在下方压一条琥珀记号线（与眉标那根 18×2 同一套强调） */
+.site-nav-item.is-active {
+  opacity: 1;
+  color: var(--poster-ink);
+  font-weight: 600;
+}
+
+.site-nav-item.is-active::after {
+  background: var(--poster-amber);
+  height: 2px;
+  left: 4px;
+  right: 4px;
+}
+
+/* 单一 CTA：文字 + 箭头，不要实心胶囊 */
+.site-tools-btn {
+  background: none;
+  color: var(--poster-ink);
+  border-radius: 0;
+  padding: 6px 0;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: none;
+}
+
+.site-tools-btn:hover {
+  background: none;
+  opacity: 0.72;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------
+   首屏文字：左列一块，标题大到能当图形看
+   ------------------------------------------------------------ */
+.hero-content-stage {
+  max-width: 54vw;
+}
+
+.hero-main-title {
+  color: var(--poster-ink);
+  font-size: clamp(76px, 8.6vw, 140px);
+  font-weight: 800;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+}
+
+.hero-subtitle-group {
+  margin-top: clamp(22px, 3vh, 36px);
+}
+
+.hero-sub-title {
+  color: var(--poster-ink);
+  font-size: clamp(22px, 1.9vw, 30px);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+
+
+.hero-value-desc {
+  color: var(--poster-ink-2);
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 34em;
+  margin-top: clamp(14px, 1.8vh, 22px);
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------
+   按钮：一个实心（加入我们）+ 一个安静的文字链
+   ------------------------------------------------------------ */
+.hero-cta-group {
+  gap: clamp(22px, 2.2vw, 32px);
+  align-items: center;
+}
+
+.hero-btn-primary {
+  /* 页面上唯一的实心强调色面 */
+  background: var(--poster-accent);
+  color: var(--poster-accent-on);
+  border-radius: 999px;
+  padding: 11px 24px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: none;
+}
+
+.hero-btn-primary:hover {
+  /* 克制版不加位移与阴影，只把底色压深一档 */
+  background: var(--poster-accent-deep);
+  transform: none;
+  box-shadow: none;
+}
+
+.hero-btn-secondary {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--poster-line);
+  border-radius: 0;
+  color: var(--poster-ink-2);
+  padding: 8px 0;
+  font-weight: 500;
+}
+
+.hero-btn-secondary:hover {
+  background: none;
+  border-bottom-color: var(--poster-accent);
+  color: var(--poster-accent);
+}
+
+.hero-btn-secondary:hover .hero-btn-arrow {
+  transform: none;
+}
+
+/* 指标行已从 DOM 移除；这里只留一道保险，避免旧样式复活 */
+
+
+/* ------------------------------------------------------------
+   右下角唯一配图：圆形裁切的校园线稿
+   ------------------------------------------------------------ */
+.hero-corner-art {
+  position: absolute;
+  right: clamp(24px, 4.4vw, 76px);
+  bottom: clamp(28px, 6vh, 64px);
+  width: clamp(180px, 17vw, 250px);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  overflow: hidden;
+  /* 与纸底同色：圆盘上只留 1px 线框 + 线稿，别在淡灰底上压出一个白盘 */
+  border: 1px solid var(--poster-line);
+  background: var(--poster-canvas);
+  z-index: 50;
+  pointer-events: none;
+}
+
+.hero-corner-art .campus-visual-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-corner-art .campus-sketch-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* 线稿是 1440×900 位图，主体（图书馆 + 校训石）在中下部；
+   圆形窗口靠 object-position 取景，灰度化与墨黑排版同调 */
+.hero-corner-art .campus-sketch-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 44% 90%;
+  opacity: 1;
+  filter: grayscale(1) contrast(1.08);
+  /* 取景对准建筑与校训石：微微放大填满圆形，同时不把石刻上的字裁断 */
+  transform: scale(1.18);
+  transform-origin: 44% 90%;
+}
+
+/* ------------------------------------------------------------
+   向下提示：一条细线 + 一个词
+   ------------------------------------------------------------ */
+.scroll-indicator {
+  gap: 0;
+  color: var(--poster-ink-3);
+}
+
+/* hover 的反馈从「整体变淡」改成「文字换主色」：
+   父级 0.7 透明度会把 #0f4c5c 洗成第二种浅青蓝，等于凭空多出一个色。 */
+.scroll-indicator:hover .scroll-text {
+  color: var(--poster-accent);
+}
+
+.scroll-mouse-icon {
+  display: none;
+}
+
+.scroll-stem-line {
+  width: 1px;
+  height: 44px;
+  background-color: var(--poster-line);
+}
+
+.scroll-stem-pulse {
+  background-color: var(--poster-accent);
+}
+
+.scroll-text {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: var(--poster-ink-3);
+  margin-top: 10px;
+}
+
+/* ------------------------------------------------------------
+   断点：本文件在旧样式之后加载，所以旧文件里的媒体查询不再生效，
+   凡是我改过的属性都在这里重新给一遍响应式值。
+   ------------------------------------------------------------ */
+@media (max-width: 1200px) {
+  .hero-main-title {
+    font-size: clamp(56px, 7.2vw, 92px);
+  }
+
+  .hero-corner-art {
+    width: clamp(160px, 20vw, 220px);
+  }
+}
+
+@media (max-width: 900px) {
+  .hero-content-stage {
+    max-width: 68vw;
+  }
+
+  .hero-corner-art {
+    width: clamp(140px, 26vw, 190px);
+    right: clamp(20px, 4vw, 40px);
+  }
+}
+
+@media (max-width: 600px) {
+  .hero-main-title {
+    font-size: clamp(38px, 11vw, 56px);
+    line-height: 1.04;
+  }
+
+  .hero-sub-title {
+    font-size: 19px;
+  }
+
+  .hero-value-desc {
+    font-size: 13.5px;
+    max-width: 30em;
+  }
+
+  .hero-cta-group {
+    gap: 16px;
+  }
+
+  .hero-corner-art {
+    width: clamp(110px, 32vw, 150px);
+    bottom: 20px;
+  }
+}
+
+/* ------------------------------------------------------------
+   顶部 1px 滚动进度线（全页唯一的位置反馈）
+   ------------------------------------------------------------
+   纯 transform 缩放，没有 rAF 循环、没有第二层配色、不占布局高度；
+   挂在 .home-story-scroll 里所以能取到 --poster-accent。
+   它是主色（青蓝）的落点之一（见 docs/homepage-design-style.md）。
+   z-index 必须高过页头（100），否则会被页头以后加的底色吃掉。 */
+.home-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  z-index: 120;
+  background: var(--poster-accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+@media (max-height: 680px) {
+  .hero-main-title {
+    font-size: clamp(34px, 7vw, 48px);
+  }
+
+  .hero-corner-art {
+    display: none;
+  }
+}

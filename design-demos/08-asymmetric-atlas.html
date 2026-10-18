@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="theme-light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>预选方案一 · 巨幅工程图谱与非对称多维展陈 (The Asymmetric Matrix Atlas)</title>
+  <style>
+    :root {
+      /* Impeccable Kinpaku & Warm Cocoa Palette */
+      --ks-gold: #C99738;
+      --ks-gold-hover: #DBA946;
+      --ks-gold-dim: rgba(201, 151, 56, 0.12);
+      --ks-gold-glow: rgba(201, 151, 56, 0.28);
+      --ks-patina: #10B981;
+      --ks-amber: #D97706;
+
+      /* Light Cocoa Foam Theme */
+      --bg-canvas: #F8F5EE;
+      --bg-surface: #FFFFFF;
+      --bg-subtle: #F0E9DC;
+      --text-primary: #150D08;
+      --text-secondary: #4A372C;
+      --text-muted: #826F64;
+      --border-hairline: rgba(70, 40, 25, 0.16);
+      --border-focus: rgba(201, 151, 56, 0.6);
+      --grid-cross: rgba(70, 40, 25, 0.35);
+    }
+
+    html.theme-dark {
+      /* Deep Roasted Dark Chocolate Theme */
+      --bg-canvas: #0A0604;
+      --bg-surface: #140C08;
+      --bg-subtle: #1C120C;
+      --text-primary: #F8F5EE;
+      --text-secondary: #C8B7AC;
+      --text-muted: #7E6C62;
+      --border-hairline: rgba(229, 184, 105, 0.18);
+      --border-focus: rgba(201, 151, 56, 0.6);
+      --grid-cross: rgba(201, 151, 56, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      padding-bottom: 140px;
+    }
+
+    /* Screen 01 Hero Preserved Banner */
+    .hero-preserve-banner {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-hairline);
+      padding: 13px 40px;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .banner-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .banner-title strong {
+      color: var(--ks-gold);
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .theme-toggle-btn {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-hairline);
+      color: var(--text-primary);
+      padding: 5px 15px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: monospace;
+      font-weight: 700;
+      transition: all 0.15s;
+    }
+    .theme-toggle-btn:hover {
+      border-color: var(--ks-gold);
+      color: var(--ks-gold);
+    }
+
+    /* Expansive Full Canvas (94% width, max 1440px) */
+    .atlas-wrap {
+      width: 94%;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    /* Section Foundation: Open hairline cuts, NO cards */
+    .atlas-section {
+      padding: 96px 0;
+      border-bottom: 1px solid var(--border-hairline);
+      position: relative;
+    }
+
+    /* Crosshair markers on section corners */
+    .atlas-section::before {
+      content: '+';
+      position: absolute;
+      top: -9px;
+      left: -4px;
+      font-family: monospace;
+      font-size: 14px;
+      color: var(--grid-cross);
+      line-height: 1;
+    }
+    .atlas-section::after {
+      content: '+';
+      position: absolute;
+      top: -9px;
+      right: -4px;
+      font-family: monospace;
+      font-size: 14px;
+      color: var(--grid-cross);
+      line-height: 1;
+    }
+
+    /* Editorial Eyebrow */
+    .atlas-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: "Space Grotesk", monospace;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      color: var(--ks-gold);
+      margin-bottom: 22px;
+    }
+    .atlas-eyebrow .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--ks-gold);
+      border-radius: 50%;
+    }
+
+    /* Massive Editorial Headline (大字突出) */
+    h2.atlas-title {
+      font-size: clamp(40px, 4.8vw, 64px);
+      font-weight: 900;
+      line-height: 1.12;
+      letter-spacing: -1.5px;
+      margin-bottom: 22px;
+      text-wrap: pretty;
+    }
+    h2.atlas-title em {
+      font-style: normal;
+      color: var(--ks-gold);
+    }
+
+    p.atlas-lead {
+      font-size: clamp(17px, 1.4vw, 21px);
+      line-height: 1.75;
+      color: var(--text-secondary);
+      max-width: 1080px;
+      margin-bottom: 52px;
+    }
+
+    /* ========================================================
+       SECTION 02: MANIFESTO (Dual-Axis 62/38 Asymmetrical Split)
+       Notice: Strictly NO 3-column grid!
+       ======================================================== */
+    .manifesto-duo-axis {
+      display: grid;
+      grid-template-columns: 62% 38%;
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+    }
+    .manifesto-left-hero {
+      padding: 56px 48px 56px 0;
+      border-right: 1px solid var(--border-hairline);
+    }
+    .manifesto-quote-huge {
+      font-size: clamp(26px, 2.5vw, 36px);
+      font-weight: 800;
+      line-height: 1.35;
+      letter-spacing: -0.8px;
+      color: var(--text-primary);
+      margin-bottom: 28px;
+    }
+    .manifesto-left-hero p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      max-width: 720px;
+    }
+
+    .manifesto-right-plinth {
+      padding: 56px 0 56px 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 36px;
+    }
+    .pillar-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .pillar-item {
+      display: flex;
+      align-items: baseline;
+      gap: 18px;
+    }
+    .pillar-num {
+      font-family: "Space Grotesk", monospace;
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--ks-gold);
+      line-height: 1;
+    }
+    .pillar-content h4 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .pillar-content p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ========================================================
+       SECTION 03: THE PRODUCTION ATLAS (彻底去除年份！产品维度展陈)
+       Asymmetrical Master-Detail (68% / 32%)
+       ======================================================== */
+    .filter-rail {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 40px;
+      border-bottom: 1px solid var(--border-hairline);
+      padding-bottom: 16px;
+      overflow-x: auto;
+    }
+    .filter-rail-label {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-right: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .filter-pill {
+      background: transparent;
+      border: 1px solid var(--border-hairline);
+      color: var(--text-secondary);
+      padding: 6px 18px;
+      font-size: 13.5px;
+      font-weight: 600;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .filter-pill.active {
+      background: var(--ks-gold);
+      color: #0A0604;
+      border-color: var(--ks-gold);
+      font-weight: 800;
+    }
+    .filter-pill:hover:not(.active) {
+      border-color: var(--ks-gold);
+      color: var(--text-primary);
+    }
+
+    /* Master Flagship Showcase: 68% / 32% */
+    .flagship-matrix-grid {
+      display: grid;
+      grid-template-columns: 68% 32%;
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+      margin-bottom: 56px;
+    }
+    .flagship-stage {
+      padding: 52px 48px 52px 0;
+      border-right: 1px solid var(--border-hairline);
+    }
+    .flagship-head-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 16px;
+    }
+    .flagship-code {
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: var(--ks-gold);
+    }
+    .flagship-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      font-family: monospace;
+      color: var(--ks-patina);
+      font-weight: 700;
+    }
+    .flagship-status::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      background: var(--ks-patina);
+      border-radius: 50%;
+    }
+
+    .flagship-name {
+      font-size: clamp(36px, 4vw, 54px);
+      font-weight: 900;
+      letter-spacing: -1.2px;
+      line-height: 1.15;
+      margin-bottom: 20px;
+    }
+    .flagship-summary {
+      font-size: 17px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 36px;
+      max-width: 820px;
+    }
+
+    /* Interactive Terminal HUD (Hairline, Open, Zero Card) */
+    .hud-console {
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+      padding: 24px 0;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      background: transparent;
+    }
+    .hud-console-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+    }
+    .hud-live-tag {
+      color: var(--ks-gold);
+      font-weight: 700;
+    }
+    .hud-line {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 6px;
+    }
+    .hud-prefix {
+      color: var(--ks-gold);
+      user-select: none;
+      font-weight: 700;
+    }
+    .hud-text {
+      color: var(--text-secondary);
+    }
+    .hud-text strong {
+      color: var(--text-primary);
+    }
+    .hud-benchmark-badge {
+      color: var(--ks-patina);
+      font-weight: 700;
+    }
+
+    /* Flagship Right Plinth (Stats & Engineering Specs) */
+    .flagship-specs {
+      padding: 52px 0 52px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .spec-massive-figure {
+      margin-bottom: 36px;
+    }
+    .spec-massive-figure strong {
+      display: block;
+      font-size: clamp(52px, 5.5vw, 76px);
+      font-weight: 900;
+      font-family: "Space Grotesk", sans-serif;
+      line-height: 1;
+      letter-spacing: -2px;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .spec-massive-figure span {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .spec-detail-list {
+      border-top: 1px dashed var(--border-hairline);
+      padding-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .spec-detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 13.5px;
+    }
+    .spec-detail-row dt {
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+    .spec-detail-row dd {
+      color: var(--text-primary);
+      font-weight: 700;
+      font-family: monospace;
+    }
+
+    .flagship-actions {
+      margin-top: 36px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .btn-solid {
+      background: var(--text-primary);
+      color: var(--bg-canvas);
+      border: 1px solid var(--text-primary);
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+    .btn-solid:hover {
+      background: var(--ks-gold);
+      border-color: var(--ks-gold);
+      color: #0A0604;
+    }
+    .btn-outline-link {
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      cursor: pointer;
+    }
+
+    /* ========================================================
+       SECTION 03-PART 2: STAGGERED DUO-TIER SHELF (零三排并列！)
+       Row 1: 72% / 28%
+       Row 2: 32% / 68%
+       ======================================================== */
+    .stagger-shelf-title {
+      font-family: "Space Grotesk", monospace;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    /* Row 1: Left wide 72%, Right 28% */
+    .stagger-row-1 {
+      display: grid;
+      grid-template-columns: 72% 28%;
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+    }
+    .stagger-cell-wide-1 {
+      padding: 44px 44px 44px 0;
+      border-right: 1px solid var(--border-hairline);
+    }
+    .stagger-cell-narrow-1 {
+      padding: 44px 0 44px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Row 2: Left narrow 32%, Right wide 68% */
+    .stagger-row-2 {
+      display: grid;
+      grid-template-columns: 32% 68%;
+      border-bottom: 1px solid var(--border-hairline);
+    }
+    .stagger-cell-narrow-2 {
+      padding: 44px 40px 44px 0;
+      border-right: 1px solid var(--border-hairline);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .stagger-cell-wide-2 {
+      padding: 44px 0 44px 44px;
+    }
+
+    .project-index-mark {
+      font-family: "Space Grotesk", monospace;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: var(--ks-gold);
+      display: block;
+      margin-bottom: 10px;
+    }
+    .project-name-h3 {
+      font-size: clamp(24px, 2.2vw, 32px);
+      font-weight: 900;
+      letter-spacing: -0.6px;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+    .project-desc-p {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+    .project-meta-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .meta-chip {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-hairline);
+      border-radius: 4px;
+      color: var(--text-secondary);
+    }
+
+    .stat-callout-box {
+      border-top: 1px dashed var(--border-hairline);
+      padding-top: 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .stat-callout-box strong {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--text-primary);
+      display: block;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    /* ========================================================
+       SECTION 04: ENGINEERING CRITERIA & AUDIT (非对称准则)
+       60% / 40% Split
+       ======================================================== */
+    .audit-grid {
+      display: grid;
+      grid-template-columns: 55% 45%;
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+    }
+    .audit-left {
+      padding: 52px 48px 52px 0;
+      border-right: 1px solid var(--border-hairline);
+    }
+    .audit-right {
+      padding: 52px 0 52px 48px;
+    }
+    .audit-rule-item {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .audit-rule-item:last-child {
+      margin-bottom: 0;
+    }
+    .rule-badge {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--ks-gold);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-hairline);
+      padding: 4px 10px;
+      border-radius: 4px;
+      height: fit-content;
+      white-space: nowrap;
+    }
+    .rule-body h4 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .rule-body p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* ========================================================
+       SECTION 05: RECRUITMENT PORTAL (Dual Split 50/50, No 3-Col)
+       ======================================================== */
+    .portal-dual-grid {
+      display: grid;
+      grid-template-columns: 50% 50%;
+      border-top: 1px solid var(--border-hairline);
+      border-bottom: 1px solid var(--border-hairline);
+    }
+    .portal-cell {
+      padding: 52px 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 280px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .portal-cell:first-child {
+      padding-left: 0;
+      border-right: 1px solid var(--border-hairline);
+    }
+    .portal-cell:last-child {
+      padding-right: 0;
+    }
+    .portal-cell:hover {
+      background: rgba(201, 151, 56, 0.03);
+    }
+    .portal-tag {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: var(--ks-gold);
+      margin-bottom: 16px;
+    }
+    .portal-cell h3 {
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+    }
+    .portal-cell p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .portal-cta {
+      margin-top: 36px;
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--ks-gold);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    @media (max-width: 960px) {
+      .manifesto-duo-axis,
+      .flagship-matrix-grid,
+      .stagger-row-1,
+      .stagger-row-2,
+      .audit-grid,
+      .portal-dual-grid {
+        grid-template-columns: 1fr;
+      }
+      .manifesto-left-hero,
+      .manifesto-right-plinth,
+      .flagship-stage,
+      .flagship-specs,
+      .stagger-cell-wide-1,
+      .stagger-cell-narrow-1,
+      .stagger-cell-narrow-2,
+      .stagger-cell-wide-2,
+      .audit-left,
+      .audit-right,
+      .portal-cell {
+        padding: 36px 0;
+        border-right: none;
+        border-bottom: 1px solid var(--border-hairline);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen 01 Hero Preserved Banner -->
+  <header class="hero-preserve-banner">
+    <div class="banner-title">
+      <strong>[SCREEN 01 · HERO 保留屏]</strong>
+      <span>全校大门主图与引力粒子场严格保留不变。下方为<strong>方案一 · 巨幅工程图谱与非对称多维展陈</strong>：</span>
+    </div>
+    <button class="theme-toggle-btn" id="themeBtn" onclick="toggleTheme()">切换至深色生巧模式</button>
+  </header>
+
+  <main class="atlas-wrap">
+
+    <!-- Screen 02: The Atelier Manifesto (非对称 62% / 38% 双轴布局) -->
+    <section class="atlas-section" id="story-manifesto">
+      <div class="atlas-eyebrow"><span class="dot"></span> 02 / ATELIER FOUNDATION · 项目组工程立论</div>
+
+      <h2 class="atlas-title">
+        不造玩具 Demo。<br />
+        <em>只凭真实并发与可用性立基石。</em>
+      </h2>
+      <p class="atlas-lead">
+        告别毫无回响的模拟作业。南昌航空大学科技学院计算机科技小组“项目组”，将全部力量倾注于打造真正解决校园痛点的工业级数字工程基建。
+      </p>
+
+      <!-- 62% / 38% Duo Axis -->
+      <div class="manifesto-duo-axis">
+        <div class="manifesto-left-hero">
+          <div class="manifesto-quote-huge">
+            “每一行合并进主干的代码，都直接服务于两万名师生的真实校园生活。”
+          </div>
+          <p>
+            我们从不布置为了交差而写的虚构作业。在项目组，大一与大二成员直接拥有真实服务器集群的访问权，在高并发沙箱、动态向量索引与自主智能体的碰撞中，培养出远超同侪的工程手感与系统直觉。
+          </p>
+        </div>
+
+        <div class="manifesto-right-plinth">
+          <div class="pillar-stack">
+            <div class="pillar-item">
+              <span class="pillar-num">01</span>
+              <div class="pillar-content">
+                <h4>全量真实负载交付</h4>
+                <p>杜绝单机玩具。所有系统上线前均需通过严苛的压力测试与故障演练。</p>
+              </div>
+            </div>
+            <div class="pillar-item">
+              <span class="pillar-num">02</span>
+              <div class="pillar-content">
+                <h4>严格审校与知识共创</h4>
+                <p>每行 PR 必经过两轮结对 Code Review，杜绝代码坏味道进入生产。</p>
+              </div>
+            </div>
+            <div class="pillar-item">
+              <span class="pillar-num">03</span>
+              <div class="pillar-content">
+                <h4>架构决策透明沉淀</h4>
+                <p>每个模块均附带详细的 ADR（架构决策记录）与可追踪的技术指标。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 03: The Production Atlas (彻底去除年份！产品与工程维度全景) -->
+    <section class="atlas-section" id="story-products">
+      <div class="atlas-eyebrow"><span class="dot"></span> 03 / THE PRODUCTION ATLAS · 重点工程图谱</div>
+
+      <h2 class="atlas-title">
+        六大自研系统，<em>构筑校园数字全景</em>
+      </h2>
+      <p class="atlas-lead">
+        按产品职能与技术层级深度拆解。涵盖认知智能体、高并发安全评测机群、空间时空雷达与微服务总线。
+      </p>
+
+      <!-- Category Filter Rail (按产品领域分类，绝无年份！) -->
+      <div class="filter-rail">
+        <span class="filter-rail-label">按系统领域检索:</span>
+        <button class="filter-pill active" onclick="setFilter(this, 'all')">全部系统 (ALL)</button>
+        <button class="filter-pill" onclick="setFilter(this, 'ai')">AI 认知与智能体</button>
+        <button class="filter-pill" onclick="setFilter(this, 'infra')">高并发与系统沙箱</button>
+        <button class="filter-pill" onclick="setFilter(this, 'tools')">空间拓扑与实用工具</button>
+      </div>
+
+      <!-- Flagship Showcase: 68% / 32% Master Detail (校园 AI 智能助手) -->
+      <div class="flagship-matrix-grid">
+        <div class="flagship-stage">
+          <div class="flagship-head-row">
+            <span class="flagship-code">SYS-01 // COGNITIVE CORE</span>
+            <span class="flagship-status">生产环境活跃运行中</span>
+          </div>
+          <h3 class="flagship-name">校园 AI 智能助手 (Campus Agent OS)</h3>
+          <p class="flagship-summary">
+            项目组核心旗舰工程。基于 LangGraph 状态图与 pgvector 混合检索，彻底重塑校园知识问答体验。具备动态意图路由、自动化工具调用与带权威引用切片的严谨溯源输出。
+          </p>
+
+          <!-- Hairline Terminal HUD (Open, Live Telemetry) -->
+          <div class="hud-console">
+            <div class="hud-console-header">
+              <span>ACTIVE PIPELINE TRACE // PROD-CLUSTER-04</span>
+              <span class="hud-live-tag">● LIVE STREAM</span>
+            </div>
+            <div class="hud-line">
+              <span class="hud-prefix">INPUT &rarr;</span>
+              <span class="hud-text">"请帮我查询本周教三-402机房是否有空闲，并推荐大二下编译原理学习资料"</span>
+            </div>
+            <div class="hud-line">
+              <span class="hud-prefix">ROUTER &rarr;</span>
+              <span class="hud-text">Intent: <strong>Multi-Hop Compound</strong> (Tools: [CampusBooking, ResourceIndex])</span>
+            </div>
+            <div class="hud-line">
+              <span class="hud-prefix">EXEC &rarr;</span>
+              <span class="hud-text">Dispatching pgvector query + BM25 hybrid ranking. Chunks matched: 4.</span>
+            </div>
+            <div class="hud-line">
+              <span class="hud-prefix">RESULT &rarr;</span>
+              <span class="hud-text"><span class="hud-benchmark-badge">[200 OK]</span> 综合意图推理耗时: <strong>42.8ms</strong> | 幻觉对抗检测通过率: <strong>100%</strong></span>
+            </div>
+          </div>
+
+          <div class="flagship-actions">
+            <button class="btn-solid">
+              查阅核心架构决策书
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 8h10M9 4l4 4-4 4"/>
+              </svg>
+            </button>
+            <a class="btn-outline-link">体验在线调试控制台 ➔</a>
+          </div>
+        </div>
+
+        <!-- Right Plinth: Big Figures -->
+        <div class="flagship-specs">
+          <div>
+            <div class="spec-massive-figure">
+              <strong>128K+</strong>
+              <span>校园精校向量切片</span>
+            </div>
+            <div class="spec-massive-figure">
+              <strong>42ms</strong>
+              <span>中枢平均召回耗时</span>
+            </div>
+            <div class="spec-massive-figure">
+              <strong>12 人</strong>
+              <span>跨年级共建工程师</span>
+            </div>
+          </div>
+
+          <dl class="spec-detail-list">
+            <div class="spec-detail-row">
+              <dt>Core Engine</dt>
+              <dd>FastAPI / LangGraph</dd>
+            </div>
+            <div class="spec-detail-row">
+              <dt>Vector DB</dt>
+              <dd>PostgreSQL + pgvector</dd>
+            </div>
+            <div class="spec-detail-row">
+              <dt>Web Client</dt>
+              <dd>Vue 3 + TailwindCSS</dd>
+            </div>
+            <div class="spec-detail-row">
+              <dt>Deploy Target</dt>
+              <dd>Campus K8s Cluster</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Non-3-Column Staggered Duo-Tier Grid -->
+      <div class="stagger-shelf-title">SUB-SYSTEMS // 工业级子系统矩阵</div>
+
+      <!-- Tier 1: 72% / 28% -->
+      <div class="stagger-row-1">
+        <div class="stagger-cell-wide-1">
+          <span class="project-index-mark">SYS-02 // HIGH CONCURRENCY</span>
+          <h3 class="project-name-h3">在线题库与沙箱评测平台 (STC Online Judge)</h3>
+          <p class="project-desc-p">
+            专为 ACM 算法训练与日常课程机考构建的分布式评测系统。采用轻量化 Linux cgroup 沙箱隔离，支持 C++、Python、Java 毫秒级安全判题与实时榜单滚榜。
+          </p>
+          <div class="project-meta-chips">
+            <span class="meta-chip">Next.js 14</span>
+            <span class="meta-chip">NestJS</span>
+            <span class="meta-chip">Go Judge Daemon</span>
+            <span class="meta-chip">Redis Streams</span>
+            <span class="meta-chip">Docker Sandboxing</span>
+          </div>
+          <div class="stat-callout-box">
+            <strong>2,400+ 次/分</strong>
+            <span>机考高峰期瞬时并发评测吞吐量，0 沙箱逃逸记录</span>
+          </div>
+        </div>
+
+        <div class="stagger-cell-narrow-1">
+          <div>
+            <span class="project-index-mark">SYS-03 // IOT GATEWAY</span>
+            <h3 class="project-name-h3" style="font-size: 22px;">实验室设备预约网关</h3>
+            <p class="project-desc-p" style="font-size: 14px;">
+              打通全校 8 个机房与硬件创新实验室。支持门禁联动、分时段使用审计与设备异常告警。
+            </p>
+            <div class="project-meta-chips">
+              <span class="meta-chip">Spring Boot</span>
+              <span class="meta-chip">Vue 3</span>
+              <span class="meta-chip">MQTT</span>
+            </div>
+          </div>
+          <div class="stat-callout-box">
+            <strong>100% 审计率</strong>
+            <span>全校硬件设备零遗失</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tier 2: 32% / 68% -->
+      <div class="stagger-row-2">
+        <div class="stagger-cell-narrow-2">
+          <div>
+            <span class="project-index-mark">SYS-04 // SPATIAL RADAR</span>
+            <h3 class="project-name-h3" style="font-size: 22px;">校园拓扑空间导航雷达</h3>
+            <p class="project-desc-p" style="font-size: 14px;">
+              针对新生迷路痛点，对全校 16 栋楼宇、阶梯教室与空闲自习室进行拓扑矢量化建模与室内外无缝寻路。
+            </p>
+            <div class="project-meta-chips">
+              <span class="meta-chip">React</span>
+              <span class="meta-chip">Go</span>
+              <span class="meta-chip">PostGIS</span>
+            </div>
+          </div>
+          <div class="stat-callout-box">
+            <strong>16 栋</strong>
+            <span>全景矢量拓扑全覆盖</span>
+          </div>
+        </div>
+
+        <div class="stagger-cell-wide-2">
+          <span class="project-index-mark">SYS-05 // KNOWLEDGE GRAPH</span>
+          <h3 class="project-name-h3">学术竞赛与技术复盘协同知识库 (CollabHub)</h3>
+          <p class="project-desc-p">
+            将历届蓝桥杯、ACM、软件设计大赛的获奖解题报告、工程面经与大厂复盘沉淀为结构化知识图谱。支持 Markdown 双向链接与知识节点自动提取。
+          </p>
+          <div class="project-meta-chips">
+            <span class="meta-chip">FastAPI</span>
+            <span class="meta-chip">React 18</span>
+            <span class="meta-chip">Neo4j</span>
+            <span class="meta-chip">Full-text Search</span>
+          </div>
+          <div class="stat-callout-box">
+            <strong>1,324+ 份</strong>
+            <span>经资深组长校对的高价值工程文档与大厂通关手札</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 04: Engineering Protocol & Code Review (非对称准则) -->
+    <section class="atlas-section" id="story-protocol">
+      <div class="atlas-eyebrow"><span class="dot"></span> 04 / THE CODE PROTOCOL · 生产代码标准</div>
+
+      <h2 class="atlas-title">
+        严格审校，<em>杜绝技术债务</em>
+      </h2>
+      <p class="atlas-lead">
+        在项目组，任何一次代码提交都不是盲目的。我们践行与一线大厂对齐的敏捷迭代规范。
+      </p>
+
+      <div class="audit-grid">
+        <div class="audit-left">
+          <div class="audit-rule-item">
+            <span class="rule-badge">RULE 01</span>
+            <div class="rule-body">
+              <h4>必须通过双人结对审校 (Dual PR Review)</h4>
+              <p>每个功能分支合并至 main 分支前，必须经过一名大三资深成员和一名大二模块负责人共同审查边界溢出与错误兜底。</p>
+            </div>
+          </div>
+
+          <div class="audit-rule-item">
+            <span class="rule-badge">RULE 02</span>
+            <div class="rule-body">
+              <h4>单元测试覆盖率与自动化 CI 门禁</h4>
+              <p>核心算法与业务逻辑测试覆盖率不低于 85%。GitHub Actions 自动化流水线保障每次构建零回归风险。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="audit-right">
+          <div class="audit-rule-item">
+            <span class="rule-badge">RULE 03</span>
+            <div class="rule-body">
+              <h4>架构决策记录 (ADR) 必须同步更新</h4>
+              <p>选型变更或数据模型迭代必须撰写 ADR 归档，让系统设计逻辑清晰透明，杜绝出现“无人知晓的黑盒代码”。</p>
+            </div>
+          </div>
+
+          <div class="audit-rule-item">
+            <span class="rule-badge">RULE 04</span>
+            <div class="rule-body">
+              <h4>渐进式交付与真实生产观测</h4>
+              <p>部署均接入 Prometheus 与 Grafana 实时看板，对请求延迟、错误率与资源开销进行全天候透明追踪。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 05: Join The Atelier (50/50 开放式双轨入口) -->
+    <section class="atlas-section" id="story-join">
+      <div class="atlas-eyebrow"><span class="dot"></span> 05 / ADMISSION · 加入项目组</div>
+
+      <h2 class="atlas-title">
+        不看学历与起点，<br />
+        <em>只看你的代码执着与求知欲。</em>
+      </h2>
+      <p class="atlas-lead">
+        无论你刚刚敲出第一个 Hello World，还是已经能独立写出后端服务，项目组都有与你当前水平匹配的工位。
+      </p>
+
+      <div class="portal-dual-grid">
+        <div class="portal-cell">
+          <div>
+            <span class="portal-tag">PATH 01 // 新生友好入口</span>
+            <h3>认领第一个 Good First Issue</h3>
+            <p>
+              面向大一、大二新生的平缓起步路径。涵盖前端微小交互优化、API 参数校验补齐、文档错别字修正。由学长学姐一对一协助你完成第一个 PR 提交流程。
+            </p>
+          </div>
+          <span class="portal-cta">
+            浏览今日开放认领的 Issues
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M3 8h10M9 4l4 4-4 4"/>
+            </svg>
+          </span>
+        </div>
+
+        <div class="portal-cell">
+          <div>
+            <span class="portal-tag">PATH 02 // 独立孵化入口</span>
+            <h3>提交你的校园工程立项方案</h3>
+            <p>
+              发现学校里还有哪些痛点没有被优雅解决？向项目组提交你的 PRD 构想与架构草案。项目组将为你调配全栈开发队友与服务器算力资源，助力项目全校上线。
+            </p>
+          </div>
+          <span class="portal-cta">
+            提交新系统孵化申请
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M3 8h10M9 4l4 4-4 4"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const btn = document.getElementById('themeBtn');
+      if (html.classList.contains('theme-light')) {
+        html.classList.remove('theme-light');
+        html.classList.add('theme-dark');
+        btn.textContent = '切换至暖奶霜模式';
+      } else {
+        html.classList.remove('theme-dark');
+        html.classList.add('theme-light');
+        btn.textContent = '切换至深色生巧模式';
+      }
+    }
+
+    function setFilter(btn, category) {
+      document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+  </script>
+</body>
+</html>

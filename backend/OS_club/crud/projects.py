@@ -18,6 +18,7 @@ from crud.notifications import (
     mark_notification_event_read,
     notify_content_reviewers,
 )
+from crud.project_members import normalize_project_member_ids
 from models.favorites import Favorite
 from models.project_join_requests import ProjectJoinRequest
 from models.projects import Project
@@ -178,6 +179,11 @@ async def create_project(
     project_values = data.model_dump(
         by_alias=False,
     )
+    project_values["member_ids"] = await normalize_project_member_ids(
+        db,
+        project_values.get("member_ids"),
+    )
+    project_values["member_count"] = len(project_values["member_ids"])
 
     project = Project(
         **project_values,
@@ -243,6 +249,13 @@ async def update_project(
         exclude_unset=True,
         by_alias=False,
     )
+
+    if "member_ids" in update_values:
+        update_values["member_ids"] = await normalize_project_member_ids(
+            db,
+            update_values["member_ids"],
+        )
+        update_values["member_count"] = len(update_values["member_ids"])
 
     # 把提交的字段逐个写入数据库对象。
     for field_name, field_value in update_values.items():

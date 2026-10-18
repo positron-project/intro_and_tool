@@ -80,6 +80,12 @@ export interface ResourceAttachment {
   sortOrder?: number
 }
 
+export interface ResourceLink {
+  title: string
+  url: string
+  description?: string
+}
+
 /** Local demo record for a resource submitted by a member for moderation. */
 export interface ContributionSubmission {
   id: string
@@ -93,6 +99,7 @@ export interface ContributionSubmission {
   tags?: string[]
   visibility?: ContentVisibility
   resourceUrl?: string
+  links?: ResourceLink[]
   fileName?: string
   attachments?: ResourceAttachment[]
   content?: string
@@ -287,6 +294,13 @@ export interface ContentCategory extends ContentMeta {
 /** Backward-compatible name for integrations that still call these project categories. */
 export type ProjectCategory = ContentCategory
 
+export interface LearningLink {
+  id: string
+  title: string
+  url: string
+  description?: string
+}
+
 export interface LearningNode {
   id: string
   title: string
@@ -295,6 +309,11 @@ export interface LearningNode {
   projects: number
   description?: string
   projectIds?: string[]
+  /** IDs of existing resource-library entries linked to this learning node. */
+  resourceIds?: string[]
+  resourceLinks?: LearningLink[]
+  videoLinks?: LearningLink[] | null
+  cloudDriveLinks?: LearningLink[]
   videoTitle?: string
   videoUrl?: string
 }
@@ -325,6 +344,7 @@ export interface Resource extends ContentMeta {
   isFavorited?: boolean
   accent: string
   resourceUrl?: string
+  links?: ResourceLink[]
   downloadUrl?: string
   content?: string
   accessMode?: ResourceAccessMode
@@ -337,6 +357,7 @@ export interface Member extends ContentMeta {
   id: string
   /** Login account ID when this member profile belongs to a user account. */
   userId?: string | number
+  avatarUrl?: string
   name: string
   role: string
   cohort: string
@@ -522,3 +543,21 @@ export interface CompetitionEvent extends ContentMeta {
   tracks?: CompetitionTrack[]
   projects?: CompetitionProject[]
 }
+
+
+export interface BlogPost {
+  id: string
+  /** 分类名直接来自博客系统，不再限定为固定四项 */
+  category: string
+  title: string
+  excerpt: string
+  date: string
+  readTime: string
+  author: string
+  tags: string[]
+  /** mock 源是 Markdown 子集，Halo 源是清洗前的 HTML */
+  content: string
+  /** 博客站原文地址，仅 Halo 源提供 */
+  url?: string
+}
+

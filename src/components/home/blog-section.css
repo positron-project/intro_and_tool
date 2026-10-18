@@ -1,0 +1,654 @@
+/* ============================================================
+   05 / BLOG (小组博客 · 最近文章) · 技术刊物与杂志排版样式表
+   Design System: Technical Journal / Editorial Magazine Layout
+   Palette: Warm Ivory (--home-bg-warm, #ffffff) + Deep Navy (--home-navy, #111111) + Pale Cyan
+   ============================================================ */
+
+.blog-section-viewport {
+  position: relative;
+  width: 100%;
+  /* 内容不再需要 120vh 的舞台高度，高度由内容与留白决定 */
+  min-height: auto;
+  background-color: var(--home-bg-warm, #ffffff);
+  color: var(--home-navy, #111111);
+  font-family: "MiSans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+  box-sizing: border-box;
+  padding: clamp(96px, 12vh, 136px) 0 clamp(48px, 6vh, 72px);
+}
+
+/* ============================================================
+   主体内容舞台
+   ============================================================ */
+.blog-content-stage {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 1560px;
+  margin: 0 auto;
+  /* 与首屏 / 02 / 03 共用同一条左轴（1440 下 86px，原来是 5.5vw = 79px） */
+  padding: 0 var(--poster-gutter);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(48px, 6vh, 72px);
+}
+
+/* ------------------------------------------------------------
+   顶部章节引导区 (05 / BLOG · 最近，我们在做什么？)
+   ------------------------------------------------------------ */
+.blog-header-block {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+
+
+
+
+
+
+
+
+
+
+.blog-heading-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.blog-main-title {
+  margin: 0;
+  font-size: clamp(36px, 4.2vw, 68px);
+  font-weight: 800;
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+  color: var(--home-navy, #111111);
+}
+
+.blog-sub-quote {
+  margin: 0;
+  font-size: clamp(18px, 2vw, 28px);
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  text-align: right;
+  color: var(--home-navy, #111111);
+  /* 原来是 0.82 / 0.72 两条重复声明（后者胜），去掉重复的那条 */
+  opacity: 0.82;
+}
+
+/* 副句上方的 18×2 强调色横杠：与眉标、以及 02 / 03 每栏顶上同一根记号。
+   原来是副句左侧一根 2px 中性灰竖线，与全页的记号语言不一致。 */
+.blog-sub-quote::before {
+  content: '';
+  display: block;
+  width: 18px;
+  height: 2px;
+  margin: 0 0 14px auto;
+  background: var(--poster-amber);
+}
+
+/* ============================================================
+   非对称杂志排版网格 (Editorial Grid)
+   ============================================================ */
+.blog-editorial-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 58%) minmax(0, 42%);
+  gap: clamp(40px, 5.5vw, 84px);
+  align-items: start;
+}
+
+/* ------------------------------------------------------------
+   左侧：01 / FEATURED 主文章
+   ------------------------------------------------------------ */
+.blog-featured-article {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: clamp(28px, 3.8vh, 44px) 0;
+  border-top: 1px solid rgba(17, 17, 17, 0.1);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.08);
+  box-sizing: border-box;
+  cursor: pointer;
+  outline: none;
+  transition: opacity 0.25s ease;
+}
+
+/* 条目小标：序号 + 小眉标（或日期），与 03/04 的规格栏同构 */
+.blog-item-flag {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.blog-item-num {
+  font-family: var(--mono);
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  /* 大号章节序号恒满色强调色（琥珀）：不靠 hover 提亮，它是这一节的视觉锚点之一 */
+  color: var(--poster-amber);
+}
+
+.blog-item-date {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--poster-ink-3);
+}
+
+/* 元信息行：日期 / 栏目 / 作者，用中点分隔 */
+.blog-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--poster-ink-3);
+}
+
+.blog-meta-sep {
+  color: var(--poster-line);
+}
+
+.blog-read-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--home-navy, #111111);
+}
+
+.blog-featured-article:hover .blog-read-more {
+  color: var(--poster-accent);
+}
+
+.blog-featured-article:focus-visible {
+  outline: 1.5px dashed var(--home-navy, #111111);
+  outline-offset: 8px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* 超大文章标题 */
+.featured-title {
+  margin: 0;
+  font-size: clamp(24px, 2.4vw, 36px);
+  font-weight: 800;
+  line-height: 1.32;
+  letter-spacing: -0.02em;
+  color: var(--home-navy, #111111);
+  transition: color 0.25s ease;
+}
+
+.blog-featured-article:hover .featured-title {
+  color: #111111;
+}
+
+/* 摘要 */
+.featured-excerpt {
+  margin: 0;
+  font-size: clamp(14px, 1.02vw, 15.5px);
+  font-weight: 400;
+  line-height: 1.82;
+  color: var(--home-navy, #111111);
+  opacity: 0.78;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ------------------------------------------------------------
+   右侧：02 & 03 次级文章垂直列表
+   ------------------------------------------------------------ */
+.blog-secondary-column {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(36px, 4.5vh, 52px);
+  border-left: 1px solid rgba(17, 17, 17, 0.1);
+  padding-left: clamp(28px, 3.5vw, 48px);
+  box-sizing: border-box;
+}
+
+.blog-secondary-article {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+  cursor: pointer;
+  outline: none;
+  transition: opacity 0.25s ease;
+}
+
+.blog-secondary-article:focus-visible {
+  outline: 1.5px dashed var(--home-navy, #111111);
+  outline-offset: 6px;
+}
+
+
+
+
+
+
+
+
+
+
+
+/* 次级文章标题 */
+.secondary-title {
+  margin: 0;
+  font-size: clamp(17px, 1.35vw, 21px);
+  font-weight: 700;
+  line-height: 1.38;
+  color: var(--home-navy, #111111);
+  transition: color 0.2s ease;
+}
+
+.blog-secondary-article:hover .secondary-title {
+  color: #111111;
+}
+
+/* 次级文章摘要 (2 行截断) */
+.secondary-excerpt {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.68;
+  color: var(--home-navy, #111111);
+  opacity: 0.72;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ============================================================
+   底部：查看全部文章与 06 / JOIN US 衔接
+   ============================================================ */
+.blog-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding-top: clamp(16px, 2vh, 28px);
+  border-top: 1px solid rgba(17, 17, 17, 0.08);
+  box-sizing: border-box;
+}
+
+/* 「查看全部文章」：与区段末的继续引导同级的文字链 */
+.blog-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--poster-ink-2);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.blog-footer-link:hover {
+  color: var(--poster-ink);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* 卡片与条目的焦点环：实线，与页面其余部分的细线一致 */
+
+
+
+
+
+/* ============================================================
+   沉浸式技术刊物阅读抽屉 (Editorial Reading Drawer)
+   ============================================================ */
+.blog-drawer-portal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.blog-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 17, 17, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.blog-drawer-panel {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 680px;
+  height: 100%;
+  background: #ffffff;
+  border-left: 1.5px solid rgba(17, 17, 17, 0.3);
+  box-shadow: -16px 0 48px rgba(17, 17, 17, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.drawer-top-bar {
+  height: 48px;
+  background: rgba(17, 17, 17, 0.05);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--home-navy, #111111);
+}
+
+
+
+.drawer-cat {
+  opacity: 0.6;
+}
+
+.drawer-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--home-navy, #111111);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.drawer-close-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.drawer-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: clamp(24px, 4vw, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.drawer-article-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1px dashed rgba(17, 17, 17, 0.2);
+}
+
+.drawer-title {
+  margin: 0;
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--home-navy, #111111);
+  letter-spacing: -0.02em;
+}
+
+.drawer-meta-panel {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 11.5px;
+  color: var(--home-navy, #111111);
+  opacity: 0.7;
+}
+
+.drawer-meta-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.drawer-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.drawer-tag-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: rgba(17, 17, 17, 0.05);
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--home-navy, #111111);
+}
+
+.drawer-lead-quote {
+  padding: 12px 16px;
+  background: rgba(17, 17, 17, 0.03);
+  border-left: 2px solid var(--home-navy, #111111);
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--home-navy, #111111);
+  opacity: 0.85;
+}
+
+.drawer-lead-quote p {
+  margin: 0;
+}
+
+.drawer-article-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--home-navy, #111111);
+  opacity: 0.88;
+}
+
+.drawer-h2 {
+  margin: 20px 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--home-navy, #111111);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.15);
+  padding-bottom: 6px;
+}
+
+.drawer-h3 {
+  margin: 16px 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--home-navy, #111111);
+}
+
+.drawer-paragraph {
+  margin: 0;
+}
+
+.drawer-code-block {
+  position: relative;
+  background: #111111;
+  color: #ffffff;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 12px 0;
+}
+
+.code-lang-tag {
+  background: rgba(255, 255, 255, 0.1);
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  padding: 4px 12px;
+  color: #d4d4d4;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.drawer-code-block pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: "DM Mono", "SF Mono", monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.drawer-article-footer {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.footer-line {
+  width: 100%;
+  height: 1px;
+  background: rgba(17, 17, 17, 0.18);
+}
+
+.footer-end-mark {
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  color: var(--home-navy, #111111);
+  opacity: 0.65;
+}
+
+/* ============================================================
+   响应式设计 (Tablet / Mobile)
+   ============================================================ */
+@media (max-width: 960px) {
+  .blog-editorial-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .blog-secondary-column {
+    border-left: none;
+    border-top: 1px dashed rgba(17, 17, 17, 0.16);
+    padding-left: 0;
+    padding-top: 32px;
+  }
+
+  
+
+  
+}
+
+@media (max-width: 768px) {
+  .blog-section-viewport {
+    padding: 80px 0 44px;
+  }
+
+  
+
+  
+
+  .blog-heading-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .blog-sub-quote {
+    padding-left: 10px;
+    font-size: 14.5px;
+  }
+
+  .featured-title {
+    font-size: 22px;
+  }
+
+  .blog-drawer-panel {
+    max-width: 100%;
+  }
+}
+
+
+

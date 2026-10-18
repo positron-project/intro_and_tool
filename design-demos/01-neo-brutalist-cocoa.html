@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>方向一：新粗野主义可可工坊 (Neo-Brutalist Cocoa Lab)</title>
+  <style>
+    :root {
+      --bg-cream: #FDF9F3;
+      --choco-dark: #2A170E;
+      --choco-deep: #3D2214;
+      --choco-milk: #7B4B28;
+      --caramel-amber: #D97706;
+      --caramel-light: #FBBF24;
+      --milk-foam: #FFFFFF;
+      --pistachio: #059669;
+      --berry: #E11D48;
+      --border-width: 2.5px;
+      --hard-shadow: 4px 4px 0px var(--choco-dark);
+      --hard-shadow-lg: 6px 6px 0px var(--choco-dark);
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: var(--bg-cream);
+      color: var(--choco-dark);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.6;
+      background-image: radial-gradient(rgba(42, 23, 14, 0.08) 1.2px, transparent 1.2px);
+      background-size: 24px 24px;
+      padding-bottom: 80px;
+    }
+    /* Top Banner Notice */
+    .hero-preserve-banner {
+      background: var(--choco-dark);
+      color: var(--caramel-light);
+      padding: 12px 24px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: var(--border-width) solid var(--caramel-amber);
+    }
+    .hero-preserve-banner .tag {
+      background: var(--caramel-amber);
+      color: var(--choco-dark);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    
+    .demo-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    /* Section Container */
+    .section-block {
+      margin-bottom: 72px;
+      background: var(--milk-foam);
+      border: var(--border-width) solid var(--choco-dark);
+      border-radius: 12px;
+      box-shadow: var(--hard-shadow-lg);
+      padding: 40px;
+      position: relative;
+    }
+    .section-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--caramel-light);
+      border: 2px solid var(--choco-dark);
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 2px 2px 0px var(--choco-dark);
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .section-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--berry);
+    }
+    
+    h2.section-title {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: var(--choco-dark);
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    p.section-subtitle {
+      font-size: 16px;
+      color: var(--choco-milk);
+      margin-bottom: 32px;
+      max-width: 760px;
+    }
+
+    /* Section 02: Atelier Manifesto Grid */
+    .manifesto-lead {
+      background: #F8EFE3;
+      border: 2px dashed var(--choco-dark);
+      padding: 24px;
+      border-radius: 8px;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .manifesto-lead em {
+      color: var(--caramel-amber);
+      font-style: normal;
+      text-decoration: underline wavy var(--caramel-amber);
+    }
+    .value-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .choco-card {
+      background: var(--milk-foam);
+      border: var(--border-width) solid var(--choco-dark);
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: var(--hard-shadow);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      position: relative;
+    }
+    .choco-card:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px var(--choco-dark);
+    }
+    .choco-bar-notch {
+      position: absolute;
+      top: 0;
+      right: 24px;
+      background: var(--choco-dark);
+      color: var(--caramel-light);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 10px;
+      border-bottom-left-radius: 6px;
+      border-bottom-right-radius: 6px;
+    }
+    .choco-card .num-stamp {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--caramel-amber);
+      margin-bottom: 8px;
+    }
+    .choco-card h3 {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .choco-card p {
+      font-size: 14px;
+      color: #553322;
+      line-height: 1.55;
+    }
+
+    /* Section 03: Loop Steps */
+    .loop-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      position: relative;
+    }
+    .step-box {
+      background: #FFFDF9;
+      border: var(--border-width) solid var(--choco-dark);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 3px 3px 0px var(--choco-dark);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .step-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .step-badge {
+      background: var(--choco-dark);
+      color: #FFF;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .step-phase {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--caramel-amber);
+    }
+    .step-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .step-desc {
+      font-size: 13px;
+      color: #6B4226;
+      line-height: 1.5;
+    }
+
+    /* Section 04: Flagship Build (Agent v3) */
+    .build-split {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 28px;
+      align-items: center;
+    }
+    .build-left-tags {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .tag-live {
+      background: #D1FAE5;
+      color: #065F46;
+      border: 1.5px solid #059669;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tag-live::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      background: #10B981;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.2); }
+    }
+    .tag-version {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1.5px solid #D97706;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .build-stats-bar {
+      display: flex;
+      gap: 20px;
+      background: #F6ECE0;
+      border: 2px solid var(--choco-dark);
+      border-radius: 8px;
+      padding: 14px 20px;
+      margin: 20px 0;
+    }
+    .build-stat-unit strong {
+      display: block;
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--choco-dark);
+    }
+    .build-stat-unit span {
+      font-size: 12px;
+      color: var(--choco-milk);
+      font-weight: 600;
+    }
+    .tech-stack-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .tech-pill {
+      background: var(--milk-foam);
+      border: 1.5px solid var(--choco-dark);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 2px 2px 0px var(--choco-dark);
+    }
+    .btn-row {
+      display: flex;
+      gap: 14px;
+      margin-top: 24px;
+    }
+    .btn-choco {
+      background: var(--choco-dark);
+      color: var(--caramel-light);
+      border: 2px solid var(--choco-dark);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 3px 3px 0px var(--caramel-amber);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.1s;
+    }
+    .btn-choco:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0px var(--caramel-amber);
+    }
+    .btn-caramel {
+      background: var(--caramel-light);
+      color: var(--choco-dark);
+      border: 2px solid var(--choco-dark);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 3px 3px 0px var(--choco-dark);
+      transition: all 0.1s;
+    }
+    .btn-caramel:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0px var(--choco-dark);
+    }
+    
+    /* Right Preview Window */
+    .preview-board {
+      background: var(--choco-deep);
+      color: #FFF;
+      border: var(--border-width) solid var(--choco-dark);
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: var(--hard-shadow);
+    }
+    .preview-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+      font-size: 12px;
+      font-family: monospace;
+      color: var(--caramel-light);
+    }
+    .preview-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .preview-dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .preview-dots span:nth-child(1) { background: #EF4444; }
+    .preview-dots span:nth-child(2) { background: #F59E0B; }
+    .preview-dots span:nth-child(3) { background: #10B981; }
+
+    .arch-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .arch-node {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 6px;
+      padding: 10px 14px;
+    }
+    .arch-node .kind {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--caramel-light);
+      letter-spacing: 0.5px;
+    }
+    .arch-node strong {
+      display: block;
+      font-size: 14px;
+      color: #FFF;
+      margin: 2px 0;
+    }
+    .arch-node small {
+      font-size: 11px;
+      color: #D1D5DB;
+    }
+
+    /* Section 05: Vintage Relay */
+    .relay-matrix {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    .relay-item {
+      background: #FFFDF9;
+      border: var(--border-width) solid var(--choco-dark);
+      border-radius: 8px;
+      padding: 22px;
+      box-shadow: 3px 3px 0px var(--choco-dark);
+    }
+    .relay-item.highlight {
+      background: #FEF9EE;
+      border-color: var(--caramel-amber);
+      box-shadow: 4px 4px 0px var(--caramel-amber);
+    }
+    .relay-year {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--caramel-amber);
+      margin-bottom: 4px;
+    }
+    .relay-title {
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .relay-desc {
+      font-size: 13px;
+      color: #553322;
+      margin-bottom: 12px;
+    }
+    .relay-legacy {
+      background: #F3E7D7;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--choco-dark);
+    }
+
+    /* Section 06: Join Us */
+    .join-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .join-card {
+      background: #FAF3EA;
+      border: var(--border-width) solid var(--choco-dark);
+      border-radius: 10px;
+      padding: 26px;
+      box-shadow: var(--hard-shadow);
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .join-card:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 7px 7px 0px var(--choco-dark);
+    }
+    .join-badge {
+      display: inline-block;
+      background: var(--choco-dark);
+      color: #FFF;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+    .join-card h3 {
+      font-size: 18px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+    .join-card p {
+      font-size: 13px;
+      color: #6B4226;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .join-cta {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--caramel-amber);
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen 0 Hero Preserved Notification -->
+  <div class="hero-preserve-banner">
+    <div><strong>[SCREEN 01 · HERO 保留屏]</strong> 此处完全继承原有粒子网格与校园大门主图，保持不变。以下为重构的项目组板块：</div>
+    <span class="tag">Hero Preserved</span>
+  </div>
+
+  <div class="demo-wrapper">
+
+    <!-- Screen 02: The Atelier Manifesto -->
+    <section class="section-block" id="story-club">
+      <div class="section-pill"><span class="dot"></span> 02 / THE ATELIER · 计算机科技小组 · 项目组</div>
+      <h2 class="section-title">我们不造玩具 Demo，<br />只淬炼能真实跑在校园里的数字基建。</h2>
+      <p class="section-subtitle">像手工打磨黑巧一样雕琢每一行代码。在项目组，每一次迭代都有真实用户检验，每一行提交都是下一代成员的工程底座。</p>
+      
+      <div class="manifesto-lead">
+        <span>🍫 <strong>项目组核心格言：</strong>“工程的甘甜，来自与同侪共同熬过重构时的浓郁与专注。”</span>
+        <span style="font-size:13px; background:var(--choco-dark); color:#FFF; padding:4px 10px; border-radius:4px;">STCNCHU CS ATELIER</span>
+      </div>
+
+      <div class="value-cards-grid">
+        <div class="choco-card">
+          <span class="choco-bar-notch">85% 黑巧</span>
+          <div class="num-stamp">01</div>
+          <h3>工业级真实上下文</h3>
+          <p>拒绝过家家式的期末小作业。在上一届已经跑通的 Docker 容器、PostgreSQL 向量集群与微服务架构上继续拓展真实业务需求。</p>
+        </div>
+        <div class="choco-card">
+          <span class="choco-bar-notch">海盐太妃</span>
+          <div class="num-stamp">02</div>
+          <h3>工坊结对与代码评审</h3>
+          <p>大二带大一、学长带学弟。每一次提交都经历严格的 Pull Request 讨论与自动化流水线测试，在真实对抗中培养硬核工程肌肉记忆。</p>
+        </div>
+        <div class="choco-card">
+          <span class="choco-bar-notch">金箔榛果</span>
+          <div class="num-stamp">03</div>
+          <h3>100% 交付与持续运行</h3>
+          <p>代码写完不是终点，上线运行才是起点。项目组沉淀系统监控、日志可观测性与架构交接文档，让技术在校园里生生不息。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 03: The Sprint Loop -->
+    <section class="section-block" id="story-loop">
+      <div class="section-pill"><span class="dot"></span> 03 / THE SPRINT · 项目组敏捷孵化闭环</div>
+      <h2 class="section-title">从一颗创意可可豆，到校园上线的工程全链路</h2>
+      <p class="section-subtitle">项目组不是单向任务派发，而是一个从技术选型、需求碰撞到产品化交付的甜蜜孵化闭环。</p>
+
+      <div class="loop-grid">
+        <div class="step-box">
+          <div>
+            <div class="step-header">
+              <span class="step-badge">STEP 01</span>
+              <span class="step-phase">原材料精选</span>
+            </div>
+            <h3 class="step-title">技术选型与技能对齐</h3>
+            <p class="step-desc">快速突破 Python、FastAPI、Vue 3、Git 协作规范，在工坊中统一技术语言。</p>
+          </div>
+          <div style="margin-top:14px; font-size:11px; font-weight:700; color:var(--caramel-amber);">→ 路线地图对齐完成</div>
+        </div>
+
+        <div class="step-box">
+          <div>
+            <div class="step-header">
+              <span class="step-badge">STEP 02</span>
+              <span class="step-phase">高温共熬</span>
+            </div>
+            <h3 class="step-title">需求拆解与架构研讨</h3>
+            <p class="step-desc">把模糊校园痛点拆成一个个可执行的 Issue，设计 API 契约与向量数据库索引方案。</p>
+          </div>
+          <div style="margin-top:14px; font-size:11px; font-weight:700; color:var(--caramel-amber);">→ PRD 与原型评审</div>
+        </div>
+
+        <div class="step-box">
+          <div>
+            <div class="step-header">
+              <span class="step-badge">STEP 03</span>
+              <span class="step-phase">硬核浇模</span>
+            </div>
+            <h3 class="step-title">敏捷冲刺与 Code Review</h3>
+            <p class="step-desc">每周 Sprint 迭代，自动化单元测试跑通，组长逐行审校代码质量与边界异常处理。</p>
+          </div>
+          <div style="margin-top:14px; font-size:11px; font-weight:700; color:var(--caramel-amber);">→ CI/CD 自动化验证</div>
+        </div>
+
+        <div class="step-box">
+          <div>
+            <div class="step-header">
+              <span class="step-badge">STEP 04</span>
+              <span class="step-phase">精美出炉</span>
+            </div>
+            <h3 class="step-title">全校部署与传承交接</h3>
+            <p class="step-desc">部署上线供全校师生使用，将架构决策书与运维手册归档入库，交棒下一代。</p>
+          </div>
+          <div style="margin-top:14px; font-size:11px; font-weight:700; color:var(--pistachio);">✔ 校园落地运行</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 04: Flagship Project (Agent v3) -->
+    <section class="section-block" id="story-build">
+      <div class="section-pill"><span class="dot"></span> 04 / CURRENT BUILD · 当前项目攻坚</div>
+      
+      <div class="build-split">
+        <div>
+          <div class="build-left-tags">
+            <span class="tag-live">活跃开发中</span>
+            <span class="tag-version">2026 · Agent v3 架构</span>
+          </div>
+          <h2 class="section-title" style="font-size:28px;">校园 AI 智能助手</h2>
+          <p style="font-size:15px; color:#6B4226; margin-bottom:14px;">
+            项目组今年重磅旗舰工程：将教务通知、历届选课心得、竞赛规程与项目代码文档，全面构建成一个可实时检索、自主规划并溯源回答的校园知识 Agent。
+          </p>
+
+          <div class="build-stats-bar">
+            <div class="build-stat-unit">
+              <strong>12 位</strong>
+              <span>跨年级项目组成员</span>
+            </div>
+            <div style="width:1px; background:#D8C4B0;"></div>
+            <div class="build-stat-unit">
+              <strong>380+</strong>
+              <span>Git 提交迭代</span>
+            </div>
+            <div style="width:1px; background:#D8C4B0;"></div>
+            <div class="build-stat-unit">
+              <strong>100%</strong>
+              <span>全栈开源与文档</span>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <span style="font-size:11px; font-weight:800; color:var(--choco-milk); letter-spacing:0.5px;">TECH STACK (可可配方):</span>
+            <div class="tech-stack-pills">
+              <span class="tech-pill">Python</span>
+              <span class="tech-pill">FastAPI</span>
+              <span class="tech-pill">Vue 3</span>
+              <span class="tech-pill">LangGraph</span>
+              <span class="tech-pill">pgvector</span>
+              <span class="tech-pill">Docker</span>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn-choco">查看项目详情 ➔</button>
+            <button class="btn-caramel">试用 AI 对话演示</button>
+          </div>
+        </div>
+
+        <!-- Architecture Flow Diagram -->
+        <div class="preview-board">
+          <div class="preview-bar">
+            <div class="preview-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <span>campus-ai.stcnchu-cs.club/v3</span>
+            <span style="color:#10B981;">● Online</span>
+          </div>
+
+          <div class="arch-flow">
+            <div class="arch-node">
+              <span class="kind">INPUT / 原料多模态索引</span>
+              <strong>教务通知 · 历届文档 · 竞赛规程</strong>
+              <small>自动化抓取切片 + 向量嵌入流水线</small>
+            </div>
+            <div style="text-align:center; color:var(--caramel-light); font-size:14px;">↓</div>
+            <div class="arch-node" style="border-color:var(--caramel-amber); background:rgba(217, 119, 6, 0.15);">
+              <span class="kind" style="color:var(--caramel-light);">CORE ENGINE / 智能中枢核心</span>
+              <strong>LangGraph 多步骤意图路由 + 混合召回</strong>
+              <small>稠密向量匹配 + BM25 关键词 + 自动化工具决策</small>
+            </div>
+            <div style="text-align:center; color:var(--caramel-light); font-size:14px;">↓</div>
+            <div class="arch-node">
+              <span class="kind">OUTPUT / 交互终端与溯源</span>
+              <strong>可追溯智能应答与校园节点导航</strong>
+              <small>精准锚定出处，支持一键直达学习节点</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 05: Vintage Relay -->
+    <section class="section-block" id="story-relay">
+      <div class="section-pill"><span class="dot"></span> 05 / VINTAGE RELAY · 项目传承年轮</div>
+      <h2 class="section-title">历届优秀项目，如何跨越年级持续传承</h2>
+      <p class="section-subtitle">项目组不会因成员毕业而解散项目，每一届成员都在上一届的代码库上完成一次技术跨越。</p>
+
+      <div class="relay-matrix">
+        <div class="relay-item">
+          <div class="relay-year">2024</div>
+          <h3 class="relay-title">校园问答 v1 · 经典黑巧</h3>
+          <p class="relay-desc">第一代成员针对“新生资料分散”痛点手搓的问答系统，基于关键词索引与 Flask 构建。</p>
+          <div class="relay-legacy">🍫 沉淀资产：首批 1200+ 校园问答语料与爬虫组件</div>
+        </div>
+
+        <div class="relay-item">
+          <div class="relay-year">2025</div>
+          <h3 class="relay-title">RAG 知识中枢 v2 · 榛果摩卡</h3>
+          <p class="relay-desc">引入大模型与向量数据库 pgvector，搭建自动化知识切分与语义匹配微服务。</p>
+          <div class="relay-legacy">🍫 沉淀资产：向量化流水线与标准化后端 API</div>
+        </div>
+
+        <div class="relay-item highlight">
+          <div class="relay-year">2026 (NOW)</div>
+          <h3 class="relay-title">Agent 智能体 v3 · 金箔松露</h3>
+          <p class="relay-desc">全新 LangGraph 架构，实现主动调度、工具调用与精准评测集，正由第四代成员全力研发。</p>
+          <div class="relay-legacy" style="background:#FDE68A;">🍫 正在开放：认领 Issue 与算法调优工作位</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 06: Join Us -->
+    <section class="section-block" id="story-join">
+      <div class="section-pill"><span class="dot"></span> 06 / JOIN US · 认领属于你的巧克力工位</div>
+      <h2 class="section-title">无论刚写完 Hello World，还是全栈开发者，<br />项目组都有为你准备的位置。</h2>
+      <p class="section-subtitle">从认领一个 Good First Issue 开始，和跨年级的伙伴一起，把属于大学时代的代码刻进校园的记忆里。</p>
+
+      <div class="join-grid">
+        <div class="join-card">
+          <span class="join-badge">ENTRY 01</span>
+          <h3>认领你的第一个 Issue</h3>
+          <p>针对大一、大二新生特别设计的友好任务，包含前端组件修复、API 数据验证与文档优化，学长手把手 Review。</p>
+          <div class="join-cta">查看新生 Issue 列表 ➔</div>
+        </div>
+
+        <div class="join-card">
+          <span class="join-badge">ENTRY 02</span>
+          <h3>自荐你的校园新项目</h3>
+          <p>发现校园里的生活、学习不便？带上你的好点子来项目组，我们为你拉通前后端与算法队友，一起孵化。</p>
+          <div class="join-cta">提交项目孵化提案 ➔</div>
+        </div>
+
+        <div class="join-card">
+          <span class="join-badge">ENTRY 03</span>
+          <h3>进入项目控制台</h3>
+          <p>探索全部 68 个历届开源项目、技术雷达与开发指南，站在学长学姐的肩膀上看得更远。</p>
+          <div class="join-cta">浏览历届 68 个项目 ➔</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

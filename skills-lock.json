@@ -1,11 +1,35 @@
 {
   "version": 1,
   "skills": {
-    "frontend-design": {
-      "source": "anthropics/skills",
+    "gsap": {
+      "source": "repo",
+      "sourceType": "local",
+      "skillPath": ".agents/skills/gsap/SKILL.md",
+      "computedHash": ""
+    },
+    "framer-motion": {
+      "source": "repo",
+      "sourceType": "local",
+      "skillPath": ".agents/skills/framer-motion/SKILL.md",
+      "computedHash": ""
+    },
+    "three-js": {
+      "source": "repo",
+      "sourceType": "local",
+      "skillPath": ".agents/skills/three-js/SKILL.md",
+      "computedHash": ""
+    },
+    "react-bits": {
+      "source": "repo",
+      "sourceType": "local",
+      "skillPath": ".agents/skills/react-bits/SKILL.md",
+      "computedHash": ""
+    },
+    "ssh-server-ops": {
+      "source": "Xiaoyun-0922/sshops",
       "sourceType": "github",
-      "skillPath": "skills/frontend-design/SKILL.md",
-      "computedHash": "93f53fd1c0352d3d7ec17b8f73d7351bf76f4821e55d123c9d2abc2c53ba48e4"
+      "skillPath": "skills/ssh-server-ops/SKILL.md",
+      "computedHash": "50741ce36545c21fcbc663bfa3db9fa5f0fdc1a277860cd59a0ec3aef25622f5"
     }
   }
 }

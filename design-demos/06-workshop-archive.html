@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>候选二：极客工程蓝图与档案折页标本 (The Specimen Archive)</title>
+  <style>
+    :root {
+      --gold-accent: #C99738;
+      --bg-page: #F5F1E8;
+      --bg-drawer: #ECE6D9;
+      --text-dark: #120904;
+      --text-soft: #4A372C;
+      --text-muted: #826E62;
+      --hairline: rgba(70, 40, 25, 0.2);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-dark);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+      line-height: 1.6;
+      padding-bottom: 120px;
+    }
+    .top-notice {
+      padding: 14px 48px;
+      background: var(--bg-page);
+      border-bottom: 1px solid var(--hairline);
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .archive-wrap {
+      width: 94%;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    .archive-section {
+      padding: 96px 0;
+      border-bottom: 1px solid var(--hairline);
+    }
+    .specimen-label {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: var(--gold-accent);
+      margin-bottom: 20px;
+      display: block;
+    }
+    h2.archive-title {
+      font-size: clamp(40px, 5vw, 64px);
+      font-weight: 900;
+      line-height: 1.12;
+      letter-spacing: -1.2px;
+      margin-bottom: 20px;
+    }
+    h2.archive-title em {
+      font-style: normal;
+      color: var(--gold-accent);
+    }
+    p.archive-desc {
+      font-size: clamp(17px, 1.4vw, 21px);
+      color: var(--text-soft);
+      max-width: 1000px;
+      line-height: 1.7;
+      margin-bottom: 48px;
+    }
+
+    /* ==========================================================
+       SECTION 05: 档案折页标本 (Full-Width Accordion Specimen Rows)
+       绝无三排并列！整幅水平展开的手作档案折页
+       ========================================================== */
+    .specimen-archive-container {
+      border-top: 1px solid var(--hairline);
+    }
+    .specimen-row {
+      border-bottom: 1px solid var(--hairline);
+      transition: background-color 0.2s ease;
+    }
+    .specimen-header {
+      padding: 36px 0;
+      display: grid;
+      grid-template-columns: 140px 380px 1fr 180px;
+      align-items: baseline;
+      cursor: pointer;
+      user-select: none;
+    }
+    .specimen-header:hover {
+      background: rgba(201, 151, 56, 0.04);
+    }
+    .specimen-year {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 40px;
+      font-weight: 900;
+      color: var(--gold-accent);
+      line-height: 1;
+    }
+    .specimen-title-box h3 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .specimen-title-box span {
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 4px;
+    }
+    .specimen-summary {
+      font-size: 16px;
+      color: var(--text-soft);
+      padding-right: 32px;
+    }
+    .specimen-stamp-col {
+      text-align: right;
+    }
+    .specimen-stamp {
+      font-family: monospace;
+      font-size: 11px;
+      font-weight: 800;
+      border: 1px solid var(--gold-accent);
+      color: var(--gold-accent);
+      padding: 4px 10px;
+      border-radius: 2px;
+      letter-spacing: 1px;
+      display: inline-block;
+    }
+
+    /* 展开的工程档案抽屉 (Dossier Drawer) */
+    .specimen-drawer {
+      display: none;
+      padding: 0 0 44px 0;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .specimen-row.is-expanded .specimen-drawer {
+      display: block;
+    }
+    .dossier-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 48px;
+      background: var(--bg-drawer);
+      padding: 36px 40px;
+      border-left: 3px solid var(--gold-accent);
+    }
+    .dossier-left h4 {
+      font-size: 19px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .dossier-left p {
+      font-size: 15px;
+      color: var(--text-soft);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+    .dossier-code-block {
+      background: #1C120B;
+      color: #F8F5EE;
+      font-family: monospace;
+      font-size: 12.5px;
+      padding: 16px 20px;
+      border-radius: 4px;
+      line-height: 1.6;
+    }
+    .dossier-right {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-left: 1px dashed var(--hairline);
+      padding-left: 36px;
+    }
+    .dossier-legacy-title {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--gold-accent);
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .dossier-legacy-body {
+      font-size: 15.5px;
+      font-weight: 600;
+      color: var(--text-dark);
+      line-height: 1.6;
+    }
+    .dossier-author-quote {
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 13.5px;
+      margin-top: 24px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 960px) {
+      .specimen-header {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .dossier-grid {
+        grid-template-columns: 1fr;
+      }
+      .dossier-right {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px dashed var(--hairline);
+        padding-top: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-notice">
+    <div><strong>[候选二 · 极客工程蓝图与档案折页标本]</strong> 抛弃固定并列，将历届沉淀打造为可交互拉开的工坊工程档案折页：</div>
+    <span style="font-family:monospace; color:var(--gold-accent);">SPECIMEN ARCHIVE</span>
+  </header>
+
+  <main class="archive-wrap">
+
+    <!-- Screen 05: 极客档案折页标本 -->
+    <section class="archive-section" id="story-relay">
+      <span class="specimen-label">FILE SYSTEM · 05 / VINTAGE SPECIMEN RELAY</span>
+      <h2 class="archive-title">历届项目在时光里的<em>代际演进档案</em></h2>
+      <p class="archive-desc">
+        在项目组，每一次迭代都不是随性的涂抹，而是一份封存在代码库里的技术标本。点击展开每一份工程档案手记：
+      </p>
+
+      <div class="specimen-archive-container">
+
+        <!-- 2024 Epoch Dossier -->
+        <div class="specimen-row" id="row2024">
+          <div class="specimen-header" onclick="toggleDossier('row2024')">
+            <div class="specimen-year">2024</div>
+            <div class="specimen-title-box">
+              <h3>校园问答系统 v1</h3>
+              <span>Vue 2 · Flask · SQLite</span>
+            </div>
+            <div class="specimen-summary">
+              从 0 到 1 拓荒：突破校园通知分散痛点，建立第一代倒排索引与精校问答对系统。
+            </div>
+            <div class="specimen-stamp-col">
+              <span class="specimen-stamp">[ARCHIVED 2024]</span>
+            </div>
+          </div>
+          <div class="specimen-drawer">
+            <div class="dossier-grid">
+              <div class="dossier-left">
+                <h4>第一代工程手记：荒原上的首枚钉子</h4>
+                <p>面对教务、竞赛与通知散落各处的校园现实，大二学长手搓自动化爬虫定时拉取。虽无大模型支持，但严谨的规则树与高精准度倒排索引彻底颠覆了新生找资料的体验。</p>
+                <div class="dossier-code-block">
+                  # 2024 核心规则解析器<br />
+                  def match_campus_intent(query: str):<br />
+                  &nbsp;&nbsp;tokens = tokenizer.cut(query)<br />
+                  &nbsp;&nbsp;return inverted_index.lookup(tokens, threshold=0.82)
+                </div>
+              </div>
+              <div class="dossier-right">
+                <div>
+                  <span class="dossier-legacy-title">HARD ASSET HANDOVER / 传承资产</span>
+                  <div class="dossier-legacy-body">
+                    沉淀首批 1200+ 精校校园问答语料库与高可用教务爬虫套件，至今仍作为基础数据源。
+                  </div>
+                </div>
+                <div class="dossier-author-quote">
+                  “把代码写得扎实一点，下一届学弟才能直接调接口。” —— 2024 届负责人
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2025 Epoch Dossier -->
+        <div class="specimen-row" id="row2025">
+          <div class="specimen-header" onclick="toggleDossier('row2025')">
+            <div class="specimen-year">2025</div>
+            <div class="specimen-title-box">
+              <h3>RAG 知识向量中枢 v2</h3>
+              <span>FastAPI · pgvector · Microservices</span>
+            </div>
+            <div class="specimen-summary">
+              架构大跃升：全面接入嵌入模型与向量数据库，打通校园微服务微集群，迈入语义检索时代。
+            </div>
+            <div class="specimen-stamp-col">
+              <span class="specimen-stamp">[MIGRATED 2025]</span>
+            </div>
+          </div>
+          <div class="specimen-drawer">
+            <div class="dossier-grid">
+              <div class="dossier-left">
+                <h4>第二代工程手记：向量时代的骨架重构</h4>
+                <p>2025 届全面推翻静态规则，重构为微服务架构。自建向量分块流水线，将上万份教务文件、历届竞赛指南与选课手记转化为稠密向量，实现毫秒级语义检索。</p>
+                <div class="dossier-code-block">
+                  # 2025 向量混合索引<br />
+                  embedding = embed_model.encode(chunk)<br />
+                  cur.execute("SELECT id, content FROM docs ORDER BY vec &lt;=&gt; %s LIMIT 5", (embedding,))
+                </div>
+              </div>
+              <div class="dossier-right">
+                <div>
+                  <span class="dossier-legacy-title">HARD ASSET HANDOVER / 传承资产</span>
+                  <div class="dossier-legacy-body">
+                    确立了项目组后端微服务规范、pgvector 向量数据库流水线与 Docker 容器化运维体系。
+                  </div>
+                </div>
+                <div class="dossier-author-quote">
+                  “从玩具到微服务，我们终于把项目变成了真正的基础设施。” —— 2025 届后端组长
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2026 Epoch Dossier (Default Open) -->
+        <div class="specimen-row is-expanded" id="row2026">
+          <div class="specimen-header" onclick="toggleDossier('row2026')">
+            <div class="specimen-year">2026</div>
+            <div class="specimen-title-box">
+              <h3>Agent 智能协同体 v3</h3>
+              <span>LangGraph · Multi-Agent · Eval Bench</span>
+            </div>
+            <div class="specimen-summary">
+              从被动到主动调度：基于 LangGraph 构建多智能体意图路由与自动化评测集，正在主力研发中。
+            </div>
+            <div class="specimen-stamp-col">
+              <span class="specimen-stamp" style="border-color:#10B981; color:#047857; background:#D1FAE5;">[ACTIVE NOW]</span>
+            </div>
+          </div>
+          <div class="specimen-drawer">
+            <div class="dossier-grid">
+              <div class="dossier-left">
+                <h4>第三代工程手记：智能体的自主漫游</h4>
+                <p>当前攻坚核心：告别单一问答，让 Agent 具备自我反思、多步推理与外部工具调用能力（查询空闲自习室、选课学分核算、代码 Issue 诊断）。配合全套评测基准 Benchmark，严守幻觉边界。</p>
+                <div class="dossier-code-block">
+                  # 2026 LangGraph 状态机编排<br />
+                  workflow = StateGraph(AgentState)<br />
+                  workflow.add_node("intent_router", route_query)<br />
+                  workflow.add_node("tool_executor", call_campus_api)<br />
+                  workflow.add_edge("intent_router", "tool_executor")
+                </div>
+              </div>
+              <div class="dossier-right">
+                <div>
+                  <span class="dossier-legacy-title">CURRENT WORKSPACES / 开放工作位</span>
+                  <div class="dossier-legacy-body" style="color:var(--gold-accent);">
+                    正在招募大一、大二新成员！开放 LangGraph 节点调试、前端响应式交互与评测集标注席位。
+                  </div>
+                </div>
+                <div class="dossier-author-quote">
+                  “这一代，我们要把 Agent 带进每个南航科大学生的日常。” —— 2026 届现任负责人
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function toggleDossier(rowId) {
+      const row = document.getElementById(rowId);
+      row.classList.toggle('is-expanded');
+    }
+  </script>
+</body>
+</html>

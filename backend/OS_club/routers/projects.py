@@ -36,6 +36,7 @@ from crud.project_join_requests import (
     review_join_request,
 )
 from crud.favorites import count_favorites, get_favorite
+from crud.project_members import normalize_project_member_ids
 from models.project_join_requests import ProjectJoinRequest
 from models.projects import Project
 from models.users import User
@@ -63,13 +64,28 @@ router = APIRouter(
 )
 
 
+async def build_project_response(
+    db: AsyncSession,
+    project: Project,
+) -> ProjectResponse:
+    """返回统一成员 ID 与准确成员数，兼容尚未编辑的旧项目数据。"""
+
+    response = ProjectResponse.model_validate(project)
+    response.member_ids = await normalize_project_member_ids(
+        db,
+        project.member_ids,
+    )
+    response.member_count = len(response.member_ids)
+    return response
+
+
 async def add_submitter_public_info(
     db: AsyncSession,
     project,
 ) -> ProjectResponse:
     """给审核列表补充提交人的公开资料，不暴露邮箱和密码。"""
 
-    response = ProjectResponse.model_validate(project)
+    response = await build_project_response(db, project)
     if project.submitted_by is None:
         response.submitted_by_name = "项目提交人"
         response.submitted_by_direction = "未分配方向"
@@ -93,7 +109,7 @@ async def add_project_favorite_info(
 ) -> ProjectResponse:
     """把收藏总数和当前用户收藏状态补充到项目响应。"""
 
-    response = ProjectResponse.model_validate(project)
+    response = await build_project_response(db, project)
     project_id = str(project.id)
     response.favorite_count = await count_favorites(
         db=db,
@@ -112,6 +128,21 @@ async def add_project_favorite_info(
             is not None
         )
 
+    return response
+
+
+async def build_project_response(
+    db: AsyncSession,
+    project: Project,
+) -> ProjectResponse:
+    """返回统一成员 ID 与准确成员数，兼容尚未编辑的旧项目数据。"""
+
+    response = ProjectResponse.model_validate(project)
+    response.member_ids = await normalize_project_member_ids(
+        db,
+        project.member_ids,
+    )
+    response.member_count = len(response.member_ids)
     return response
 
 
@@ -167,7 +198,7 @@ async def create_project(
         submitted_by=current_user.id,
     )
 
-    return project
+    return await build_project_response(db, project)
 
 
 @router.patch(
@@ -235,7 +266,7 @@ async def update_project(
         data=project_data,
     )
 
-    return updated_project
+    return await build_project_response(db, updated_project)
 
 
 @router.post(
@@ -418,7 +449,7 @@ async def review_project(
         data=review_data,
     )
 
-    return reviewed_project
+    return await build_project_response(db, reviewed_project)
 
 
 @router.get(

@@ -1,0 +1,14 @@
+# Club OS 后端（backend/OS_club）运行依赖
+# 安装： .venv/Scripts/python.exe -m pip install -r requirements.txt
+# 说明： asyncmy 走 MySQL caching_sha2_password 认证，必须同时安装 cryptography。
+fastapi==0.142.4
+uvicorn[standard]==0.54.0
+SQLAlchemy[asyncio]==2.1.4
+asyncmy==0.2.16
+cryptography==50.0.2
+pwdlib[argon2]==0.3.1
+python-multipart==0.0.32
+email-validator==2.3.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+greenlet==3.5.6

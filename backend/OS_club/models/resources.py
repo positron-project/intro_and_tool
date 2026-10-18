@@ -103,6 +103,14 @@ class Resource(Base):
         nullable=True,
     )
 
+    # 每条外部链接都保存标题、地址和用途说明。
+    # 使用 JSON 列是因为一个资源可以有多条链接；迁移脚本会为旧数据补空列表或旧链接。
+    links: Mapped[list] = mapped_column(
+        JSON,
+        default=list,
+        nullable=False,
+    )
+
     # 文件下载地址。
     download_url: Mapped[str | None] = mapped_column(
         String(500),

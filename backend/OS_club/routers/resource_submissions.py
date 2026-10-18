@@ -147,6 +147,7 @@ async def build_submission_response(
         tags=submission.tags or [],
         visibility=submission.visibility,
         resource_url=submission.resource_url,
+        links=submission.links or [],
         file_name=submission.file_name,
         attachments=submission.attachments or [],
         content=submission.content,
@@ -426,6 +427,7 @@ async def review_submission(
             author=author_name,
             visibility=submission.visibility,
             resource_url=submission.resource_url,
+            links=submission.links or [],
             attachments=submission.attachments or [],
             content=submission.content,
         )

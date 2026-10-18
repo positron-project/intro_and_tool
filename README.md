@@ -9,6 +9,30 @@ npm install
 npm run dev
 ```
 
+## 本地环境（本机已配置）
+
+| 组成 | 位置 / 版本 | 说明 |
+| --- | --- | --- |
+| 前端工具链 | Node 26.11.0 + pnpm 12.10.1 | 依赖已装好（`pnpm install`） |
+| 前端服务 | http://127.0.0.1:5173 | `pnpm run dev`；`/api` 与 `/uploads` 已代理到后端 8000，不涉及 CORS |
+| 后端 | `backend/OS_club`，Python 3.14.8 虚拟环境 `.venv` | 依赖见 `backend/OS_club/requirements.txt` |
+| 后端服务 | http://127.0.0.1:8000 | `.venv/Scripts/python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000`，健康检查 `/api/health` |
+| 数据库 | `D:\_tools\mysql-8.4.9-winx64`（MySQL 8.4.9 便携版，非服务） | `root / 123456`，库 `club_os`（utf8mb4），表结构已由 `init_db.py` 建好 |
+
+一键启动 MySQL + 后端（前端另开终端跑 `pnpm run dev`）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/dev-up.ps1
+```
+
+停止 MySQL：
+
+```bash
+D:/_tools/mysql-8.4.9-winx64/bin/mysqladmin.exe -u root -p123456 shutdown
+```
+
+`.env` 由 `.env.example` 生成，默认 `VITE_CONTENT_SOURCE=api`；只想用浏览器本地演示数据时改成 `mock`。
+
 生产构建：
 
 ```bash
