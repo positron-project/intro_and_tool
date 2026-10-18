@@ -54,6 +54,10 @@ def send_verification_email(to_email: str, code: str, purpose: str) -> None:
     """同步提交验证码邮件；异步路由用 asyncio.to_thread 调用本函数。"""
 
     settings = get_email_settings()
+    api_key = settings.mail_api_key.get_secret_value().strip()
+    if not api_key:
+        raise EmailApiError()
+
     subject, text_body, html_body = _build_email_content(code, purpose)
     payload = {
         "to": to_email,
@@ -64,7 +68,6 @@ def send_verification_email(to_email: str, code: str, purpose: str) -> None:
         "fromEmail": settings.mail_from_email,
     }
 
-    # 参考实现未附加认证头；若服务文档要求 API 令牌，应在后端配置并在这里添加。
     # HTTP API 接收 JSON；ensure_ascii=False 让中文按 UTF-8 发出。
     request = Request(
         settings.mail_api_url,
@@ -72,6 +75,7 @@ def send_verification_email(to_email: str, code: str, purpose: str) -> None:
         headers={
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "Authorization": f"Bearer {api_key}",
         },
         method="POST",
     )

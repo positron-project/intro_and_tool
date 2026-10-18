@@ -1,11 +1,9 @@
 import asyncio
 import json
-import os
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-
-DEFAULT_EMAIL_API_URL = "https://mail-api.twoword.cfd/api/v1/emails"
+from config.email_conf import get_email_settings
 
 
 class EmailApiError(Exception):
@@ -14,11 +12,19 @@ class EmailApiError(Exception):
 
 
 def _post_email(payload: dict) -> dict:
-    url = os.getenv("MAIL_API_URL", DEFAULT_EMAIL_API_URL)
+    settings = get_email_settings()
+    api_key = settings.mail_api_key.get_secret_value().strip()
+    if not api_key:
+        raise EmailApiError()
+
     request = Request(
-        url,
+        settings.mail_api_url,
         data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
         method="POST",
     )
 
@@ -65,7 +71,7 @@ async def send_verification_email(email: str, code: str, purpose: str) -> dict:
         "subject": f"南昌航空大学科技小组邮箱{action}验证码",
         "text": text,
         "html": html,
-        "fromName": "南航计算机科技小组",
-        "fromEmail": "no_reply@stcnchu.com",
+        "fromName": get_email_settings().mail_from_name,
+        "fromEmail": get_email_settings().mail_from_email,
     }
     return await asyncio.to_thread(_post_email, payload)
