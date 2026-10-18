@@ -2,8 +2,8 @@
 
 **整理日期：** 2026-10-18  
 **远程主分支：** `origin/main`  
-**主分支最新提交：** `b42ecda`（`feat: improve route and project editors`）  
-**本地整合提交：** `12a0f5e`（`Merge latest main into feature/email-api-sending`）
+**主分支最新提交：** `c7ba098`（`feat: authenticate external email API requests`）
+**主分支推送结果：** `b42ecda..c7ba098` 快进更新成功
 
 ## 一、主分支近期更新
 
@@ -55,6 +55,18 @@
 
 相关提交：`fea0644`、`7990f8c`、`de9f690`
 
+### 6. 外部邮件 API 鉴权
+
+- 邮件服务接口继续使用 `https://mail-api.twoword.cfd/api/v1/emails`。
+- 后端新增 `MAIL_API_KEY` 配置，并使用 `SecretStr` 保存，避免在配置对象中明文展示。
+- 每次发送请求增加 `Authorization: Bearer <MAIL_API_KEY>` 请求头。
+- 实际路由使用的 `utils/email_sender.py` 和保留的 `utils/email_api.py` 均已同步鉴权逻辑。
+- 未配置密钥时，后端会在发送前直接报配置错误，不会发送未鉴权请求。
+- 已用项目现有验证码邮件路径发送模拟邮件，接口返回 `200` 且业务状态为 `accepted`。
+- 临时密钥只保存在本地被忽略的 `.env` 文件，没有写入示例配置、提交或远程仓库。
+
+相关提交：`c7ba098`
+
 ## 二、邮件和认证现状
 
 - 邮件 API 仍为 `https://mail-api.twoword.cfd/api/v1/emails`。
@@ -67,17 +79,34 @@
 
 ## 三、本次整合结果
 
-- 当前工作分支已包含 `origin/main` 最新提交 `b42ecda`。
+- `origin/main` 已从 `b42ecda` 快进到 `c7ba098`；功能分支 `feature/email-api-sending` 与主分支指向同一提交。
 - 主分支的新首页、资源库、学习路线、管理员编辑器和测试文件已进入当前分支。
+- 邮件验证码发送已改为带 Bearer API Key 的第三方邮件服务调用，默认发件人仍为“南航计算机科技小组 <no_reply@stcnchu.com>”。
 - 本地数据库配置改为从 `backend/.env` 或 `backend/OS_club/.env` 的 `DATABASE_URL` 读取，不再把数据库密码写死在代码中。
 - 前端通过 `VITE_TURNSTILE_ENABLED` 控制是否显示 Turnstile 控件，后端通过 `TURNSTILE_ENABLED` 控制是否执行服务端校验。
 - 原有本地未提交修改已保留；未跟踪的 IDE 配置和本地环境文件没有写入本总结，也没有提交敏感值。
 
-> 说明：本次推送包含主分支整合提交和本总结文档。数据库、Turnstile 和本地开发开关的补充修改仍保留在当前工作区，尚未提交到远程分支。
+> 说明：本次推送包含主分支整合提交、更新总结文档和邮件 API 鉴权提交。数据库、Turnstile 和本地开发开关的其他补充修改仍保留在当前工作区，未被本次提交覆盖。
 
-## 四、后续检查建议
+## 四、完整提交记录
+
+从原主分支 `b42ecda` 到当前主分支 `c7ba098` 的更新链如下：
+
+| 提交 | 类型 | 内容 |
+| --- | --- | --- |
+| `346a6e5` | 功能 | 接入验证码邮件 API，增加邮件验证码请求模型、路由和 Turnstile 校验 |
+| `4350874` | 修复 | 调整顶部导航的响应式布局，减少窄屏重叠 |
+| `18dfee1` | 修复 | 将默认发件邮箱改为 `no_reply@stcnchu.com` |
+| `12a0f5e` | 合并 | 合并当时最新的 `main`，包含资源库、学习路线、管理员编辑器等主线更新 |
+| `f7767a7` | 文档 | 增加主分支更新总结文档 |
+| `e9fa6d4` | 文档 | 补充本地配置和未提交修改说明 |
+| `c7ba098` | 功能 | 为邮件 API 请求增加 Bearer API Key 鉴权 |
+
+上述提交已推送到 `origin/main` 和 `origin/feature/email-api-sending`。
+
+## 五、后续检查建议
 
 1. 安装 `backend/OS_club/requirements.txt` 中的依赖。
-2. 配置后端 `.env` 中的 `DATABASE_URL`、邮件 API 和 Turnstile 参数。
+2. 配置后端 `.env` 中的 `DATABASE_URL`、`MAIL_API_KEY`、邮件 API 和 Turnstile 参数。
 3. 执行前端生产构建，确认首页、管理员编辑器和学习路线链接正常编译。
 4. 启动 FastAPI 后运行邮箱验证码、资源链接和学习路线相关测试。
