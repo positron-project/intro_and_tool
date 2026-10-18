@@ -85,7 +85,7 @@ import { MAX_RESOURCE_ATTACHMENTS, uploadAsset, validateResourceAttachmentFiles 
 import { ResourceLinksEditor } from './components/ResourceLinksEditor'
 import { isRemoteClubConfigEnabled } from './services/club-config.service'
 import { listMyProjectJoinRequests, listOwnedProjectJoinRequests, listProjectJoinRequests, reviewProjectJoinRequest, submitProjectJoinRequest, type ProjectJoinRequest } from './services/project.service'
-import { competitionDateLabel, competitionNextMilestone, competitionStage, getCompetitionReminder, setCompetitionReminder } from './services/competition.service'
+import { competitionDateLabel, competitionNextMilestone, competitionStage, getCompetitionReminder, hasCompetitionSchedule, setCompetitionReminder } from './services/competition.service'
 import { getSiteSettings, getUserPreferences, isRemoteSettingsEnabled, updateUserPreferences } from './services/settings.service'
 import { getProject, listMyProjectSubmissions, resubmitProject } from './services/content.service'
 import { listFavorites, toggleFavorite, type FavoriteRecord, type FavoriteTargetType } from './services/favorite.service'
@@ -1884,13 +1884,34 @@ type FilterOption = string | { value: string; label: string }
 
 type CompetitionDirectoryScope = 'all' | 'current' | 'past'
 
-function isPastCompetition(event: CompetitionEvent) {
-  return event.lifecycle === 'archived' || event.status === '已结束'
+/** 列表里同时保留数据库原始状态和按赛程实时算出的阶段，供展示与筛选共用。 */
+type LiveCompetitionEvent = CompetitionEvent & { dbStatus: CompetitionEvent['status'] }
+
+/**
+ * 这些阶段是主办方已经明确表态的结论，即使还没录具体日期也该照实显示。
+ * 例如强网杯官网只写“报名即日起至 10 月下旬（暂定）”，没有可填的精确日期，
+ * 但“正在报名”这个事实必须让人一眼看到，不能被“赛程待定”盖掉。
+ */
+const CONFIRMED_COMPETITION_STATUSES: CompetitionEvent['status'][] = ['报名中', '报名已截止', '比赛进行中', '等待结果', '已结束']
+
+/**
+ * 卡片、详情和筛选用同一个口径判断该显示什么。
+ * 之前展示按“有无日期”判断、筛选按原始 status 比较，两套规则不一致，
+ * 导致卡片上看得见的状态在下拉里筛不出来。
+ */
+function competitionDisplayStatus(event: LiveCompetitionEvent): CompetitionEvent['status'] | '赛程待定' {
+  if (hasCompetitionSchedule(event)) return event.status
+  return CONFIRMED_COMPETITION_STATUSES.includes(event.dbStatus) ? event.dbStatus : '赛程待定'
 }
 
-function competitionSortRank(event: CompetitionEvent) {
+function isPastCompetition(event: LiveCompetitionEvent) {
+  const displayed = competitionDisplayStatus(event)
+  return event.lifecycle === 'archived' || displayed === '已结束'
+}
+
+function competitionSortRank(event: LiveCompetitionEvent) {
   if (isPastCompetition(event)) return 2
-  if (['报名中', '比赛进行中', '等待结果'].includes(event.status)) return 0
+  if (['报名中', '比赛进行中', '等待结果'].includes(competitionDisplayStatus(event))) return 0
   return 1
 }
 
@@ -1945,7 +1966,8 @@ function EventsPage() {
     const timer = window.setInterval(() => setNow(new Date()), 60_000)
     return () => window.clearInterval(timer)
   }, [])
-  const liveEvents = useMemo(() => accessibleEvents.map((event) => ({ ...event, status: competitionStage(event, now) })), [accessibleEvents, now])
+  // dbStatus 保留数据库里的原始状态：赛程还没录全时，靠它区分“主办方已明确在报名”与“确实还没消息”。
+  const liveEvents = useMemo<LiveCompetitionEvent[]>(() => accessibleEvents.map((event) => ({ ...event, dbStatus: event.status, status: competitionStage(event, now) })), [accessibleEvents, now])
   const sortedEvents = useMemo(() => [...liveEvents].sort((a, b) => {
     const rankDifference = competitionSortRank(a) - competitionSortRank(b)
     if (rankDifference) return rankDifference
@@ -1957,22 +1979,27 @@ function EventsPage() {
   const pastEvents = useMemo(() => sortedEvents.filter(isPastCompetition), [sortedEvents])
   const scopedEvents = directoryScope === 'current' ? currentEvents : directoryScope === 'past' ? pastEvents : sortedEvents
   const seriesOptions = useMemo(() => ['全部赛事系列', ...Array.from(new Set(liveEvents.map((event) => event.seriesName?.trim()).filter(Boolean) as string[])).sort()], [liveEvents])
-  const statusOptions = ['全部状态', '即将报名', '报名中', '报名已截止', '即将开始', '比赛进行中', '等待结果', '已结束', '已归档']
+  const statusOptions = ['全部状态', '赛程待定', '即将报名', '报名中', '报名已截止', '即将开始', '比赛进行中', '等待结果', '已结束', '已归档']
   const filteredEvents = useMemo(() => {
     const keyword = search.trim().toLowerCase()
     return scopedEvents.filter((event) => {
       const matchesSearch = !keyword || `${event.title} ${event.seriesName ?? ''} ${event.type} ${event.organizer ?? ''} ${event.description}`.toLowerCase().includes(keyword)
       const matchesSeries = seriesFilter === '全部赛事系列' || event.seriesName === seriesFilter
-      const matchesStatus = statusFilter === '全部状态' || (statusFilter === '已归档' ? event.lifecycle === 'archived' : event.status === statusFilter)
+      const matchesStatus = statusFilter === '全部状态'
+        || (statusFilter === '已归档'
+          ? event.lifecycle === 'archived'
+          : competitionDisplayStatus(event) === statusFilter)
       return matchesSearch && matchesSeries && matchesStatus
     })
   }, [scopedEvents, search, seriesFilter, statusFilter])
   const reminderEvent = useMemo(() => {
     const withMilestone = currentEvents
       .map((event) => ({ event, milestone: competitionNextMilestone(event, now) }))
-      .filter((item): item is { event: CompetitionEvent; milestone: NonNullable<typeof item.milestone> } => Boolean(item.milestone))
+      .filter((item): item is { event: LiveCompetitionEvent; milestone: NonNullable<typeof item.milestone> } => Boolean(item.milestone))
       .sort((a, b) => a.milestone.date.getTime() - b.milestone.date.getTime())
-    return withMilestone[0]?.event
+    // 后台刚发布、官网还没出赛程的赛事没有未来节点，此时用第一场当前赛事占位，
+    // 避免横幅落到“暂无公开赛事”的空白态。
+    return withMilestone[0]?.event ?? currentEvents[0]
   }, [currentEvents, now])
   const reminderMilestone = reminderEvent ? competitionNextMilestone(reminderEvent, now) : undefined
   const pageCount = Math.max(1, Math.ceil(filteredEvents.length / pageSize))
@@ -2014,13 +2041,13 @@ function EventsPage() {
     }
   }
   return <div className="page listing-page events-page">
-    <PageIntro eyebrow="COMPETITION HUB / 08" title="比赛中心" description="按赛事系列整理比赛，把报名、时间节点和历届成果放在同一处。" action={<button type="button" className="secondary-button" onClick={() => void toggleReminder()} disabled={reminderBusy || reminderLoading || !reminderEvent} aria-pressed={reminderSet} aria-label={reminderEvent ? `${reminderSet ? '取消' : '设置'}「${reminderEvent.title}」的最近赛程提醒` : '当前没有未来赛程节点可提醒'} title={reminderEvent ? `提醒「${reminderEvent.title}」的下一个赛程节点` : '当前没有未来赛程节点可提醒'}><CalendarDays size={16} /> {!user ? '登录后提醒' : reminderLoading ? '读取提醒…' : reminderBusy ? '保存中…' : reminderSet ? '最近节点已提醒' : '提醒最近节点'}</button>} />
+    <PageIntro eyebrow="COMPETITION HUB / 08" title="比赛中心" description="按赛事系列整理比赛，把报名、时间节点和历届成果放在同一处。" action={<button type="button" className="secondary-button" onClick={() => void toggleReminder()} disabled={reminderBusy || reminderLoading || !reminderMilestone} aria-pressed={reminderSet} aria-label={reminderEvent && reminderMilestone ? `${reminderSet ? '取消' : '设置'}「${reminderEvent.title}」的最近赛程提醒` : '当前没有未来赛程节点可提醒'} title={reminderEvent && reminderMilestone ? `提醒「${reminderEvent.title}」的下一个赛程节点` : '当前没有未来赛程节点可提醒'}><CalendarDays size={16} /> {!user ? '登录后提醒' : reminderLoading ? '读取提醒…' : reminderBusy ? '保存中…' : reminderSet ? '最近节点已提醒' : '提醒最近节点'}</button>} />
     {reminderError && <p className="event-reminder-feedback" role="status">{reminderError}</p>}
     <section className="event-next-milestone" aria-label="最近赛事节点">
       <div className="event-next-label"><CalendarDays size={16} /><span>下一个时间节点</span></div>
       <div className="event-next-copy">
         <strong>{reminderEvent?.title ?? '暂无公开赛事'}</strong>
-        <span>{reminderMilestone ? `${reminderMilestone.label} · ${reminderMilestone.date.toLocaleString('zh-CN', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : reminderEvent ? '当前没有待到达的赛程节点' : '发布赛事后会显示最近的赛程节点'}</span>
+        <span>{reminderMilestone ? `${reminderMilestone.label} · ${reminderMilestone.date.toLocaleString('zh-CN', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : reminderEvent ? `${competitionDisplayStatus(reminderEvent)}：官网尚未公布具体赛程节点，可先看详情里的赛道与报名入口` : '发布赛事后会显示最近的赛程节点'}</span>
       </div>
       {reminderEvent && <button type="button" className="text-button event-next-action" onClick={() => setSelected(reminderEvent)}>查看赛事 <ArrowUpRight size={13} /></button>}
     </section>
@@ -2039,23 +2066,24 @@ function EventsPage() {
         { stage: 'competition', label: '比赛开始', date: competitionDateLabel(event.eventStart ?? event.date) },
         { stage: 'results', label: '结果公布', date: event.resultDate ? competitionDateLabel(event.resultDate) : undefined },
       ].filter((item): item is { stage: string; label: string; date: string } => Boolean(item.date))
-      const statusTone = event.status === '报名中' ? 'mint'
-        : event.status === '比赛进行中' || event.status === '报名已截止' ? 'orange'
-          : event.status === '等待结果' ? 'violet'
-            : event.status === '已结束' ? 'neutral' : 'blue'
+      const displayedStatus = competitionDisplayStatus(event)
+      const statusTone = displayedStatus === '报名中' ? 'mint'
+        : displayedStatus === '比赛进行中' || displayedStatus === '报名已截止' ? 'orange'
+          : displayedStatus === '等待结果' ? 'violet'
+            : displayedStatus === '已结束' ? 'neutral' : 'blue'
       return <article className={`event-card event-${event.accent}`} key={event.id}>
         <div className="event-card-copy">
-          <div className="event-card-top"><Tag tone={event.lifecycle === 'archived' ? 'neutral' : statusTone}>{event.lifecycle === 'archived' ? '已归档' : event.status}</Tag><span title={event.seriesName || event.type}>{event.seriesName || event.type}</span></div>
+          <div className="event-card-top"><Tag tone={event.lifecycle === 'archived' ? 'neutral' : statusTone}>{event.lifecycle === 'archived' ? '已归档' : displayedStatus}</Tag><span title={event.seriesName || event.type}>{event.seriesName || event.type}</span></div>
           <button type="button" className="event-card-title" onClick={() => setSelected(event)} aria-label={`查看${event.title}详情`}>{event.title}</button>
           <p className="event-card-description">{event.description}</p>
         </div>
-        <div className="event-timeline" data-count={milestones.length} aria-label={`${event.title}赛程节点`}>
+        {milestones.length > 0 ? <div className="event-timeline" data-count={milestones.length} aria-label={`${event.title}赛程节点`}>
           {milestones.map((milestone) => <div className="event-timeline-point" data-stage={milestone.stage} key={milestone.stage}>
             <span className="event-timeline-dot" aria-hidden="true" />
             <span className="event-timeline-label">{milestone.label}</span>
             <strong>{milestone.date || '待定'}</strong>
           </div>)}
-        </div>
+        </div> : <p className="event-timeline-pending">赛程节点待官网公布，报名入口见详情</p>}
         <div className="event-meta"><span className="event-card-subtitle" title={[event.organizer, event.type].filter(Boolean).join(' · ')}>{[event.organizer, event.type].filter(Boolean).join(' · ')}</span><button type="button" className="text-button" onClick={() => setSelected(event)}>查看详情 <ArrowUpRight size={13} /></button></div>
       </article>
     })}</div>
@@ -2067,7 +2095,10 @@ function EventsPage() {
 
 function CompetitionDetailModal({ event, onClose }: { event: CompetitionEvent; onClose: () => void }) {
   const dialogRef = useRef<HTMLElement>(null)
-  const stage = competitionStage(event)
+  // 详情弹窗拿到的可能是列表里已经算过阶段的对象，也可能是原始记录；
+  // 统一走同一个判定，避免弹窗标签和卡片标签说法不一致。
+  const dbStatus = (event as LiveCompetitionEvent).dbStatus ?? event.status
+  const displayedStatus = competitionDisplayStatus({ ...event, dbStatus })
   const milestones = [{ label: '报名开始', value: event.registrationStart }, { label: '报名截止', value: event.registrationEnd ?? event.deadline }, { label: '比赛开始', value: event.eventStart ?? event.date }, { label: '比赛结束', value: event.eventEnd }, { label: '结果公布', value: event.resultDate }].filter((item) => item.value)
   const officialUrl = safeLink(event.officialUrl)
   const tracks = (event.tracks ?? []).filter((track) => track.name.trim())
@@ -2106,27 +2137,31 @@ function CompetitionDetailModal({ event, onClose }: { event: CompetitionEvent; o
       }}
     >
       <div className="admin-modal-head"><div><p className="eyebrow">COMPETITION / ARCHIVE</p><h2 id="competition-detail-title">{event.title}</h2><p>{event.description}</p></div><button type="button" className="icon-button small" onClick={onClose} aria-label="关闭比赛详情"><X size={16} /></button></div>
-      <div className="competition-detail-meta"><Tag tone={stage === '报名中' || stage === '比赛进行中' ? 'mint' : stage === '已结束' ? 'neutral' : 'violet'}>{stage}</Tag>{event.seriesName && <span><Layers3 size={14} /> {event.seriesName}</span>}{event.organizer && <span>{event.organizer}</span>}</div>
-      {milestones.length > 0 && <div className="competition-schedule"><div className="admin-card-head"><div><p className="eyebrow">SCHEDULE</p><h3>关键时间</h3></div><span>按赛程节点更新状态</span></div><div className="competition-schedule-grid">{milestones.map((milestone) => <div key={milestone.label}><span>{milestone.label}</span><strong>{competitionDateLabel(milestone.value)}</strong></div>)}</div></div>}
+      <div className="competition-detail-meta"><Tag tone={event.lifecycle === 'archived' ? 'neutral' : displayedStatus === '报名中' || displayedStatus === '比赛进行中' ? 'mint' : displayedStatus === '已结束' ? 'neutral' : 'violet'}>{event.lifecycle === 'archived' ? '已归档' : displayedStatus}</Tag>{event.seriesName && <span><Layers3 size={14} /> {event.seriesName}</span>}{event.organizer && <span>{event.organizer}</span>}</div>
+      {milestones.length > 0 ? <div className="competition-schedule"><div className="admin-card-head"><div><p className="eyebrow">SCHEDULE</p><h3>关键时间</h3></div><span>按赛程节点更新状态</span></div><div className="competition-schedule-grid">{milestones.map((milestone) => <div key={milestone.label}><span>{milestone.label}</span><strong>{competitionDateLabel(milestone.value)}</strong></div>)}</div></div> : <div className="competition-schedule-pending"><CalendarDays size={16} /><span>赛事赛程暂未公布，后续更新后会在这里显示。</span></div>}
       {officialUrl && <a className="competition-official-link" href={officialUrl} target={officialUrl.startsWith('#/') ? undefined : '_blank'} rel="noreferrer"><ExternalLink size={14} /> 打开官方报名入口</a>}
-      {tracks.length > 0 && <div className="competition-tracks"><div className="competition-tracks-head"><div className="admin-card-head"><div><p className="eyebrow">COMPETITION TRACKS</p><h3>比赛赛道</h3></div><span>{tracks.length} 个赛道</span></div>{tracks.length > 6 && <label className="admin-search competition-track-search"><Search size={14} /><input value={trackQuery} onChange={(inputEvent) => setTrackQuery(inputEvent.target.value)} placeholder="搜索赛道" aria-label="搜索赛道" /></label>}</div><div className="competition-track-list">{visibleTracks.map((track) => {
+      {tracks.length > 0 && <div className="competition-tracks"><div className="competition-tracks-head"><div className="admin-card-head"><div><p className="eyebrow">COMPETITION TRACKS</p><h3>比赛赛道</h3></div><span>{tracks.length} 个赛道</span></div>{tracks.length > 4 && <label className="admin-search competition-track-search"><Search size={14} /><input value={trackQuery} onChange={(inputEvent) => setTrackQuery(inputEvent.target.value)} placeholder="搜索赛道" aria-label="搜索赛道" /></label>}</div><div className="competition-track-list">{visibleTracks.map((track) => {
         const registrationUrl = safeLink(track.registrationUrl)
         const rulesUrl = safeLink(track.rulesUrl)
         const registrationSummary = track.registrationEnd ? `报名截止 ${competitionDateLabel(track.registrationEnd)}` : track.registrationStart ? `报名开始 ${competitionDateLabel(track.registrationStart)}` : '报名时间待补充'
         const isExpanded = expandedTrackId === track.id
         const detailsId = `competition-track-details-${track.id}`
+        // 说明与要求都没填时左列会整块留白，这里兜一句提示，避免只剩右列事实栏的怪排版。
+        const hasTrackIntro = Boolean(track.description || track.requirements)
+        const hasTrackFacts = Boolean(track.audience || track.format || track.teamSize || track.registrationStart || track.registrationEnd || track.awards || registrationUrl || rulesUrl)
         return <article className={`competition-track-item ${isExpanded ? 'is-expanded' : ''}`} key={track.id}>
           <button type="button" className="competition-track-toggle" aria-expanded={isExpanded} aria-controls={isExpanded ? detailsId : undefined} onClick={() => setExpandedTrackId(isExpanded ? null : track.id)}>
             <span className="competition-track-toggle-main"><strong>{track.name}</strong>{track.format && <small>{track.format}</small>}</span>
             <span className="competition-track-toggle-facts"><span>{track.audience || '参赛对象待补充'}</span>{track.teamSize && <span>队伍 {track.teamSize}</span>}<span>{registrationSummary}</span></span>
             <ChevronDown size={15} aria-hidden="true" />
           </button>
-          {isExpanded && <div className="competition-track-details" id={detailsId}>
+          {isExpanded && <div className={`competition-track-details${hasTrackIntro ? '' : ' is-facts-only'}${hasTrackFacts ? '' : ' is-intro-only'}`} id={detailsId}>
             <div className="competition-track-detail-main">
               {track.description && <p className="competition-track-description">{track.description}</p>}
               {track.requirements && <div className="competition-track-requirements"><strong>参赛要求</strong><p>{track.requirements}</p></div>}
+              {!hasTrackIntro && <p className="competition-track-pending">{hasTrackFacts ? '这个赛道还没补方向说明，先看右侧的赛制与报名信息。' : '这个赛道的介绍和报名信息还在整理中。'}</p>}
             </div>
-            <div className="competition-track-detail-side">
+            {hasTrackFacts && <div className="competition-track-detail-side">
               <dl className="competition-track-facts">
                 {track.audience && <div><dt>参赛对象</dt><dd>{track.audience}</dd></div>}
                 {track.format && <div><dt>赛制</dt><dd>{track.format}</dd></div>}
@@ -2139,7 +2174,7 @@ function CompetitionDetailModal({ event, onClose }: { event: CompetitionEvent; o
                 {registrationUrl && <a href={registrationUrl} target={registrationUrl.startsWith('#/') ? undefined : '_blank'} rel="noreferrer"><ExternalLink size={13} /> 赛道报名</a>}
                 {rulesUrl && <a href={rulesUrl} target={rulesUrl.startsWith('#/') ? undefined : '_blank'} rel="noreferrer"><ExternalLink size={13} /> 赛事规则</a>}
               </div>}
-            </div>
+            </div>}
           </div>}
         </article>
       })}{visibleTracks.length === 0 && <div className="competition-track-no-results">没有找到匹配的赛道。</div>}</div></div>}
@@ -3494,7 +3529,7 @@ function App() {
       const slug = route.slice('/projects/'.length)
       return <ProjectDetailPage slug={slug} project={projects.find((item) => item.slug === slug)} onNavigate={navigate} />
     }
-    if (route === '/events') return <EventsPage />
+    if (route === '/events' || route === '/competitions') return <EventsPage />
     if (route === '/resources') return <ResourcesPage onNavigate={navigate} />
     if (route === '/resources/prompts') return <PromptsPage onNavigate={navigate} />
     if (route.startsWith('/resources/')) return <ResourceDetailPage resourceId={route.slice('/resources/'.length)} onNavigate={navigate} />

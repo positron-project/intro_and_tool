@@ -2843,7 +2843,11 @@ html[data-theme='dark'] .admin-danger-link:hover:not(:disabled) { color: #ffc1c1
 .competition-track-item.is-expanded > .competition-track-toggle { border-bottom: 1px solid var(--border); }
 .competition-track-item.is-expanded > .competition-track-toggle > svg, .competition-track-editor.is-expanded .competition-track-editor-toggle > svg { transform: rotate(180deg); }
 .competition-track-details { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(210px, .8fr); gap: 16px; padding: 11px; background: var(--surface); }
+/* 只有其中一列有内容时不要留半屏空白：单列占满，并把说明与事实的间距拉开。 */
+.competition-track-details.is-facts-only { grid-template-columns: minmax(0, 1fr); }
+.competition-track-details.is-intro-only { grid-template-columns: minmax(0, 1fr); }
 .competition-track-detail-main, .competition-track-detail-side { min-width: 0; }
+.competition-track-pending { margin: 0; color: var(--text-muted); font-size: 9px; line-height: 1.6; }
 .competition-track-description { margin: 0; color: var(--text-secondary); font-size: 9px; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere; }
 .competition-track-facts { display: grid; gap: 6px; margin: 0; }
 .competition-track-facts > div { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 7px; font-size: 9px; line-height: 1.5; }
@@ -4656,7 +4660,9 @@ html[data-theme='dark'] .competition-editor-section, html[data-theme='dark'] .co
 .event-card-description { display: -webkit-box; min-height: 29px; margin: 0; overflow: hidden; color: var(--text-secondary); font-size: 10px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .event-card-subtitle { min-width: 0; overflow: hidden; color: var(--text-muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .event-timeline { position: relative; display: grid; min-width: 0; min-height: 48px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.event-timeline[data-count='1'] { grid-template-columns: minmax(0, 1fr); }
 .event-timeline[data-count='2'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.event-timeline-pending { display: flex; min-height: 48px; align-items: center; margin: 0; padding: 0 0 0 10px; color: var(--text-muted); font-size: 10px; line-height: 1.4; border-left: 2px solid var(--border); }
 .event-timeline::before { position: absolute; top: 4px; right: 8px; left: 8px; height: 1px; background: var(--border); content: ''; }
 .event-timeline-point { position: relative; z-index: 1; display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: 3px; }
 .event-timeline-point[data-stage='registration'] { --stage-color: #a26420; }
@@ -8677,3 +8683,32 @@ html[data-theme='dark'] .visual-cover-label {
 .admin-editor-form .admin-project-member-search input,
 .admin-editor-form .admin-project-member-search input:focus { width: 100%; min-width: 0; height: auto; padding: 0; border: 0; border-radius: 0; outline: 0; background: transparent; box-shadow: none; }
 .admin-project-member-search > svg { flex: 0 0 auto; }
+
+/* Keep the competition dialog itself fixed so its save actions do not scroll away. */
+.admin-editor-modal.admin-competition-modal {
+  max-height: min(88vh, 820px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.admin-competition-modal > .admin-modal-head { flex: 0 0 auto; }
+.admin-competition-modal > .admin-competition-layout {
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+  overflow: hidden;
+}
+.admin-competition-actions { align-items: flex-start; }
+.admin-competition-actions .admin-competition-save-status {
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+.admin-competition-actions .admin-competition-save-status > span { font-family: var(--sans); font-size: 9px; }
+.admin-competition-actions .admin-inline-error { max-width: 100%; line-height: 1.45; }
+.competition-schedule-editor-note { margin: 5px 0 0; color: var(--text-muted); font-size: 9px; line-height: 1.45; }
+.competition-schedule-pending { display: flex; align-items: center; gap: 8px; padding: 11px 13px; color: var(--text-secondary); background: var(--surface-soft); border: 1px dashed var(--border); border-radius: 10px; font-size: 10px; line-height: 1.45; }
+.competition-schedule-pending svg { flex: 0 0 auto; color: var(--blue); }

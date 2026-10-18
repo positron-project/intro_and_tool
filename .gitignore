@@ -27,6 +27,14 @@ backend/OS_club/*.log
 # 日志
 *.log
 
+# 本地运行与编辑器产物
+.runtime/
+%SystemDrive%/
+backend/OS_club/.idea/
+*.py~
+nchu-cs-club-frontend.zip
+backend/OS_club/migrations/20261018_simplify_resource_categories.sql
+
 # 编辑器原子写临时目录（Vite watcher 也在忽略它）
 *.tmpdir/
 

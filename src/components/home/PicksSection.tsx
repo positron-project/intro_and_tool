@@ -25,7 +25,9 @@ interface Pick {
   desc: string
   specs: PickSpec[]
   action: { label: string; path: string; /** 预热中这类只展示不可跳转的态 */ disabled?: boolean }
-  /** public/assets 下的文件名 */
+  /** 封面图路径，写成完整的 '/assets/xxx.webp' 字面量。
+   *  create-standalone.mjs 只内联这种字面量；拼动态文件名的话，
+   *  单文件版（file://）会因为找不到资源而 404。 */
   image: string
   /** 封面贴左缘、正文右移的镜像条目（与上一条交替） */
   reverse?: boolean
@@ -43,7 +45,7 @@ const PICKS: Pick[] = [
       { label: '访问', value: '目前仅校园网用户' },
     ],
     action: { label: '预热中...', path: '#/projects', disabled: true },
-    image: 'picks-minecraft-base.webp',
+    image: '/assets/picks-minecraft-base.webp',
   },
   {
     num: '02',
@@ -55,7 +57,7 @@ const PICKS: Pick[] = [
       { label: '状态', value: '已经上线，组内自己维护' },
     ],
     action: { label: '打开工作台', path: '#/tools' },
-    image: 'picks-tools-page.webp',
+    image: '/assets/picks-tools-page.webp',
     reverse: true,
   },
 ]
@@ -212,7 +214,7 @@ export function PicksSection({ onNavigate }: PicksSectionProps) {
               <div className="picks-item-cover">
                 <img
                   className="picks-item-photo"
-                  src={`./assets/${pick.image}`}
+                  src={pick.image}
                   alt=""
                   aria-hidden="true"
                 />

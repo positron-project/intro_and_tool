@@ -69,7 +69,7 @@ import { deleteFeedbackMessage, listFeedbackMessages, updateFeedbackMessage } fr
 import { uploadAsset } from '../../services/upload.service'
 import { isRemoteClubConfigEnabled } from '../../services/club-config.service'
 import { listProjectJoinRequests, reviewProjectJoinRequest, type ProjectJoinRequest } from '../../services/project.service'
-import { competitionDateInput, competitionDateLabel, competitionStage } from '../../services/competition.service'
+import { competitionDateInput, competitionDateLabel, competitionSaveValidationError, competitionSchedulePayload, competitionStage, hasCompetitionSchedule } from '../../services/competition.service'
 import { isRemoteCompetitionProjectsEnabled, syncCompetitionProjects } from '../../services/competition-project.service'
 import { isRemoteSettingsEnabled, updateSiteSettings, updateUserPreferences } from '../../services/settings.service'
 import { deleteAllAuditLogs, deleteAuditLog, isRemoteAuditEnabled, listAllAuditLogs, listAuditLogs, type AuditLog } from '../../services/audit.service'
@@ -641,16 +641,13 @@ function AdminCompetitionManager({ events, onClose, onSave, onBatchSave, onDelet
     date: draft.eventStart || draft.date,
     deadline: draft.registrationEnd || draft.deadline,
   })
-  const stagePreviewLabel = draft.lifecycle === 'archived' ? '已归档' : stagePreview
+  const stagePreviewLabel = draft.lifecycle === 'archived' ? '已归档' : draft.lifecycle === 'draft' ? '草稿' : hasCompetitionSchedule(draft) ? stagePreview : '赛程待定'
   const primarySaveIntent = draft.lifecycle === 'draft' || (draft.lifecycle === 'published' && selected?.lifecycle !== 'published') ? 'publish' : 'save'
   const primarySaveLabel = primarySaveIntent === 'publish' ? '发布赛事' : draft.lifecycle === 'archived' ? '保存归档' : '保存修改'
   const save = async (intent: 'draft' | 'publish' | 'save') => {
-    if (!draft.title.trim() || !(draft.eventStart.trim() || draft.date.trim()) || !(draft.registrationEnd.trim() || draft.deadline.trim()) || !draft.description.trim()) {
-      setSaveError('请填写比赛名称、比赛开始、报名截止和比赛简介。')
-      return
-    }
-    if (draft.tracks.some((track) => !track.name.trim())) {
-      setSaveError('请填写每个赛道的名称，或删除未使用的赛道。')
+    const validationError = competitionSaveValidationError(draft)
+    if (validationError) {
+      setSaveError(validationError)
       return
     }
     setSaveError('')
@@ -711,13 +708,13 @@ function AdminCompetitionManager({ events, onClose, onSave, onBatchSave, onDelet
               </div>
             </section>
             <section className="competition-editor-section">
-              <div className="competition-editor-section-head"><div><p className="eyebrow">SCHEDULE</p><h3>比赛日程</h3></div><span className="competition-auto-note"><Clock3 size={13} /> 状态自动更新</span></div>
+              <div className="competition-editor-section-head"><div><p className="eyebrow">SCHEDULE</p><h3>比赛日程</h3><p className="competition-schedule-editor-note">时间尚未确定可先留空，官网公布后再补充；状态按已填写的时间节点更新。</p></div><span className="competition-auto-note"><Clock3 size={13} /> 状态自动更新</span></div>
               <div className="admin-editor-form-grid">
-                <label><span>报名开始</span><input type="datetime-local" value={draft.registrationStart} onChange={(event) => updateDraft({ registrationStart: event.target.value })} /></label>
-                <label><span>报名截止 <b>*</b></span><input type="datetime-local" value={draft.registrationEnd} onChange={(event) => updateDraft({ registrationEnd: event.target.value, deadline: event.target.value })} /></label>
-                <label><span>比赛开始 <b>*</b></span><input type="datetime-local" value={draft.eventStart} onChange={(event) => updateDraft({ eventStart: event.target.value, date: event.target.value })} /></label>
-                <label><span>比赛结束</span><input type="datetime-local" value={draft.eventEnd} onChange={(event) => updateDraft({ eventEnd: event.target.value })} /></label>
-                <label><span>结果公布</span><input type="datetime-local" value={draft.resultDate} onChange={(event) => updateDraft({ resultDate: event.target.value })} /></label>
+                <label><span>报名开始（选填）</span><input type="datetime-local" value={draft.registrationStart} onChange={(event) => updateDraft({ registrationStart: event.target.value })} /></label>
+                <label><span>报名截止（选填）</span><input type="datetime-local" value={draft.registrationEnd} onChange={(event) => updateDraft({ registrationEnd: event.target.value, deadline: event.target.value })} /></label>
+                <label><span>比赛开始（选填）</span><input type="datetime-local" value={draft.eventStart} onChange={(event) => updateDraft({ eventStart: event.target.value, date: event.target.value })} /></label>
+                <label><span>比赛结束（选填）</span><input type="datetime-local" value={draft.eventEnd} onChange={(event) => updateDraft({ eventEnd: event.target.value })} /></label>
+                <label><span>结果公布（选填）</span><input type="datetime-local" value={draft.resultDate} onChange={(event) => updateDraft({ resultDate: event.target.value })} /></label>
                 <label><span>发布状态</span><select value={draft.lifecycle} onChange={(event) => updateDraft({ lifecycle: event.target.value as CompetitionEditorValue['lifecycle'] })}><option value="draft">草稿</option><option value="published">公开</option><option value="archived">归档</option></select></label>
               </div>
               <div className="competition-stage-preview"><span>前台显示状态</span><strong>{draft.lifecycle === 'draft' ? '草稿' : stagePreviewLabel}</strong></div>
@@ -769,10 +766,12 @@ function AdminCompetitionManager({ events, onClose, onSave, onBatchSave, onDelet
               <div className="competition-project-editor-list">{uploadError && <small className="admin-upload-error">{uploadError}</small>}{draft.projects.map((project) => <article className="competition-project-editor" key={project.id}><div className="competition-project-editor-fields"><div className="admin-editor-form-grid"><label><span>届次</span><input value={project.cohort} onChange={(event) => updateProject(project.id, { cohort: event.target.value })} placeholder="2029" /></label><label><span>项目名称</span><input value={project.title} onChange={(event) => updateProject(project.id, { title: event.target.value })} placeholder="校园智能问答" /></label></div><label><span>项目说明</span><textarea rows={2} value={project.description} onChange={(event) => updateProject(project.id, { description: event.target.value })} placeholder="说明项目内容、获奖情况等" /></label><label><span>项目链接</span><input type="url" value={project.projectUrl ?? ''} onChange={(event) => updateProject(project.id, { projectUrl: event.target.value })} placeholder="https://..." /></label></div><div className="competition-project-editor-media">{project.imageUrl ? <img src={project.imageUrl} alt="历届项目预览" /> : <div className="competition-project-placeholder"><ImagePlus size={20} /><span>暂无图片</span></div>}<input className="admin-file-input" id={`competition-project-image-${project.id}`} type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => void uploadProjectImage(project.id, event)} /><label className="secondary-button admin-small-button" htmlFor={`competition-project-image-${project.id}`}>上传图片</label><button type="button" className="admin-link-button admin-danger-link" onClick={() => removeProject(project.id)}><Trash2 size={13} /> 删除成果</button></div></article>)}{draft.projects.length === 0 && <div className="admin-empty competition-project-empty"><Trophy size={20} /><strong>尚无历届成果</strong><span>添加后，比赛详情会展示往届项目。</span></div>}</div>
             </section>
             </> : <div className="admin-empty competition-project-empty"><Trophy size={22} /><strong>从列表选择赛事，或新建一场比赛</strong><span>赛事较多时可用搜索和系列筛选快速定位。</span><button className="primary-button admin-small-button" onClick={() => select()}><Plus size={14} /> 新建赛事</button></div>}
-            {saveError && <p className="admin-inline-error" role="alert">{saveError}</p>}
           </div>
           <div className="admin-modal-foot admin-competition-actions">
-            <span>{selected ? '保存后会同步到比赛中心' : '填写赛事信息后可保存草稿或发布'}</span>
+            <div className="admin-competition-save-status">
+              <span>{selected ? '保存后会同步到比赛中心' : '填写赛事信息后可保存草稿或发布'}</span>
+              {saveError && <p className="admin-inline-error" role="alert" aria-live="assertive">{saveError}</p>}
+            </div>
             <div className="admin-modal-actions">
               <button className="admin-link-button admin-danger-link" disabled={!selected || saveBusy || deleteBusy} onClick={() => void removeSelected()}><Trash2 size={13} /> 删除</button>
               <button className="secondary-button admin-small-button" onClick={onClose} disabled={saveBusy}>关闭</button>
@@ -2117,13 +2116,12 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
   }
   const saveCompetition = async (id: string | undefined, value: CompetitionEditorValue, intent: 'draft' | 'publish' | 'save', onCreated: (event: CompetitionEvent) => void) => {
     if (!canEditGlobalContent) throw new Error('比赛中心属于全局配置，仅组长可以修改赛事')
-    if (!value.title.trim() || !(value.eventStart.trim() || value.date.trim()) || !(value.registrationEnd.trim() || value.deadline.trim()) || !value.description.trim()) throw new Error('请填写比赛名称、比赛开始、报名截止和说明')
+    const validationError = competitionSaveValidationError(value)
+    if (validationError) throw new Error(validationError)
     try {
       const projects = value.projects.filter((project) => project.title.trim()).map((project, index) => ({ ...project, title: project.title.trim(), cohort: project.cohort.trim() || '未标注届次', description: project.description.trim(), projectUrl: project.projectUrl?.trim() || undefined, sortOrder: project.sortOrder ?? index }))
       const tracks = value.tracks.filter((track) => track.name.trim()).map((track) => ({ ...track, name: track.name.trim(), description: track.description?.trim() || undefined, audience: track.audience?.trim() || undefined, teamSize: track.teamSize?.trim() || undefined, requirements: track.requirements?.trim() || undefined, registrationStart: track.registrationStart?.trim() || undefined, registrationEnd: track.registrationEnd?.trim() || undefined, registrationUrl: track.registrationUrl?.trim() || undefined, rulesUrl: track.rulesUrl?.trim() || undefined, awards: track.awards?.trim() || undefined }))
-      const eventStart = value.eventStart.trim() || value.date.trim()
-      const registrationEnd = value.registrationEnd.trim() || value.deadline.trim()
-      const payload: CreateInput<CompetitionEvent> = { title: value.title.trim(), seriesName: value.seriesName.trim() || undefined, type: value.type.trim() || '其他', organizer: value.organizer.trim() || undefined, officialUrl: value.officialUrl.trim() || undefined, registrationStart: value.registrationStart.trim() || undefined, registrationEnd, eventStart, eventEnd: value.eventEnd.trim() || undefined, resultDate: value.resultDate.trim() || undefined, lifecycle: value.lifecycle, date: eventStart, deadline: registrationEnd, description: value.description.trim(), status: value.lifecycle === 'draft' ? '草稿' : value.status === '草稿' ? '即将开始' : value.status, accent: value.accent, tracks }
+      const payload: CreateInput<CompetitionEvent> = { title: value.title.trim(), seriesName: value.seriesName.trim() || undefined, type: value.type.trim() || '其他', organizer: value.organizer.trim() || undefined, officialUrl: value.officialUrl.trim() || undefined, ...competitionSchedulePayload(value), lifecycle: value.lifecycle, description: value.description.trim(), status: value.lifecycle === 'draft' ? '草稿' : value.status === '草稿' ? '即将开始' : value.status, accent: value.accent, tracks }
       if (!isRemoteCompetitionProjectsEnabled) payload.projects = projects
       const saved = id ? await updateCompetition(id, payload) : await createCompetition(payload)
       if (!id) onCreated(saved)
@@ -2143,13 +2141,12 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
     if (!values.length) throw new Error('没有可导入的赛事')
     for (let index = 0; index < values.length; index += 1) {
       const value = values[index]
-      if (!value.title.trim() || !(value.eventStart.trim() || value.date.trim()) || !(value.registrationEnd.trim() || value.deadline.trim()) || !value.description.trim()) {
-        throw new Error(`第 ${index + 1} 场赛事「${value.title || '未命名'}」缺少比赛名称、比赛开始、报名截止或简介`)
+      const validationError = competitionSaveValidationError(value)
+      if (validationError) {
+        throw new Error(`第 ${index + 1} 场赛事「${value.title || '未命名'}」：${validationError}`)
       }
       try {
-        const eventStart = value.eventStart.trim() || value.date.trim()
-        const registrationEnd = value.registrationEnd.trim() || value.deadline.trim()
-        await createCompetition({ title: value.title.trim(), seriesName: value.seriesName.trim() || undefined, type: value.type.trim() || '其他', organizer: value.organizer.trim() || undefined, officialUrl: value.officialUrl.trim() || undefined, registrationStart: value.registrationStart.trim() || undefined, registrationEnd, eventStart, eventEnd: value.eventEnd.trim() || undefined, resultDate: value.resultDate.trim() || undefined, lifecycle: value.lifecycle, date: eventStart, deadline: registrationEnd, description: value.description.trim(), status: value.lifecycle === 'draft' ? '草稿' : '即将开始', accent: value.accent, tracks: value.tracks.filter((track) => track.name.trim()) })
+        await createCompetition({ title: value.title.trim(), seriesName: value.seriesName.trim() || undefined, type: value.type.trim() || '其他', organizer: value.organizer.trim() || undefined, officialUrl: value.officialUrl.trim() || undefined, ...competitionSchedulePayload(value), lifecycle: value.lifecycle, description: value.description.trim(), status: value.lifecycle === 'draft' ? '草稿' : '即将开始', accent: value.accent, tracks: value.tracks.filter((track) => track.name.trim()) })
       } catch (error) {
         const message = error instanceof Error ? error.message : '请求失败'
         throw new Error(`第 ${index + 1} 场赛事「${value.title}」导入失败：${message}`, { cause: error })

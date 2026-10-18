@@ -164,6 +164,14 @@ async def update_competition(
 ) -> Competition:
     """更新比赛中实际提交的字段，并同步旧版日期字段。"""
 
+    old_milestones = {
+        "registration_start": competition.registration_start,
+        "registration_end": competition.registration_end or competition.deadline,
+        "event_start": competition.event_start or competition.date,
+        "event_end": competition.event_end,
+        "result_date": competition.result_date,
+    }
+
     # exclude_unset=True 区分“没有提交字段”和“明确传入 null”。
     values = data.model_dump(exclude_unset=True, by_alias=False, exclude={"tracks"})
     # [] 是明确清空；未提交或显式 null 都不改动原赛道。
@@ -209,6 +217,36 @@ async def update_competition(
         competition.deadline = values["registration_end"] or ""
     elif "deadline" in values and "registration_end" not in values:
         competition.registration_end = _clean_optional_text(values["deadline"])
+
+    new_milestones = {
+        "registration_start": competition.registration_start,
+        "registration_end": competition.registration_end or competition.deadline,
+        "event_start": competition.event_start or competition.date,
+        "event_end": competition.event_end,
+        "result_date": competition.result_date,
+    }
+    changed_milestones = {
+        field_name
+        for field_name, old_value in old_milestones.items()
+        if _clean_optional_text(old_value)
+        != _clean_optional_text(new_milestones[field_name])
+    }
+    if changed_milestones:
+        reminders_result = await db.execute(
+            select(CompetitionReminder).where(
+                CompetitionReminder.competition_id == competition.id
+            )
+        )
+        for reminder in reminders_result.scalars().all():
+            # 只解除被改期节点的标记；其他节点仍保留已提醒状态。
+            reminder.notified_milestones = [
+                marker
+                for marker in (reminder.notified_milestones or [])
+                if not any(
+                    marker == field_name or marker.startswith(f"{field_name}:")
+                    for field_name in changed_milestones
+                )
+            ]
 
     # lifecycle 时间由服务端维护，客户端不能通过请求体指定这些时间。
     if "lifecycle" in values and values["lifecycle"] is not None:

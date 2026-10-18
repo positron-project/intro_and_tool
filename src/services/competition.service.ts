@@ -28,6 +28,42 @@ export function parseCompetitionDate(value?: string) {
   return parseParts(value)
 }
 
+/** Returns whether any confirmed competition timetable node has been entered. */
+export function hasCompetitionSchedule(event: Pick<CompetitionEvent, 'registrationStart' | 'registrationEnd' | 'eventStart' | 'date' | 'eventEnd' | 'resultDate'>) {
+  return [event.registrationStart, event.registrationEnd, event.eventStart ?? event.date, event.eventEnd, event.resultDate]
+    .some((value) => Boolean(value?.trim()))
+}
+
+/** Date nodes are intentionally optional because organizers often publish schedules late. */
+export function competitionSaveValidationError(value: { title: string; description: string; tracks?: Array<{ name: string }> }) {
+  if (!value.title.trim()) return '请填写比赛名称。'
+  if (!value.description.trim()) return '请填写比赛简介；赛程时间尚未确定时可以留空。'
+  if (value.tracks?.some((track) => !track.name.trim())) return '请填写每个赛道的名称，或删除未使用的赛道。'
+  return undefined
+}
+
+/** Sends blank date fields explicitly so PATCH can clear previously saved dates. */
+export function competitionSchedulePayload(value: {
+  registrationStart: string
+  registrationEnd: string
+  eventStart: string
+  eventEnd: string
+  resultDate: string
+}) {
+  const eventStart = value.eventStart.trim()
+  const registrationEnd = value.registrationEnd.trim()
+  return {
+    registrationStart: value.registrationStart.trim(),
+    registrationEnd,
+    eventStart,
+    eventEnd: value.eventEnd.trim(),
+    resultDate: value.resultDate.trim(),
+    // Keep legacy aliases in sync; empty strings intentionally clear them too.
+    date: eventStart,
+    deadline: registrationEnd,
+  }
+}
+
 export function competitionDateInput(value?: string) {
   const date = parseCompetitionDate(value)
   if (!date) return ''
@@ -62,6 +98,7 @@ export function competitionNextMilestone(event: CompetitionEvent, now = new Date
 
 export function competitionStage(event: CompetitionEvent, now = new Date()): CompetitionEvent['status'] {
   if (event.lifecycle === 'draft') return '草稿'
+  if (!hasCompetitionSchedule(event)) return '即将开始'
   const registrationStart = parseCompetitionDate(event.registrationStart)
   const registrationEnd = parseCompetitionDate(event.registrationEnd)
   const eventStart = parseCompetitionDate(event.eventStart ?? event.date)
@@ -72,7 +109,8 @@ export function competitionStage(event: CompetitionEvent, now = new Date()): Com
   if (eventStart && now < eventStart) {
     if (registrationStart && now < registrationStart) return '即将报名'
     if (registrationEnd && now < registrationEnd) return '报名中'
-    if (registrationEnd && now >= registrationEnd) return '即将开始'
+    if (registrationEnd && now >= registrationEnd) return '报名已截止'
+    if (registrationStart && now >= registrationStart) return '报名中'
     if (!registrationStart && !registrationEnd) return '即将开始'
     return event.status
   }
@@ -81,12 +119,14 @@ export function competitionStage(event: CompetitionEvent, now = new Date()): Com
     if (eventEnd && now < eventEnd) return '比赛进行中'
     if (eventEnd && now >= eventEnd) return resultDate && now < resultDate ? '等待结果' : '已结束'
     if (resultDate && now < resultDate) return '等待结果'
-    return event.status
+    return '比赛进行中'
   }
 
   if (eventEnd && now >= eventEnd) return resultDate && now < resultDate ? '等待结果' : '已结束'
   if (registrationStart && now < registrationStart) return '即将报名'
+  if (registrationStart && now >= registrationStart) return '报名中'
   if (registrationEnd && now < registrationEnd) return '报名中'
+  if (registrationEnd && now >= registrationEnd) return '报名已截止'
   return event.status
 }
 

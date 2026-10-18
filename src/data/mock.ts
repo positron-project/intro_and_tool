@@ -23,41 +23,37 @@ export const announcements: Announcement[] = [
 
 export const projects: Project[] = [
   {
-    id: 'p1', slug: 'green-easy-fang', name: '绿易坊', description: '面向校园与社区的绿色生活平台', intro: '把「问、估、找、做、聊」放在一条线上：先弄清楚一件东西值多少、该怎么处理，再就近找到愿意接手的人。', githubUrl: 'https://github.com/example/green-easy-fang', docsUrl: '#/resources', demoUrl: 'http://127.0.0.1:18080', issueUrl: 'https://github.com/example/green-easy-fang/issues', stack: ['Vue3', 'Spring Boot', 'MySQL'], members: 3, stars: 46, status: '维护中', difficulty: 3, year: 2026, category: 'Web', accent: 'mint', icon: 'leaf', featured: true, visibility: 'contributors', memberIds: ['m1', 'm2', 'm4'], joinEnabled: true, joinNote: '欢迎熟悉前端交互或服务端接口的成员参与。', coverImage: '/assets/showcase/shop-01-home.webp', milestones: [{ id: 'p1-m1', year: '2026', title: '咨询与估价', summary: '环保咨询 · 图文估价 · 流式回答', status: '已完成' }, { id: 'p1-m2', year: '2026', title: '附近闲置物', summary: '就近匹配 · 闲置发布 · 收藏', status: '已完成' }, { id: 'p1-m3', year: '2026', title: '行动与社区', summary: '绿色行动 · 绿叶值 · 社区内容', status: '已完成' }], logs: [{ id: 'p1-l1', date: '05-16', title: '列表与详情页对齐后端契约', detail: '按后端 VO 字段调整了闲置物与社区内容的取数口径。', author: '何宇辰', authorInitials: 'HY' }, { id: 'p1-l2', date: '05-12', title: '补上三态与空态文案', detail: '每个数据区都给出加载、空、失败三种可执行提示。', author: '周一帆', authorInitials: 'ZY' }],
+    id: 'p1', slug: 'green-easy-fang', name: '绿易坊', description: '面向校园与社区的绿色生活平台', intro: '把「问、估、找、做、聊」放在一条线上：先弄清楚一件东西值多少、该怎么处理，再就近找到愿意接手的人。', githubUrl: 'https://github.com/example/green-easy-fang', docsUrl: '#/resources', demoUrl: 'http://127.0.0.1:18080', issueUrl: 'https://github.com/example/green-easy-fang/issues', stack: ['Vue3', 'Spring Boot', 'MySQL'], members: 3, stars: 46, status: '维护中', difficulty: 3, year: 2026, category: 'other', accent: 'mint', icon: 'leaf', featured: true, visibility: 'contributors', memberIds: ['m1', 'm2', 'm4'], joinEnabled: true, joinNote: '欢迎熟悉前端交互或服务端接口的成员参与。', coverImage: '/assets/showcase/shop-01-home.webp', milestones: [{ id: 'p1-m1', year: '2026', title: '咨询与估价', summary: '环保咨询 · 图文估价 · 流式回答', status: '已完成' }, { id: 'p1-m2', year: '2026', title: '附近闲置物', summary: '就近匹配 · 闲置发布 · 收藏', status: '已完成' }, { id: 'p1-m3', year: '2026', title: '行动与社区', summary: '绿色行动 · 绿叶值 · 社区内容', status: '已完成' }], logs: [{ id: 'p1-l1', date: '05-16', title: '列表与详情页对齐后端契约', detail: '按后端 VO 字段调整了闲置物与社区内容的取数口径。', author: '何宇辰', authorInitials: 'HY' }, { id: 'p1-l2', date: '05-12', title: '补上三态与空态文案', detail: '每个数据区都给出加载、空、失败三种可执行提示。', author: '周一帆', authorInitials: 'ZY' }],
   },
   {
-    id: 'p2', slug: 'lijing', name: '砺境', description: '东方水墨世界里的 AI 学习 RPG', intro: '把一个长期目标拆成今天能做完的一段学习，学完留下证据、写下复盘，再让知识彼此连起来。', githubUrl: 'https://github.com/positron-project/lijing-foundation', demoUrl: 'http://127.0.0.1:4187', stack: ['Node.js', 'PostgreSQL', 'Supabase'], members: 1, stars: 0, status: '维护中', difficulty: 4, year: 2026, category: 'AI', accent: 'blue', icon: 'spark', featured: true, visibility: 'members', coverImage: '/assets/showcase/lijing-01-home.webp', milestones: [{ id: 'p2-m1', year: '2026', title: '水墨世界壳层', summary: '统一视觉与页面转场 · 八卦功能目录', status: '已完成' }, { id: 'p2-m2', year: '2026', title: '学习证据与复盘', summary: '学习证据试点 · 回望复盘 · 知识脉络', status: '已完成' }, { id: 'p2-m3', year: '2026', title: '服务端 AI Gateway', summary: '注册登录 · 配额与审计 · 模板降级', status: '进行中' }],
+    id: 'p2', slug: 'lijing', name: '砺境', description: '东方水墨世界里的 AI 学习 RPG', intro: '把一个长期目标拆成今天能做完的一段学习，学完留下证据、写下复盘，再让知识彼此连起来。', githubUrl: 'https://github.com/positron-project/lijing-foundation', demoUrl: 'http://127.0.0.1:4187', stack: ['Node.js', 'PostgreSQL', 'Supabase'], members: 1, stars: 0, status: '维护中', difficulty: 4, year: 2026, category: 'other', accent: 'blue', icon: 'spark', featured: true, visibility: 'members', coverImage: '/assets/showcase/lijing-01-home.webp', milestones: [{ id: 'p2-m1', year: '2026', title: '水墨世界壳层', summary: '统一视觉与页面转场 · 八卦功能目录', status: '已完成' }, { id: 'p2-m2', year: '2026', title: '学习证据与复盘', summary: '学习证据试点 · 回望复盘 · 知识脉络', status: '已完成' }, { id: 'p2-m3', year: '2026', title: '服务端 AI Gateway', summary: '注册登录 · 配额与审计 · 模板降级', status: '进行中' }],
   },
   {
-    id: 'p3', slug: 'lab-booking', name: '实验室设备预约系统', description: '设备预约、使用管理与数据统计', stack: ['Spring Boot', 'Vue3', 'MySQL'], members: 6, stars: 64, status: '维护中', difficulty: 3, year: 2024, category: 'Backend', accent: 'mint', icon: 'calendar', featured: false,
+    id: 'p3', slug: 'lab-booking', name: '实验室设备预约系统', description: '设备预约、使用管理与数据统计', stack: ['Spring Boot', 'Vue3', 'MySQL'], members: 6, stars: 64, status: '维护中', difficulty: 3, year: 2024, category: 'other', accent: 'mint', icon: 'calendar', featured: false,
   },
   {
-    id: 'p4', slug: 'campus-map', name: '校园地图导航', description: '面向新生的室内外校园路线与地点图谱', stack: ['React', 'Go', 'PostGIS'], members: 7, stars: 53, status: '招募中', difficulty: 3, year: 2026, category: 'Tools', accent: 'orange', icon: 'map',
+    id: 'p4', slug: 'campus-map', name: '校园地图导航', description: '面向新生的室内外校园路线与地点图谱', stack: ['React', 'Go', 'PostGIS'], members: 7, stars: 53, status: '招募中', difficulty: 3, year: 2026, category: 'other', accent: 'orange', icon: 'map',
   },
   {
-    id: 'p5', slug: 'vision-lab', name: '实验室视觉识别', description: '轻量化视觉模型在实验室场景的实践', stack: ['PyTorch', 'ONNX', 'Docker'], members: 5, stars: 41, status: '已归档', difficulty: 5, year: 2023, category: 'Algorithm', accent: 'rose', icon: 'scan',
+    id: 'p5', slug: 'vision-lab', name: '实验室视觉识别', description: '轻量化视觉模型在实验室场景的实践', stack: ['PyTorch', 'ONNX', 'Docker'], members: 5, stars: 41, status: '已归档', difficulty: 5, year: 2023, category: 'other', accent: 'rose', icon: 'scan',
   },
   // 下面四条按 featured + 年份倒序会落在入口页 03 区的 03 / 04 / 05 / 06 位
   {
-    id: 'p6', slug: 'acg-hut', name: '次元小屋', description: '按元素分类的动画、漫画与游戏索引站', intro: '看过的动画、漫画和游戏按冰火木水土雷暗分好类，站内快讯和一季新番挂在同一页上。', stack: ['Vue3', 'Node.js', 'MySQL'], members: 2, stars: 12, status: '维护中', difficulty: 2, year: 2026, category: 'Web', accent: 'violet', icon: 'spark', featured: true, coverImage: '/assets/showcase/acg-hut-01-home.webp',
+    id: 'p6', slug: 'acg-hut', name: '次元小屋', description: '按元素分类的动画、漫画与游戏索引站', intro: '看过的动画、漫画和游戏按冰火木水土雷暗分好类，站内快讯和一季新番挂在同一页上。', stack: ['Vue3', 'Node.js', 'MySQL'], members: 2, stars: 12, status: '维护中', difficulty: 2, year: 2026, category: 'other', accent: 'violet', icon: 'spark', featured: true, coverImage: '/assets/showcase/acg-hut-01-home.webp',
   },
   {
-    id: 'p7', slug: 'data-board', name: '数据可视化大屏', description: '大区数据、报警风险与链路速率的同屏看板', intro: '把六个大区的数据量、云端报警和上下游同步速率放进同一屏，一屏看完当天的运行状态。', stack: ['ECharts', 'WebSocket', 'FastAPI'], members: 3, stars: 18, status: '维护中', difficulty: 3, year: 2026, category: 'Tools', accent: 'blue', icon: 'scan', featured: true, coverImage: '/assets/showcase/data-board-01-home.webp',
+    id: 'p7', slug: 'data-board', name: '数据可视化大屏', description: '大区数据、报警风险与链路速率的同屏看板', intro: '把六个大区的数据量、云端报警和上下游同步速率放进同一屏，一屏看完当天的运行状态。', stack: ['ECharts', 'WebSocket', 'FastAPI'], members: 3, stars: 18, status: '维护中', difficulty: 3, year: 2026, category: 'other', accent: 'blue', icon: 'scan', featured: true, coverImage: '/assets/showcase/data-board-01-home.webp',
   },
   {
-    id: 'p8', slug: 'genshin-concert', name: '原神音乐会首页', description: '照着官方音乐会页面做的整屏练习稿', intro: '乐团人物摆在中间，四个平台的下载入口压在下方，主要练整屏构图和多端入口的对齐。', stack: ['HTML', 'CSS', 'GSAP'], members: 1, stars: 9, status: '已归档', difficulty: 2, year: 2026, category: 'Web', accent: 'orange', icon: 'map', featured: true, coverImage: '/assets/showcase/genshin-concert-01-home.webp',
+    id: 'p8', slug: 'genshin-concert', name: '原神音乐会首页', description: '照着官方音乐会页面做的整屏练习稿', intro: '乐团人物摆在中间，四个平台的下载入口压在下方，主要练整屏构图和多端入口的对齐。', stack: ['HTML', 'CSS', 'GSAP'], members: 1, stars: 9, status: '已归档', difficulty: 2, year: 2026, category: 'other', accent: 'orange', icon: 'map', featured: true, coverImage: '/assets/showcase/genshin-concert-01-home.webp',
   },
   {
-    id: 'p9', slug: 'music-app', name: '音乐播放器', description: '手机端的歌单与推荐视频界面', intro: '歌手、热门歌单和推荐歌单排在一条竖线上，往右滑是推荐视频，底部在音乐和视频两个频道之间切。', stack: ['Vue3', 'Web Audio', 'Node.js'], members: 2, stars: 14, status: '维护中', difficulty: 2, year: 2026, category: 'Web', accent: 'rose', icon: 'spark', featured: true, coverImage: '/assets/showcase/music-app-01-home.webp',
+    id: 'p9', slug: 'music-app', name: '音乐播放器', description: '手机端的歌单与推荐视频界面', intro: '歌手、热门歌单和推荐歌单排在一条竖线上，往右滑是推荐视频，底部在音乐和视频两个频道之间切。', stack: ['Vue3', 'Web Audio', 'Node.js'], members: 2, stars: 14, status: '维护中', difficulty: 2, year: 2026, category: 'other', accent: 'rose', icon: 'spark', featured: true, coverImage: '/assets/showcase/music-app-01-home.webp',
   },
 ]
 
 export const projectCategories: ProjectCategory[] = [
-  { id: 'cat-ai', key: 'AI', label: 'AI', description: '智能应用、Agent 与知识工程', accent: 'blue', icon: 'spark', order: 1, enabled: true, builtIn: true },
-  { id: 'cat-web', key: 'Web', label: 'Web', description: '前端体验与全栈产品', accent: 'violet', icon: 'code', order: 2, enabled: true, builtIn: true },
-  { id: 'cat-backend', key: 'Backend', label: 'Backend', description: '服务端、数据与系统工程', accent: 'mint', icon: 'terminal', order: 3, enabled: true, builtIn: true },
-  { id: 'cat-algorithm', key: 'Algorithm', label: 'Algorithm', description: '算法训练、模型与实验', accent: 'orange', icon: 'route', order: 4, enabled: true, builtIn: true },
-  { id: 'cat-tools', key: 'Tools', label: 'Tools', description: '效率工具与校园服务', accent: 'rose', icon: 'rocket', order: 5, enabled: true, builtIn: true },
+  { id: 'project-cat-other', key: 'other', label: '其他', description: '暂未归入自定义方向的项目', accent: 'blue', icon: 'folder', order: 1, enabled: true, builtIn: true },
 ]
 
 export const learningNodes: LearningNode[] = [
@@ -73,23 +69,16 @@ export const learningNodes: LearningNode[] = [
 ]
 
 export const resources: Resource[] = [
-  { id: 'r1', title: 'FastAPI 学习路线', description: '从路由到依赖注入，完成第一个可部署服务。', category: 'backend', type: '学习路线', tags: ['Python', 'FastAPI'], author: '2025 届 · 林同学', updated: '05-15', views: 1240, accent: 'blue', visibility: 'members' },
-  { id: 'r2', title: 'Docker 从入门到实践', description: '给项目加上可复制的本地开发与部署环境。', category: 'devops', type: '文档', tags: ['Docker', '部署'], author: '2024 届 · 陈同学', updated: '05-14', views: 982, accent: 'mint' },
-  { id: 'r3', title: 'LangChain 中文文档整理', description: '小组成员共同维护的 Agent 学习索引。', category: 'agent', type: 'GitHub', tags: ['LangChain', 'RAG'], author: 'AI 方向组', updated: '05-13', views: 876, accent: 'violet', visibility: 'contributors' },
-  { id: 'r4', title: '前端工程化检查清单', description: '从组件、状态到发布，项目启动前先看这一页。', category: 'frontend', type: '文章', tags: ['React', '工程化'], author: '2026 届 · 周同学', updated: '05-11', views: 614, accent: 'orange' },
-  { id: 'r5', title: 'SQL 面试题 100 讲', description: '从查询基础到索引与事务的系统复习卡片。', category: 'database', type: '课程', tags: ['MySQL', '面试'], author: '后端方向组', updated: '05-09', views: 530, accent: 'rose' },
-  { id: 'r6', title: 'Agent Prompt 设计手册', description: '把一个模糊问题拆成可执行、可评估的指令。', category: 'prompt', type: '文档', tags: ['Prompt', 'Agent'], author: '2025 届 · 何同学', updated: '05-08', views: 488, accent: 'violet' },
+  { id: 'r1', title: 'FastAPI 学习路线', description: '从路由到依赖注入，完成第一个可部署服务。', category: 'other', type: '学习路线', tags: ['Python', 'FastAPI'], author: '2025 届 · 林同学', updated: '05-15', views: 1240, accent: 'blue', visibility: 'members' },
+  { id: 'r2', title: 'Docker 从入门到实践', description: '给项目加上可复制的本地开发与部署环境。', category: 'other', type: '文档', tags: ['Docker', '部署'], author: '2024 届 · 陈同学', updated: '05-14', views: 982, accent: 'mint' },
+  { id: 'r3', title: 'LangChain 中文文档整理', description: '小组成员共同维护的 Agent 学习索引。', category: 'other', type: 'GitHub', tags: ['LangChain', 'RAG'], author: 'AI 方向组', updated: '05-13', views: 876, accent: 'violet', visibility: 'contributors' },
+  { id: 'r4', title: '前端工程化检查清单', description: '从组件、状态到发布，项目启动前先看这一页。', category: 'other', type: '文章', tags: ['React', '工程化'], author: '2026 届 · 周同学', updated: '05-11', views: 614, accent: 'orange' },
+  { id: 'r5', title: 'SQL 面试题 100 讲', description: '从查询基础到索引与事务的系统复习卡片。', category: 'other', type: '课程', tags: ['MySQL', '面试'], author: '后端方向组', updated: '05-09', views: 530, accent: 'rose' },
+  { id: 'r6', title: 'Agent Prompt 设计手册', description: '把一个模糊问题拆成可执行、可评估的指令。', category: 'other', type: '文档', tags: ['Prompt', 'Agent'], author: '2025 届 · 何同学', updated: '05-08', views: 488, accent: 'violet' },
 ]
 
 export const resourceCategories: ContentCategory[] = [
-  { id: 'resource-cat-frontend', key: 'frontend', label: '前端', description: '界面、交互与工程化实践', accent: 'orange', icon: 'code', order: 1, enabled: true, builtIn: true },
-  { id: 'resource-cat-backend', key: 'backend', label: '后端', description: '服务端、数据库与接口设计', accent: 'blue', icon: 'terminal', order: 2, enabled: true, builtIn: true },
-  { id: 'resource-cat-algorithm', key: 'algorithm', label: '算法', description: '算法训练与模型实践', accent: 'violet', icon: 'route', order: 3, enabled: true, builtIn: true },
-  { id: 'resource-cat-ai', key: 'ai', label: 'AI', description: '人工智能与知识工程', accent: 'blue', icon: 'spark', order: 4, enabled: true, builtIn: true },
-  { id: 'resource-cat-agent', key: 'agent', label: 'Agent', description: '智能体编排与应用', accent: 'mint', icon: 'rocket', order: 5, enabled: true, builtIn: true },
-  { id: 'resource-cat-database', key: 'database', label: '数据库', description: 'SQL、存储与数据建模', accent: 'rose', icon: 'folder', order: 6, enabled: true, builtIn: true },
-  { id: 'resource-cat-devops', key: 'devops', label: 'DevOps', description: '部署、容器与运维工具', accent: 'mint', icon: 'terminal', order: 7, enabled: true, builtIn: true },
-  { id: 'resource-cat-prompt', key: 'prompt', label: 'Prompt', description: '提示词与模型协作方法', accent: 'violet', icon: 'spark', order: 8, enabled: true, builtIn: true },
+  { id: 'resource-cat-other', key: 'other', label: '其他', description: '暂未归入自定义方向的资源', accent: 'blue', icon: 'folder', order: 1, enabled: true, builtIn: true },
 ]
 
 export const members: Member[] = [
@@ -142,12 +131,71 @@ export const growthStats = [
 ]
 
 
+// 离线演示版（.env.standalone / mock 源）只放几条代表性赛事：
+// 一条正在报名、一条赛程待定、一条已结束，覆盖卡片与详情的主要状态。
+// 线上真实赛事以数据库 competitions 表为准，不在这里重复维护。
 export const competitionEvents: CompetitionEvent[] = [
-  { id: 'e1', title: '2026 蓝桥杯', seriesName: '蓝桥杯', type: '省级竞赛', date: '06.18', deadline: '报名截止 06.10', description: '用算法和工程能力，把一个下午变成一次真正的实战。', status: '报名中', accent: 'blue' },
-  { id: 'e2', title: '校内 ACM 程序设计竞赛', seriesName: '校内 ACM', type: '校内赛', date: '06.01', deadline: '报名截止 05.28', description: '三人一队，和熟悉的队友一起练习思考与协作。', status: '报名中', accent: 'orange' },
-  { id: 'e3', title: 'Agent 创意挑战赛', seriesName: 'Agent 创意挑战赛', type: '项目赛', date: '07.12', deadline: '开放组队 06.20', description: '把一个校园问题交给 Agent，做出可以被使用的答案。', status: '即将开始', accent: 'violet', visibility: 'members' },
+  {
+    id: 'competition-qwb',
+    title: '第十届强网杯全国网络安全挑战赛',
+    seriesName: '强网杯',
+    type: '信息安全',
+    organizer: '河南省委网信办、河南省教育厅、郑州市人民政府、信息工程大学、郑州大学',
+    officialUrl: 'https://www.qiangwangbei.com/',
+    lifecycle: 'published',
+    date: '',
+    deadline: '',
+    description: '报名即日起至 10 月下旬（暂定）。线上赛 10 月下旬，线下赛 11 月下旬在郑州，另设车联网、具身智能、量子与抗量子等专项赛道。',
+    status: '报名中',
+    accent: 'rose',
+    visibility: 'public',
+    tracks: [
+      { id: 'qwb-online', name: '线上赛（挑战赛）', format: '团队，≤10 人 + 1 名领队', teamSize: '10', audience: '国内高校、企业、机构，须中国国籍', description: '线上解题赛，考二进制逆向、密码分析、智能终端安全、信息隐藏、人工智能安全等方向，前 32 名进入线下赛。', requirements: '每队不超过 10 名队员 + 1 名指导教师（领队）；须中国国籍（不含港澳台）。', awards: '一等奖 3 万/队、二等奖 2 万/队、三等奖 1 万/队' },
+      { id: 'qwb-offline', name: '线下赛', format: '团队，≤4 人 + 1 名领队', teamSize: '4', audience: '线上赛前 32 名队伍', description: '郑州现场攻防赛，赛题含 Web 漏洞挖掘、固件漏洞、大模型安全、物联网设备现场破解等。', requirements: '由线上赛晋级队伍自行挑选，每队不超过 4 名队员 + 1 名指导教师。', awards: '冠军 15 万、亚军 10 万、季军 8 万' },
+    ],
+  },
+  {
+    id: 'competition-4c-2027',
+    title: '2027 年第二十届中国大学生计算机设计大赛',
+    seriesName: '中国大学生计算机设计大赛',
+    type: '综合设计',
+    organizer: '中国大学生计算机设计大赛组织委员会',
+    officialUrl: 'https://jsjds.blcu.edu.cn/',
+    lifecycle: 'published',
+    date: '',
+    deadline: '',
+    description: '面向在校本科生，按大类分组评审，走校级赛、省级赛、国家级赛三级。通常 1 月发预通知、3 月发正式通知。',
+    status: '即将报名',
+    accent: 'violet',
+    visibility: 'public',
+    tracks: [
+      { id: '4c-software', name: '软件应用与开发', format: '团队，2–9 人', teamSize: '2–9', audience: '同一院校在籍本科生', description: '交付一套可运行的软件系统，覆盖 Web、移动端、管理信息系统、工具软件等，评审看功能完整度与现场演示。', requirements: '同校 2–9 名本科生组队；作品须当届周期内原创；国赛答辩不少于 2 人。', awards: '国赛一、二、三等奖' },
+      { id: '4c-ai', name: '人工智能应用', format: '团队，2–9 人', teamSize: '2–9', audience: '同一院校在籍本科生', description: '把机器学习或大模型能力落到真实场景，重点在问题定义、数据合规与效果验证。', requirements: '同校 2–9 名本科生；AI 工具须符合组委会当年指定清单。', awards: '国赛一、二、三等奖' },
+      { id: '4c-media', name: '数媒类（静态 / 动漫短片 / 游戏交互）', format: '团队，2–9 人', teamSize: '2–9', audience: '同一院校在籍本科生', description: '分别做平面视觉、动画叙事与可玩原型。每年指定传统文化主题。', requirements: '须符合当届公布的传统文化主题；使用地图须标注审图号与来源。', awards: '国赛一、二、三等奖' },
+    ],
+  },
+  {
+    id: 'competition-cumcm-2026',
+    title: '2026 年全国大学生数学建模竞赛（CUMCM）',
+    seriesName: '全国大学生数学建模竞赛',
+    type: '数学建模',
+    organizer: '中国工业与应用数学学会',
+    officialUrl: 'https://www.mcm.edu.cn/',
+    eventStart: '2026-09-10T18:00',
+    eventEnd: '2026-09-13T20:00',
+    lifecycle: 'published',
+    date: '2026-09-10T18:00',
+    deadline: '',
+    description: '2026 年共 1962 所院校、89516 支队伍报名，赛题于 9 月 10 日 18:00 发布、9 月 13 日 20:00 截止提交。',
+    status: '已结束',
+    accent: 'blue',
+    visibility: 'public',
+    tracks: [
+      { id: 'cumcm-undergrad', name: '本科组', format: '团队，3 人一队', teamSize: '3', audience: '在校本科生（研究生不得参加）', description: '从工程、社科、经管等领域的实际问题中抽象出数学模型，完成假设、建模、求解、检验，交一篇完整论文。', requirements: '每队不超过 3 人且必须同校；每队最多 1 名指导教师且竞赛期间不得参与讨论。', awards: '全国一等奖、二等奖；各赛区另设奖项' },
+      { id: 'cumcm-vocational', name: '高职高专组', format: '团队，3 人一队', teamSize: '3', audience: '高职高专学生', description: '与本科组同题同赛制、单独评奖，题目更偏工程应用。', requirements: '仅高职高专学生可报本组，也可选择本科组。', awards: '全国及赛区分级评奖' },
+    ],
+  },
 ]
-
 
 export const blogPosts: import('../types').BlogPost[] = [
   {

@@ -31,6 +31,26 @@ MILESTONE_FIELDS = (
 )
 
 
+def milestone_marker(field_name: str, milestone_time: datetime) -> str:
+    """记住具体节点时间；比赛改期后，新时间可以再次触发提醒。"""
+
+    return f"{field_name}:{milestone_time.strftime('%Y-%m-%d %H:%M')}"
+
+
+def notification_dedupe_key(
+    competition_id: int,
+    field_name: str,
+    milestone_time: datetime,
+    user_id: int,
+) -> str:
+    """同一赛事节点的不同时间分别去重。"""
+
+    return (
+        f"competition:{competition_id}:milestone:{field_name}:"
+        f"{milestone_time.strftime('%Y-%m-%d-%H-%M')}:user:{user_id}"
+    )
+
+
 def parse_competition_datetime(
     value: str | None,
     *,
@@ -104,11 +124,13 @@ async def create_due_competition_reminders(
         for reminder, competition, user in result.all():
             notified_milestones = set(reminder.notified_milestones or [])
             for field_name, label, raw_date in get_competition_milestones(competition):
-                if field_name in notified_milestones:
-                    continue
-
                 milestone_time = parse_competition_datetime(raw_date, now=current_time)
                 if milestone_time is None:
+                    continue
+
+                marker = milestone_marker(field_name, milestone_time)
+                # 兼容旧版只保存字段名的标记；更新赛程时 CRUD 会清除此旧标记。
+                if marker in notified_milestones or field_name in notified_milestones:
                     continue
 
                 time_until_milestone = milestone_time - current_time
@@ -116,26 +138,36 @@ async def create_due_competition_reminders(
                 if time_until_milestone <= timedelta(0) or time_until_milestone > REMINDER_LEAD_TIME:
                     continue
 
-                # 这个键同时包含比赛、节点和用户，保证每人每节点最多一条。
-                dedupe_key = (
+                dedupe_key = notification_dedupe_key(
+                    competition.id, field_name, milestone_time, user.id
+                )
+                legacy_dedupe_key = (
                     f"competition:{competition.id}:milestone:{field_name}:user:{user.id}"
                 )
                 formatted_time = milestone_time.strftime("%Y-%m-%d %H:%M")
                 try:
-                    if await get_notification_by_dedupe_key(db, dedupe_key) is None:
+                    existing = await get_notification_by_dedupe_key(db, dedupe_key)
+                    legacy = None
+                    if existing is None:
+                        legacy = await get_notification_by_dedupe_key(db, legacy_dedupe_key)
+                    # 已部署旧版本发过同一时间的通知时，不因去重键升级而重复发送。
+                    already_notified = existing is not None or (
+                        legacy is not None and formatted_time in legacy.content
+                    )
+                    if not already_notified:
                         await create_notification(
                             db,
                             user_id=user.id,
                             notification_type="competition_reminder",
                             title=f"比赛提醒：{competition.title}",
                             content=f"{competition.title}的“{label}”时间是 {formatted_time}，将在 24 小时内到来。",
-                            link="#/competitions",
+                            link="#/events",
                             dedupe_key=dedupe_key,
                         )
                         created_count += 1
 
                     # 同一事务内记录已扫描节点，用户之后删除通知也不会触发重发。
-                    notified_milestones.add(field_name)
+                    notified_milestones.add(marker)
                     reminder.notified_milestones = sorted(notified_milestones)
                     await db.commit()
                 except IntegrityError:

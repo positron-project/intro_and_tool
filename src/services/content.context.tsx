@@ -266,6 +266,46 @@ function persistContent(data: ContentSnapshot) {
   }
 }
 
+/**
+ * 演示模式也遵循项目库/资源库的新规则：内置分类只保留“其他”，
+ * 但保留用户自己创建的分类，避免旧版 localStorage 继续显示已移除的预设项。
+ */
+function normalizeProjectAndResourceCategories(data: ContentSnapshot): ContentSnapshot {
+  const projectPresetKeys = new Set(['AI', 'Web', 'Backend', 'Algorithm', 'Tools'])
+  const resourcePresetKeys = new Set(['frontend', 'backend', 'ai', 'algorithm', 'agent', 'database', 'devops', 'prompt', 'study'])
+
+  const normalize = (categories: ContentCategory[], presetKeys: Set<string>, description: string) => {
+    const other = categories.find((category) => category.key === 'other') ?? {
+      id: `local-${description === '项目' ? 'project' : 'resource'}-other`,
+      key: 'other',
+      label: '其他',
+      description: `暂未归入自定义方向的${description}`,
+      accent: 'blue',
+      icon: 'folder',
+      order: 1,
+      enabled: true,
+      builtIn: true,
+    }
+    const custom = categories
+      .filter((category) => category.key !== 'other' && !presetKeys.has(category.key) && category.builtIn !== true)
+      .map((category, index) => ({ ...category, order: index + 2 }))
+    return [{ ...other, label: '其他', order: 1, enabled: true, builtIn: true }, ...custom]
+  }
+
+  const projectCategories = normalize(data.projectCategories, projectPresetKeys, '项目')
+  const resourceCategories = normalize(data.resourceCategories, resourcePresetKeys, '资源')
+  const projectKeys = new Set(projectCategories.map((category) => category.key))
+  const resourceKeys = new Set(resourceCategories.map((category) => category.key))
+
+  return {
+    ...data,
+    projectCategories,
+    resourceCategories,
+    projects: data.projects.map((project) => projectKeys.has(project.category) ? project : { ...project, category: 'other' }),
+    resources: data.resources.map((resource) => resourceKeys.has(resource.category) ? resource : { ...resource, category: 'other' }),
+  }
+}
+
 function applyPersistedContent(data: ContentSnapshot): ContentSnapshot {
   if (isRemoteContentEnabled) return data
   const overrides = readPersistedContent()
@@ -303,7 +343,7 @@ function applyPersistedContent(data: ContentSnapshot): ContentSnapshot {
     next.learningRoute = { ...next.learningRoute, nodes: copy(overrides.learningNodes) }
     next.learningRoutes = next.learningRoutes.map((route) => route.id === next.learningRoute.id ? next.learningRoute : route)
   }
-  return next
+  return normalizeProjectAndResourceCategories(next)
 }
 
 const ContentContext = createContext<ContentContextValue | null>(null)
