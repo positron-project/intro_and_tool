@@ -304,7 +304,37 @@ jobs:
             "$STAGE/" "$BACKEND_DIR/"
           echo "同步完成"
 
-          echo "=== 5. 执行待跑迁移 ==="
+          # 依赖只在 requirements.txt 变动时安装：md5 记在 .venv 里，
+          # .venv 不进 tar 包也不被 rsync 覆盖，所以这份戳能跨部署保留。
+          echo "=== 5. 同步 Python 依赖 ==="
+          REQ_FILE="$BACKEND_DIR/requirements.txt"
+          REQ_STAMP="$BACKEND_DIR/.venv/.requirements-md5"
+          if [ -f "$REQ_FILE" ]; then
+            NEW_HASH=$(md5sum "$REQ_FILE" | cut -d' ' -f1)
+            OLD_HASH=$(cat "$REQ_STAMP" 2>/dev/null || echo "")
+            if [ "$NEW_HASH" = "$OLD_HASH" ]; then
+              echo "requirements.txt 未变化，跳过"
+            else
+              echo "依赖有变化（${OLD_HASH:-空} → $NEW_HASH），开始安装"
+              if "$BACKEND_DIR/.venv/bin/python" -m pip install \
+                   --disable-pip-version-check --no-cache-dir \
+                   -r "$REQ_FILE" > /tmp/pip-install.log 2>&1; then
+                echo "$NEW_HASH" > "$REQ_STAMP"
+                echo "依赖安装完成：$(grep -c 'Successfully installed' /tmp/pip-install.log || true) 组"
+              else
+                echo "!! 依赖安装失败，最后 30 行："
+                tail -30 /tmp/pip-install.log
+                echo "!! 回滚代码"
+                tar -xzf "$BACKUP" -C /opt/club_os --overwrite
+                rm -rf "$STAGE" "$ARCHIVE"
+                exit 1
+              fi
+            fi
+          else
+            echo "!! 未找到 requirements.txt，跳过依赖安装"
+          fi
+
+          echo "=== 6. 执行待跑迁移 ==="
           APPLIED=0
           cd "$BACKEND_DIR/migrations"
           for f in *.sql; do
@@ -326,7 +356,7 @@ jobs:
           done
           echo "本次执行迁移：$APPLIED 个"
 
-          echo "=== 6. 重启服务 ==="
+          echo "=== 7. 重启服务 ==="
           systemctl restart club-os-backend
           CODE=""
           for i in $(seq 1 10); do
@@ -346,7 +376,7 @@ jobs:
             exit 1
           fi
 
-          echo "=== 7. 同步服务器 git 记录 ==="
+          echo "=== 8. 同步服务器 git 记录 ==="
           cd "$BACKEND_DIR"
           git add -A >/dev/null 2>&1 || true
           git commit -m "deploy: $SHA" >/dev/null 2>&1 || true
