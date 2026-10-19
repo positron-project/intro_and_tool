@@ -450,6 +450,20 @@
     max-width: 30em;
   }
 
+  /* 手机版：整块文字在首屏里垂直居中。
+     旧的「大 padding-top + position: relative」方案是按固定 96px 顶距排的，
+     短屏（内容天然短于视口）会把整块顶到上三分之一、下方留一片空。
+     改成「满高 + 垂直居中」：min-height 把舞台撑满一屏（矮屏仍可继续增高），
+     原先那 96 / 50px 的上下内边距清零，居中位置交给 flex 算。 */
+  .hero-content-stage {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100svh;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
   .hero-cta-group {
     gap: 16px;
   }

@@ -111,11 +111,13 @@ export function BlogSection({ onNavigate }: BlogSectionProps) {
     }
   }, [selectedPost])
 
-  // 4 篇真实文章
+  // 主文章 + 最多三条次级文章。只有一条时右列是空的，网格要收成单栏，
+  // 否则 58% / 42% 的双栏会把整节撑出一片空白（见 blog-section.css 的 .is-single）
   const featuredPost = blogPosts[0]
   const secondPost = blogPosts[1]
   const thirdPost = blogPosts[2]
   const fourthPost = blogPosts[3]
+  const hasSecondaryPosts = Boolean(secondPost || thirdPost || fourthPost)
 
   const rule = useRuleIn()
 
@@ -165,8 +167,8 @@ export function BlogSection({ onNavigate }: BlogSectionProps) {
           </div>
         </div>
 
-        {/* 主文章 + 次级文章：一张大卡带两条短条目 */}
-        <div className="blog-editorial-grid">
+        {/* 主文章 + 次级文章：一张大卡带两条短条目；只有一条时收成单栏 */}
+        <div className={`blog-editorial-grid${hasSecondaryPosts ? '' : ' is-single'}`}>
           {featuredPost && (
             <motion.article
               className="blog-featured-article"
