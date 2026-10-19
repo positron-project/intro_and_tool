@@ -213,6 +213,7 @@ jobs:
           set -euo pipefail
           cd backend/OS_club
           tar -czf /tmp/backend-upload.tar.gz \
+            --owner=0 --group=0 \
             --exclude='.venv' \
             --exclude='__pycache__' \
             --exclude='*.pyc' \
@@ -289,7 +290,9 @@ jobs:
           echo "语法检查通过"
 
           echo "=== 4. 同步代码（保留 .venv/.env/uploads/.git）==="
-          rsync -a --delete \
+          # -rlptD 不含 -o/-g：runner 打包的 uid 是 1001，保留会把文件 owner 写成
+          # 不存在的用户，git 随后拒绝工作（dubious ownership）。
+          rsync -rlptD --delete --no-owner --no-group \
             --exclude='.venv/' \
             --exclude='.env' \
             --exclude='uploads/' \
