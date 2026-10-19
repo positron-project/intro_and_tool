@@ -5,15 +5,22 @@
 """
 import asyncio
 import json
+import logging
+import time
 from urllib.error import URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from config.turnstile_conf import get_turnstile_settings
 
+logger = logging.getLogger(__name__)
 
 # Cloudflare 用这个地址核验浏览器取得的 Turnstile token。
 SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+
+# siteverify 的等待上限。必须明显小于前端的登录超时（25 秒），
+# 否则网络抖动时前端会先掐断请求，用户只能看到浏览器的英文超时错误。
+SITEVERIFY_TIMEOUT_SECONDS = 6
 
 
 class TurnstileVerificationError(RuntimeError):
@@ -41,11 +48,17 @@ def _verify_turnstile_token_sync(token: str) -> bool:
         method="POST",
     )
 
-    # 最多等待 10 秒，避免网络无响应时一直卡住。
+    # 记录耗时，便于区分「出网慢」和「token 过期/重复使用」。
+    started_at = time.monotonic()
     try:
-        with urlopen(request, timeout=10) as response:
+        with urlopen(request, timeout=SITEVERIFY_TIMEOUT_SECONDS) as response:
             result = json.loads(response.read())
-    except (URLError, TimeoutError, json.JSONDecodeError) as exc:
+    except (URLError, OSError, TimeoutError, json.JSONDecodeError) as exc:
+        logger.warning(
+            "Turnstile siteverify failed after %.2fs: %s",
+            time.monotonic() - started_at,
+            exc,
+        )
         raise TurnstileVerificationError(
             "暂时无法联系 Cloudflare 核验 Turnstile，请稍后重试。"
         ) from exc
@@ -53,6 +66,13 @@ def _verify_turnstile_token_sync(token: str) -> bool:
     if not isinstance(result, dict):
         raise TurnstileVerificationError(
             "Cloudflare 返回了无法识别的 Turnstile 核验结果。"
+        )
+
+    if result.get("success") is not True:
+        logger.info(
+            "Turnstile rejected in %.2fs: error-codes=%s",
+            time.monotonic() - started_at,
+            result.get("error-codes"),
         )
 
     # 只有 Cloudflare 明确返回 success=true 才算通过。

@@ -236,7 +236,11 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   }
 
   const controller = new AbortController()
-  const timer = globalThis.setTimeout(() => controller.abort(), Math.max(timeoutMs, 1000))
+  let timedOut = false
+  const timer = globalThis.setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, Math.max(timeoutMs, 1000))
   const abortExternal = () => controller.abort()
   if (externalSignal?.aborted) controller.abort()
   else externalSignal?.addEventListener('abort', abortExternal, { once: true })
@@ -273,6 +277,12 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       )
     }
     return unwrapResponse<T>(payload)
+  } catch (error) {
+    // 超时/取消时 fetch 抛的是浏览器原生 DOMException（"signal is aborted without reason"），
+    // 原样透出会把英文错误显示到界面上，这里统一换成可读提示。
+    if (timedOut) throw new ApiError('请求超时，请检查网络后重试', 0, 'TIMEOUT')
+    if (controller.signal.aborted) throw new ApiError('请求已取消，请重试', 0, 'ABORTED')
+    throw error
   } finally {
     globalThis.clearTimeout(timer)
     externalSignal?.removeEventListener('abort', abortExternal)

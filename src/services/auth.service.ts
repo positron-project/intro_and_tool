@@ -100,6 +100,10 @@ export const isDemoAuth = apiConfig.contentSource !== 'api'
 export const demoCredentials = Object.freeze({ email: 'leader@example.com', password: DEMO_PASSWORD })
 export const demoOwnerCredentials = Object.freeze({ email: 'owner2029@example.com', password: DEMO_PASSWORD })
 
+// 登录/注册/发码都要先让后端向 Cloudflare 核验 Turnstile（siteverify 最坏 6 秒），
+// 这里给足余量，避免前端先于后端超时把请求掐断、把英文 DOMException 透到界面上。
+const TURNSTILE_GATED_TIMEOUT_MS = 25000
+
 function readDemoSession(): AuthSession | null {
   try {
     const raw = window.localStorage.getItem(DEMO_SESSION_KEY) ?? window.sessionStorage.getItem(DEMO_SESSION_KEY)
@@ -226,7 +230,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthSession>
     return session
   }
 
-  const response = await apiRequest<BackendAuthResponse>('/auth/login', { method: 'POST', body: { email: credentials.email.trim().toLowerCase(), password: credentials.password, turnstileToken: credentials.turnstileToken, rememberMe: credentials.rememberMe }, expectedStatus: 200, withAuth: false })
+  const response = await apiRequest<BackendAuthResponse>('/auth/login', { method: 'POST', body: { email: credentials.email.trim().toLowerCase(), password: credentials.password, turnstileToken: credentials.turnstileToken, rememberMe: credentials.rememberMe }, expectedStatus: 200, withAuth: false, timeoutMs: TURNSTILE_GATED_TIMEOUT_MS })
   const session = normalizeBackendSession(response)
   persistSessionToken(session, credentials.rememberMe)
   return session
@@ -280,7 +284,7 @@ export async function loginWithCode(credentials: LoginCodeCredentials): Promise<
   if (!isDemoAuth && !credentials.turnstileToken) throw new Error('请先完成验证码校验')
 
   if (!isDemoAuth) {
-    const response = await apiRequest<BackendAuthResponse>('/auth/login/code', { method: 'POST', body: { email, verificationCode: credentials.verificationCode.trim(), turnstileToken: credentials.turnstileToken, rememberMe: credentials.rememberMe }, expectedStatus: 200, withAuth: false })
+    const response = await apiRequest<BackendAuthResponse>('/auth/login/code', { method: 'POST', body: { email, verificationCode: credentials.verificationCode.trim(), turnstileToken: credentials.turnstileToken, rememberMe: credentials.rememberMe }, expectedStatus: 200, withAuth: false, timeoutMs: TURNSTILE_GATED_TIMEOUT_MS })
     const session = normalizeBackendSession(response)
     persistSessionToken(session, credentials.rememberMe)
     return session
@@ -313,7 +317,7 @@ export async function requestRegistrationCode(email: string, turnstileToken: str
   if (!isValidEmail(email)) throw new Error('请输入合法的邮箱地址')
   if (!isSupportedRegistrationEmail(email)) throw new Error(SUPPORTED_REGISTRATION_EMAIL_MESSAGE)
   if (!isDemoAuth && !turnstileToken) throw new Error('请先完成验证码校验')
-  if (!isDemoAuth) return apiRequest<RegistrationCodeResult>('/auth/register/send-code', { method: 'POST', body: { email: email.trim().toLowerCase(), turnstileToken }, withAuth: false })
+  if (!isDemoAuth) return apiRequest<RegistrationCodeResult>('/auth/register/send-code', { method: 'POST', body: { email: email.trim().toLowerCase(), turnstileToken }, withAuth: false, timeoutMs: TURNSTILE_GATED_TIMEOUT_MS })
 
   const code = String(Math.floor(100000 + Math.random() * 900000))
   writeDemoVerificationCode(email, 'register', code)
@@ -323,7 +327,7 @@ export async function requestRegistrationCode(email: string, turnstileToken: str
 export async function requestLoginCode(email: string, turnstileToken: string): Promise<RegistrationCodeResult> {
   if (!isValidEmail(email)) throw new Error('请输入合法的邮箱地址')
   if (!isDemoAuth && !turnstileToken) throw new Error('请先完成验证码校验')
-  if (!isDemoAuth) return apiRequest<RegistrationCodeResult>('/auth/login/send-code', { method: 'POST', body: { email: email.trim().toLowerCase(), turnstileToken }, withAuth: false })
+  if (!isDemoAuth) return apiRequest<RegistrationCodeResult>('/auth/login/send-code', { method: 'POST', body: { email: email.trim().toLowerCase(), turnstileToken }, withAuth: false, timeoutMs: TURNSTILE_GATED_TIMEOUT_MS })
 
   const account = Object.values(readDemoAccounts()).find((item) => item.email?.toLowerCase() === email.trim().toLowerCase())
   if (!account) throw new Error('该邮箱尚未注册')
@@ -345,7 +349,7 @@ export async function register(credentials: RegistrationCredentials): Promise<vo
   if (!isDemoAuth) {
     // Registration follows the shared Result contract: HTTP 200 plus
     // `code === 200` means the account was created successfully.
-    await apiRequest('/auth/register', { method: 'POST', body: { verificationCode: credentials.verificationCode.trim(), username, email, password: credentials.password, turnstileToken: credentials.turnstileToken }, expectedStatus: 200, withAuth: false })
+    await apiRequest('/auth/register', { method: 'POST', body: { verificationCode: credentials.verificationCode.trim(), username, email, password: credentials.password, turnstileToken: credentials.turnstileToken }, expectedStatus: 200, withAuth: false, timeoutMs: TURNSTILE_GATED_TIMEOUT_MS })
     return
   }
 
