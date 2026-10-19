@@ -1,0 +1,169 @@
+name: Deploy frontend to us
+
+# 在 GitHub 的 runner 上构建，然后把 dist/ 通过 SSH 推到 us 服，原子替换线上目录。
+# 线上目录就是 nginx 的 root（/opt/club_os/deploy/repo/dist），替换完立刻生效。
+# 不在服务器上构建：那台机器 2 核 1GB，vite build 会跑几十分钟甚至 OOM，
+# 而 Vite 的 emptyOutDir 会先清空 dist，中途死亡就整站 403（2026-10-19 16:08 事故）。
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'backend/**'
+      - 'docs/**'
+      - 'e2e/**'
+      - '**/*.md'
+      - 'backups/**'
+      - 'viz/**'
+  workflow_dispatch:
+
+# 同一时间只允许一个部署，避免两次上传交错替换 dist
+concurrency:
+  group: deploy-us
+  cancel-in-progress: false
+
+env:
+  DEPLOY_HOST: 203.88.115.113
+  DEPLOY_PORT: '23'
+  DEPLOY_USER: root
+  REMOTE_DIR: /opt/club_os/deploy/repo
+  REMOTE_OWNER: www-data:www-data
+  SITE_HOSTNAME: cs.stcnchu.com
+  SITE_URL: https://cs.stcnchu.com/
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # .env 在 .gitignore 里，构建必须自己生成，否则 VITE_* 全是 undefined，
+      # 打出来的包会回落到 mock 数据源、连不上后端。
+      - name: Write production .env
+        env:
+          PROD_ENV_FILE: ${{ secrets.PROD_ENV_FILE }}
+        run: |
+          if [ -z "${PROD_ENV_FILE:-}" ]; then
+            echo "::error::缺少仓库 secret PROD_ENV_FILE（生产 .env 全文）"
+            exit 1
+          fi
+          printf '%s\n' "$PROD_ENV_FILE" > .env
+          echo "已写入 .env（$(wc -l < .env) 行）"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Verify build output
+        run: |
+          set -euo pipefail
+          test -f dist/index.html || { echo "::error::构建产物缺 dist/index.html"; exit 1; }
+          JS_CSS=$(find dist/assets -type f \( -name '*.js' -o -name '*.css' \) | wc -l)
+          echo "js/css 文件数：$JS_CSS"
+          if [ "$JS_CSS" -lt 5 ]; then
+            echo "::error::assets 里只有 $JS_CSS 个 js/css，疑似半成品"
+            exit 1
+          fi
+          echo "dist 体积：$(du -sh dist | cut -f1)，文件数：$(find dist -type f | wc -l)"
+
+      - name: Package dist
+        run: tar -czf dist-upload.tar.gz -C dist .
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST_KEY: ${{ secrets.SSH_HOST_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SSH_PRIVATE_KEY:-}" ]; then
+            echo "::error::缺少仓库 secret SSH_PRIVATE_KEY"
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          if [ -n "${SSH_HOST_KEY:-}" ]; then
+            printf '%s\n' "$SSH_HOST_KEY" > ~/.ssh/known_hosts
+            echo "已写入 known_hosts"
+          else
+            echo "::warning::未配置 SSH_HOST_KEY，本次用 accept-new 信任主机指纹"
+          fi
+
+      - name: Upload archive
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "$DEPLOY_PORT" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=accept-new \
+            -o ConnectTimeout=20 \
+            "$DEPLOY_USER@$DEPLOY_HOST" 'cat > /tmp/dist-upload.tar.gz' \
+            < dist-upload.tar.gz
+
+      - name: Atomic swap on server
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "$DEPLOY_PORT" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=accept-new \
+            -o ConnectTimeout=20 \
+            "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- \
+            "$REMOTE_DIR" "$REMOTE_OWNER" "$SITE_HOSTNAME" "$DEPLOY_SHA" <<'REMOTE'
+          set -euo pipefail
+          REMOTE_DIR="$1"; OWNER="$2"; SITE_HOSTNAME="$3"; SHA="$4"
+          ARCHIVE=/tmp/dist-upload.tar.gz
+          cd "$REMOTE_DIR"
+
+          rm -rf dist.new
+          mkdir -p dist.new
+          tar -xzf "$ARCHIVE" -C dist.new
+
+          # 校验通过才切换，避免出现 dist 是空目录的窗口
+          if [ ! -f dist.new/index.html ]; then
+            echo "!! 解包后缺 index.html，放弃切换，线上未受影响"
+            rm -rf dist.new "$ARCHIVE"
+            exit 1
+          fi
+          JS_CSS=$(find dist.new/assets -type f \( -name '*.js' -o -name '*.css' \) | wc -l)
+          if [ "$JS_CSS" -lt 5 ]; then
+            echo "!! assets 里只有 $JS_CSS 个 js/css，疑似半成品，放弃切换"
+            rm -rf dist.new "$ARCHIVE"
+            exit 1
+          fi
+
+          chown -R "$OWNER" dist.new
+          chmod -R a+rX dist.new
+
+          rm -rf dist.prev
+          [ -d dist ] && mv dist dist.prev
+          mv dist.new dist
+          rm -f "$ARCHIVE"
+
+          echo "index.html: $(stat -c '%s bytes  %y' dist/index.html)"
+          echo "js/css: $JS_CSS 个"
+          echo "部署来源 commit: $SHA"
+
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' -H "Host: $SITE_HOSTNAME" http://127.0.0.1/ || true)
+          echo "本机 Host 探测：HTTP $CODE"
+          [ "$CODE" = "200" ] || { echo "!! 站点非 200，回滚：ssh 上把 dist.prev 移回 dist"; exit 1; }
+          REMOTE
+
+      - name: Verify public URL
+        run: |
+          curl -sS -o /dev/null --max-time 25 --retry 2 --retry-delay 5 \
+            -w "线上 HTTP %{http_code}  ip %{remote_ip}  %{time_total}s\n" \
+            "$SITE_URL?ci=${{ github.sha }}" || true
