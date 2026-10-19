@@ -7,25 +7,30 @@ interface HomeLoadingScreenProps {
   onUnmount?: () => void
 }
 
-/** 预加载图片资源清单（全站核心素材） */
-const IMAGES_TO_PRELOAD = [
-  // 首屏与品牌
+/**
+ * 首屏关键资源：只有这几张会阻塞进度条。
+ * 判定标准是「用户进入首页第一屏就能看到」，其余一律不参与阻塞。
+ */
+const CRITICAL_IMAGES = [
   '/assets/home-hero-glow.webp',
   './assets/campus/campus-line-art.webp',
-  './assets/campus/campus-line-art.png',
   '/assets/brand-mark.svg',
   '/assets/college-wordmark.svg',
-  // 作品展示精选截图
+]
+
+/**
+ * 非首屏素材：进入页面后在空闲时间后台预热，用户滚动到之前大概率已就绪。
+ * campus-line-art.png 是 webp 的兜底格式，不在 webp 已存在时重复下载。
+ */
+const DEFERRED_IMAGES = [
   '/assets/showcase/shop-01-home.webp',
   '/assets/showcase/lijing-01-home.webp',
   '/assets/showcase/acg-hut-01-home.webp',
   '/assets/showcase/data-board-01-home.webp',
   '/assets/showcase/genshin-concert-01-home.webp',
   '/assets/showcase/music-app-01-home.webp',
-  // 小组推荐配图
   '/assets/picks-minecraft-base.webp',
   '/assets/picks-tools-page.webp',
-  // 能力图谱与联系方式
   './assets/capabilities/frontend.webp',
   './assets/capabilities/backend.webp',
   './assets/capabilities/teamwork.webp',
@@ -131,10 +136,15 @@ export function HomeLoadingScreen({ onComplete, onUnmount }: HomeLoadingScreenPr
     })
   }, [])
 
-  // 2. 真实图片预加载
+  // 2. 首屏关键图阻塞进度；非首屏素材空闲时后台预热，不参与进度
   useEffect(() => {
     let loadedCount = 0
-    const total = IMAGES_TO_PRELOAD.length
+    const total = CRITICAL_IMAGES.length
+
+    // 兜底：网络异常或某张图 404 时，最多等 3 秒就放行，绝不把用户锁在加载页
+    const watchdog = window.setTimeout(() => {
+      imagesDoneRef.current = true
+    }, 3000)
 
     const handleSingleImageLoaded = () => {
       loadedCount++
@@ -143,12 +153,31 @@ export function HomeLoadingScreen({ onComplete, onUnmount }: HomeLoadingScreenPr
       }
     }
 
-    IMAGES_TO_PRELOAD.forEach((src) => {
+    CRITICAL_IMAGES.forEach((src) => {
       const img = new Image()
       img.onload = handleSingleImageLoaded
       img.onerror = handleSingleImageLoaded
       img.src = src
     })
+
+    const preheat = () => {
+      DEFERRED_IMAGES.forEach((src) => {
+        const img = new Image()
+        img.src = src
+      })
+    }
+    const idleHandle = typeof window.requestIdleCallback === 'function'
+      ? window.requestIdleCallback(preheat, { timeout: 2500 })
+      : window.setTimeout(preheat, 1200)
+
+    return () => {
+      window.clearTimeout(watchdog)
+      if (typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleHandle)
+      } else {
+        window.clearTimeout(idleHandle)
+      }
+    }
   }, [])
 
   // 3. 平滑推进进度与栈动画
@@ -165,14 +194,16 @@ export function HomeLoadingScreen({ onComplete, onUnmount }: HomeLoadingScreenPr
           return 95
         }
 
-        const step = prev < 50 ? 2 : prev < 85 ? 2 : 1
+        // 首屏目标：约 1 秒跑到 95%。此处只是观感节奏，
+        // 真正的放行条件是 CRITICAL_IMAGES 就绪（或 3 秒兜底）。
+        const step = prev < 50 ? 4 : prev < 85 ? 3 : 2
         const next = Math.min(100, prev + step)
         if (next >= 100) {
           clearInterval(timer)
         }
         return next
       })
-    }, 45)
+    }, 32)
 
     return () => clearInterval(timer)
   }, [])

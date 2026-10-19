@@ -54,8 +54,17 @@ const HEADER_OFFSET = -70
 
 export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) => void }) {
   const [activeIndex, setActiveIndex] = useState(0)
-  const [loadingMounted, setLoadingMounted] = useState(true)
-  const [heroActive, setHeroActive] = useState(false)
+  /* 同一次会话内再次回到首页不再重播加载动画；系统开启 reduced-motion 时直接跳过 */
+  const [introSeen] = useState(() => {
+    try {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true
+      return window.sessionStorage.getItem('home-intro-seen') === '1'
+    } catch {
+      return false
+    }
+  })
+  const [loadingMounted, setLoadingMounted] = useState(!introSeen)
+  const [heroActive, setHeroActive] = useState(introSeen)
   const heroFrameRef = useRef<HTMLDivElement | null>(null)
   const lenisRef = useRef<Lenis | null>(null)
 
@@ -223,6 +232,11 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
   /* 加载页完成与卸载回调 */
   const handleLoadingComplete = useCallback(() => {
     setHeroActive(true)
+    try {
+      window.sessionStorage.setItem('home-intro-seen', '1')
+    } catch {
+      /* 隐私模式下存储不可用，忽略即可 */
+    }
   }, [])
 
   const handleLoadingUnmount = useCallback(() => {

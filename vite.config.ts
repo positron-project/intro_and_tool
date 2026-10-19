@@ -58,20 +58,13 @@ export default defineConfig(({ mode }) => {
         output: isStandalone
           ? { inlineDynamicImports: true }
           : {
+              // 页面级 chunk 交给 Rollup 按动态导入自动切分：AdminPage 已在
+              // App.tsx 用 React.lazy 引入。之前这里手工把 AdminPage / admin-modals
+              // 划成 'page-admin'，会把它们依赖的共享模块（content.context、
+              // api-client、upload.service 等）一并吞进该 chunk，而 App.tsx 同样要用
+              // 这些模块，于是入口只能静态 import 整个 page-admin，index.html 里再
+              // 用 modulepreload 预取，等于让每个访客都下载 257KB 的后台代码。
               manualChunks: (id) => {
-                const normalizedId = id.replaceAll('\\', '/')
-                if (
-                  normalizedId.includes('/src/components/admin/AdminPage.tsx') ||
-                  normalizedId.includes('/src/components/admin-modals.tsx')
-                ) {
-                  return 'page-admin'
-                }
-                if (
-                  normalizedId.includes('/src/components/interviews.tsx') ||
-                  normalizedId.includes('/src/components/prompt-modals.tsx')
-                ) {
-                  return 'page-tools'
-                }
                 if (id.includes('node_modules/framer-motion')) {
                   return 'vendor-motion'
                 }

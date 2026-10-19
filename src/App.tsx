@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -99,7 +99,12 @@ import ResourceMarkdown from './components/ResourceMarkdown'
 import { InterviewPage, InterviewSubmissionRows } from './components/interviews'
 import { TurnstileWidget } from './components/turnstile-widget'
 import { ExpandedHomePage } from './components/home/ExpandedHomePage'
-import { AdminPage } from './components/admin/AdminPage'
+// 管理后台约 230KB 源码，只有 /admin 会遇到。改成动态导入后，
+// vite.config 里分出来的 page-admin chunk 才会真正按需拉取，
+// 而不是被 index.html 用 modulepreload 提前下载给每个访客。
+const AdminPage = lazy(() =>
+  import('./components/admin/AdminPage').then((module) => ({ default: module.AdminPage })),
+)
 import { resolveProjectMembers } from './utils/project-members'
 import {
   Avatar,
@@ -3557,7 +3562,7 @@ function App() {
     : theme === 'dark' && backgroundPreference !== 'custom'
       ? 'starfield'
       : backgroundPreference === 'follow' ? 'campus' : backgroundPreference
-  return <div className={`app-shell ${isLanding ? 'landing-shell' : ''} ${isTools ? 'tools-shell' : ''} ${isAdminRoute ? 'admin-shell' : ''} ${!isLanding ? 'site-background-shell' : ''} site-bg-${siteBackground}`} style={{ '--site-background-image': backgroundImage ? `url(${backgroundImage})` : 'none' } as React.CSSProperties}>{!isFullBleed && <Navbar route={route} theme={theme} onTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')} onSearch={() => setCommandOpen(true)} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} backgroundPreference={backgroundPreference} onBackgroundPreferenceChange={setBackgroundPreference} backgroundImage={backgroundImage} onBackgroundImageChange={setBackgroundImage} />}<main className={`${isFullBleed ? 'full-bleed-main' : ''} ${isTools ? 'tools-main' : ''}`}><AnimatePresence mode="wait"><motion.div key={route} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.18 }}>{renderPage()}</motion.div></AnimatePresence></main>{!isFullBleed && !isAdminRoute && <footer className="site-footer"><div><a href="#/home" className="brand footer-brand"><img className="brand-logo" src="./assets/college-logo-cropped.png" alt="南昌航空大学科技学院校徽" /><span className="brand-copy"><strong>南昌航空大学科技学院</strong><small>计算机科技小组 · Computer Science Club</small></span></a><p>学习 → 实践 → 传承。让每一届的知识都留下来。</p></div><div className="footer-links"><a href="#/members">关于我们</a><a href="#/members">加入我们</a><a href="#/resources">贡献指南</a><a href="#/home">隐私政策</a></div><span className="copyright">© 2026 南昌航空大学科技学院计算机科技小组</span></footer>}{!isFullBleed && !isAdminRoute && <button className="floating-ai" onClick={() => setAiOpen(true)} aria-label="打开 AI 助手"><Bot size={21} /></button>}<AiDrawer open={aiOpen && !isLanding} onClose={() => setAiOpen(false)} messages={messages} onSend={sendMessage} /><CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={navigate} /><OnboardingModal open={onboardingOpen} onClose={() => setOnboardingOpen(false)} onNavigate={navigate} /></div>
+  return <div className={`app-shell ${isLanding ? 'landing-shell' : ''} ${isTools ? 'tools-shell' : ''} ${isAdminRoute ? 'admin-shell' : ''} ${!isLanding ? 'site-background-shell' : ''} site-bg-${siteBackground}`} style={{ '--site-background-image': backgroundImage ? `url(${backgroundImage})` : 'none' } as React.CSSProperties}>{!isFullBleed && <Navbar route={route} theme={theme} onTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')} onSearch={() => setCommandOpen(true)} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} backgroundPreference={backgroundPreference} onBackgroundPreferenceChange={setBackgroundPreference} backgroundImage={backgroundImage} onBackgroundImageChange={setBackgroundImage} />}<main className={`${isFullBleed ? 'full-bleed-main' : ''} ${isTools ? 'tools-main' : ''}`}><AnimatePresence mode="wait"><motion.div key={route} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.18 }}><Suspense fallback={null}>{renderPage()}</Suspense></motion.div></AnimatePresence></main>{!isFullBleed && !isAdminRoute && <footer className="site-footer"><div><a href="#/home" className="brand footer-brand"><img className="brand-logo" src="./assets/college-logo-cropped.png" alt="南昌航空大学科技学院校徽" /><span className="brand-copy"><strong>南昌航空大学科技学院</strong><small>计算机科技小组 · Computer Science Club</small></span></a><p>学习 → 实践 → 传承。让每一届的知识都留下来。</p></div><div className="footer-links"><a href="#/members">关于我们</a><a href="#/members">加入我们</a><a href="#/resources">贡献指南</a><a href="#/home">隐私政策</a></div><span className="copyright">© 2026 南昌航空大学科技学院计算机科技小组</span></footer>}{!isFullBleed && !isAdminRoute && <button className="floating-ai" onClick={() => setAiOpen(true)} aria-label="打开 AI 助手"><Bot size={21} /></button>}<AiDrawer open={aiOpen && !isLanding} onClose={() => setAiOpen(false)} messages={messages} onSend={sendMessage} /><CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={navigate} /><OnboardingModal open={onboardingOpen} onClose={() => setOnboardingOpen(false)} onNavigate={navigate} /></div>
 }
 
 export default App
