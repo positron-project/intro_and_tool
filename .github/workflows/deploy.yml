@@ -1,23 +1,19 @@
-name: Deploy frontend to us
+name: Deploy to us
 
-# 在 GitHub 的 runner 上构建，然后把 dist/ 通过 SSH 推到 us 服，原子替换线上目录。
-# 线上目录就是 nginx 的 root（/opt/club_os/deploy/repo/dist），替换完立刻生效。
+# 前端：在 GitHub runner 上构建，把 dist/ 通过 SSH 推到 us 服，原子替换 nginx root。
 # 不在服务器上构建：那台机器 2 核 1GB，vite build 会跑几十分钟甚至 OOM，
 # 而 Vite 的 emptyOutDir 会先清空 dist，中途死亡就整站 403（2026-10-19 16:08 事故）。
+#
+# 后端：源码打包上传，服务器上 rsync 到 /opt/club_os/backend（保留 .venv/.env/uploads），
+# 跑未执行的 migrations/*.sql（schema_migrations 表记录），重启 systemd，健康检查失败自动回滚。
+# 两条链路各自独立：只改前端不重启后端，只改后端不重打前端。
 
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - 'backend/**'
-      - 'docs/**'
-      - 'e2e/**'
-      - '**/*.md'
-      - 'backups/**'
-      - 'viz/**'
   workflow_dispatch:
 
-# 同一时间只允许一个部署，避免两次上传交错替换 dist
+# 同一时间只允许一个部署，避免两次上传交错替换
 concurrency:
   group: deploy-us
   cancel-in-progress: false
@@ -28,11 +24,45 @@ env:
   DEPLOY_USER: root
   REMOTE_DIR: /opt/club_os/deploy/repo
   REMOTE_OWNER: www-data:www-data
+  BACKEND_DIR: /opt/club_os/backend
   SITE_HOSTNAME: cs.stcnchu.com
   SITE_URL: https://cs.stcnchu.com/
 
 jobs:
-  build-and-deploy:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name == 'push'
+        with:
+          filters: |
+            frontend:
+              - 'src/**'
+              - 'public/**'
+              - 'index.html'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'tsconfig*.json'
+              - 'vite.config.*'
+              - 'tailwind*'
+              - 'postcss*'
+              - 'eslint.config.js'
+              - '.github/workflows/deploy.yml'
+            backend:
+              - 'backend/**'
+              - '.github/workflows/deploy.yml'
+
+  deploy-frontend:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -167,3 +197,163 @@ jobs:
           curl -sS -o /dev/null --max-time 25 --retry 2 --retry-delay 5 \
             -w "线上 HTTP %{http_code}  ip %{remote_ip}  %{time_total}s\n" \
             "$SITE_URL?ci=${{ github.sha }}" || true
+
+  deploy-backend:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 只打包源码：.venv 153M 不能进包，.env 由服务器本地维护，
+      # uploads 是运行时产生的用户文件，覆盖会丢数据。
+      - name: Package backend
+        run: |
+          set -euo pipefail
+          cd backend/OS_club
+          tar -czf /tmp/backend-upload.tar.gz \
+            --exclude='.venv' \
+            --exclude='__pycache__' \
+            --exclude='*.pyc' \
+            --exclude='uploads' \
+            --exclude='.env' \
+            --exclude='*.log' \
+            --exclude='.pytest_cache' \
+            --exclude='.idea' \
+            --exclude='.git' \
+            .
+          echo "打包体积：$(du -h /tmp/backend-upload.tar.gz | cut -f1)"
+          echo "文件数：$(find . -type f ! -path './.venv/*' ! -path '*/__pycache__/*' | wc -l)"
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST_KEY: ${{ secrets.SSH_HOST_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SSH_PRIVATE_KEY:-}" ]; then
+            echo "::error::缺少仓库 secret SSH_PRIVATE_KEY"
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          if [ -n "${SSH_HOST_KEY:-}" ]; then
+            printf '%s\n' "$SSH_HOST_KEY" > ~/.ssh/known_hosts
+          fi
+
+      - name: Upload archive
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "$DEPLOY_PORT" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=accept-new \
+            -o ConnectTimeout=20 \
+            "$DEPLOY_USER@$DEPLOY_HOST" 'cat > /tmp/backend-upload.tar.gz' \
+            < /tmp/backend-upload.tar.gz
+
+      - name: Deploy backend on server
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "$DEPLOY_PORT" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=accept-new \
+            -o ConnectTimeout=20 \
+            "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- \
+            "$BACKEND_DIR" "$DEPLOY_SHA" <<'REMOTE'
+          set -euo pipefail
+          BACKEND_DIR="$1"; SHA="$2"
+          ARCHIVE=/tmp/backend-upload.tar.gz
+          STAGE=/tmp/backend-stage
+          TS=$(date +%Y%m%d-%H%M%S)
+          BACKUP="/opt/club_os/backups/backend-ci-$TS.tar.gz"
+
+          echo "=== 1. 备份当前后端 ==="
+          mkdir -p /opt/club_os/backups
+          tar -czf "$BACKUP" --exclude='.venv' --exclude='__pycache__' --exclude='.git' \
+            -C /opt/club_os backend
+          echo "备份：$BACKUP（$(du -h "$BACKUP" | cut -f1)）"
+
+          echo "=== 2. 解包到暂存区 ==="
+          rm -rf "$STAGE"; mkdir -p "$STAGE"
+          tar -xzf "$ARCHIVE" -C "$STAGE"
+          echo "待部署文件数：$(find "$STAGE" -type f | wc -l)"
+
+          echo "=== 3. 语法检查 ==="
+          if ! ( cd "$STAGE" && "$BACKEND_DIR/.venv/bin/python" -m compileall -q . >/dev/null ); then
+            echo "!! 语法检查失败，线上未受影响"
+            rm -rf "$STAGE" "$ARCHIVE"
+            exit 1
+          fi
+          echo "语法检查通过"
+
+          echo "=== 4. 同步代码（保留 .venv/.env/uploads/.git）==="
+          rsync -a --delete \
+            --exclude='.venv/' \
+            --exclude='.env' \
+            --exclude='uploads/' \
+            --exclude='__pycache__/' \
+            --exclude='*.pyc' \
+            --exclude='*.log' \
+            --exclude='.git/' \
+            --exclude='.gitignore' \
+            "$STAGE/" "$BACKEND_DIR/"
+          echo "同步完成"
+
+          echo "=== 5. 执行待跑迁移 ==="
+          APPLIED=0
+          cd "$BACKEND_DIR/migrations"
+          for f in *.sql; do
+            if mysql -N -e "SELECT 1 FROM club_os.schema_migrations WHERE filename='$f'" 2>/dev/null | grep -q 1; then
+              continue
+            fi
+            echo "执行迁移：$f"
+            if mysql club_os < "$f" 2>/tmp/mig.err; then
+              mysql club_os -e "INSERT INTO schema_migrations (filename) VALUES ('$f')"
+              APPLIED=$((APPLIED + 1))
+              echo "  ok"
+            else
+              echo "!! 迁移失败：$(cat /tmp/mig.err)"
+              echo "!! 回滚代码"
+              tar -xzf "$BACKUP" -C /opt/club_os --overwrite
+              rm -rf "$STAGE" "$ARCHIVE"
+              exit 1
+            fi
+          done
+          echo "本次执行迁移：$APPLIED 个"
+
+          echo "=== 6. 重启服务 ==="
+          systemctl restart club-os-backend
+          CODE=""
+          for i in $(seq 1 10); do
+            sleep 3
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' -m 5 http://127.0.0.1:8000/api/health || true)
+            [ "$CODE" = "200" ] && break
+          done
+
+          if [ "$CODE" != "200" ]; then
+            echo "!! 健康检查失败（HTTP $CODE），回滚代码"
+            tar -xzf "$BACKUP" -C /opt/club_os --overwrite
+            systemctl restart club-os-backend
+            sleep 8
+            RC=$(curl -s -o /dev/null -w '%{http_code}' -m 5 http://127.0.0.1:8000/api/health || true)
+            echo "回滚后健康检查：HTTP $RC"
+            rm -rf "$STAGE" "$ARCHIVE"
+            exit 1
+          fi
+
+          echo "=== 7. 同步服务器 git 记录 ==="
+          cd "$BACKEND_DIR"
+          git add -A >/dev/null 2>&1 || true
+          git commit -m "deploy: $SHA" >/dev/null 2>&1 || true
+
+          rm -rf "$STAGE" "$ARCHIVE"
+          echo "部署完成：健康检查 200，commit $SHA"
+          REMOTE
+
+      - name: Verify public API
+        run: |
+          curl -sS --max-time 25 --retry 2 --retry-delay 5 \
+            -w "\n线上 API HTTP %{http_code}  %{time_total}s\n" \
+            "$SITE_URL/api/health" || true
