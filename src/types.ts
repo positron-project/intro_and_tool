@@ -146,7 +146,7 @@ export interface AdminContributionRow {
   submission?: ContributionSubmission
   interview?: InterviewSubmission
   prompt?: PromptReviewItem
-  feedback?: { id: string; category: string; content: string; contact?: string; createdAt: string; status?: 'pending' | 'read' | 'resolved' }
+  feedback?: { id: string; category: string; content: string; contact?: string; createdAt: string; status?: 'pending' | 'read' | 'resolved'; attachments?: Array<{ id?: string; assetId?: string; name: string; url: string; mimeType?: string; size?: number }>; attachmentsExpiresAt?: string }
 }
 
 export interface AuthSession {

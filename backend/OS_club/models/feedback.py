@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, Index, String, Text, func
+from sqlalchemy import BigInteger, DateTime, Index, JSON, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from config.db_conf import Base
@@ -37,6 +37,19 @@ class FeedbackMessage(Base):
     # 留言者可以不留联系方式，因此此字段允许为空。
     contact: Mapped[str | None] = mapped_column(
         String(255),
+        nullable=True,
+    )
+
+    # 可选的截图/图片附件。附件只保存文件元数据，实际文件仍在 uploads/feedback。
+    attachments: Mapped[list] = mapped_column(
+        JSON,
+        default=list,
+        nullable=False,
+    )
+
+    # 附件的统一过期时间；过期后清理任务只删除图片，不删除留言正文。
+    attachments_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
         nullable=True,
     )
 

@@ -1,8 +1,11 @@
 """留言建议的公开提交和管理员管理接口。"""
 
+from pathlib import Path
 from typing import Annotated
+from urllib.parse import urlsplit
+from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.db_conf import get_database
@@ -21,12 +24,57 @@ from schemas.feedback import (
     FeedbackUpdateRequest,
 )
 from utils.auth import require_leader_or_admin
+from utils.uploads import find_upload_path, upload_asset_id
+
+
+FEEDBACK_UPLOAD_ROOT = Path(__file__).resolve().parent.parent / "uploads" / "feedback"
+FEEDBACK_IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
+FEEDBACK_MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+
+def validate_feedback_attachments(attachments) -> None:
+    """只接受本接口生成的 feedback 图片，避免把任意外链写进留言记录。"""
+
+    for attachment in attachments:
+        asset_id = upload_asset_id(attachment.asset_id or attachment.id or attachment.url)
+        path = urlsplit(attachment.url).path
+        if not asset_id or f"/uploads/feedback/{asset_id}" not in path or find_upload_path(asset_id) is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="留言图片无效，请重新上传")
 
 
 router = APIRouter(
     prefix="/api/feedback",
     tags=["feedback"],
 )
+
+
+@router.post("/attachments", status_code=status.HTTP_201_CREATED)
+async def upload_feedback_attachment(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    """上传留言截图；文件先进入临时目录，提交留言后才会被记录引用。"""
+
+    extension = FEEDBACK_IMAGE_TYPES.get(file.content_type or "")
+    if extension is None:
+        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="只支持 PNG、JPG 或 WebP 图片")
+
+    content = await file.read(FEEDBACK_MAX_IMAGE_BYTES + 1)
+    if len(content) > FEEDBACK_MAX_IMAGE_BYTES:
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="留言图片单张不能超过 5 MB")
+
+    FEEDBACK_UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
+    stored_name = f"{uuid4().hex}{extension}"
+    (FEEDBACK_UPLOAD_ROOT / stored_name).write_bytes(content)
+    public_path = f"/uploads/feedback/{stored_name}"
+    return {
+        "id": stored_name,
+        "assetId": stored_name,
+        "url": str(request.base_url).rstrip("/") + public_path,
+        "name": file.filename or stored_name,
+        "mimeType": file.content_type,
+        "size": len(content),
+    }
 
 
 @router.post(
@@ -41,6 +89,7 @@ async def submit_feedback(
 ):
     """访客和成员都可以提交建议，不要求先登录。"""
 
+    validate_feedback_attachments(feedback_data.attachments)
     return await create_feedback_message(db, feedback_data)
 
 

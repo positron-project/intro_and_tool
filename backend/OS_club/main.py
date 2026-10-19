@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from routers import announcements, club_config, learning_routes, prompts, settings, user_preferences, workbench_settings
 from routers import admin, audit_logs, categories, cohorts, competitions, favorites, feedback, health, invites, notifications, project_self, users, members, projects, resource_submissions, resources, uploads, interviews
 from tasks.competition_reminders import create_due_competition_reminders
+from tasks.feedback_attachments import cleanup_feedback_attachments
 
 
 logger = logging.getLogger(__name__)
@@ -32,17 +33,36 @@ async def competition_reminder_loop():
         await asyncio.sleep(60)
 
 
+async def feedback_attachment_cleanup_loop():
+    """每天清理过期留言图片；留言正文和状态不会被删除。"""
+
+    while True:
+        try:
+            await cleanup_feedback_attachments()
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Feedback attachment cleanup failed")
+        await asyncio.sleep(24 * 60 * 60)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """服务启动时开启提醒检查，关闭时结束后台任务。"""
 
     reminder_task = asyncio.create_task(competition_reminder_loop())
+    feedback_cleanup_task = asyncio.create_task(feedback_attachment_cleanup_loop())
     try:
         yield
     finally:
         reminder_task.cancel()
+        feedback_cleanup_task.cancel()
         try:
             await reminder_task
+        except asyncio.CancelledError:
+            pass
+        try:
+            await feedback_cleanup_task
         except asyncio.CancelledError:
             pass
 

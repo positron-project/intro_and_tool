@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.cohort_photos import CohortPhoto
 from models.competitions import CompetitionProject
+from models.feedback import FeedbackMessage
 from models.members import Member
 from models.projects import Project
 from models.resource_submissions import ResourceSubmission
@@ -21,8 +22,8 @@ from models.users import User
 
 logger = logging.getLogger(__name__)
 UPLOAD_ROOT = Path(__file__).resolve().parent.parent / "uploads"
-UPLOAD_FOLDERS = ("projects", "cohort-photos", "general")
-UPLOAD_NAME_PATTERN = re.compile(r"^[a-f0-9]{32}\.(?:png|jpg|webp)$")
+UPLOAD_FOLDERS = ("projects", "cohort-photos", "feedback", "resources", "general")
+UPLOAD_NAME_PATTERN = re.compile(r"^[a-f0-9]{32}\.(?:pdf|doc|docx|ppt|pptx|xls|xlsx|zip|txt|md|png|jpg|jpeg|webp)$")
 
 
 def upload_asset_id(value: str | None) -> str | None:
@@ -101,6 +102,7 @@ async def is_upload_referenced(db: AsyncSession, asset_id: str) -> bool:
         (Project.cover_image, Project.gallery_images, Project.download_url),
         (Resource.attachments, Resource.download_url, Resource.resource_url),
         (ResourceSubmission.attachments, ResourceSubmission.resource_url),
+        (FeedbackMessage.attachments,),
         (CompetitionProject.image_url, CompetitionProject.image_asset_id),
         (CohortPhoto.data_url,),
         (SiteSettings.custom_background_asset_id,),

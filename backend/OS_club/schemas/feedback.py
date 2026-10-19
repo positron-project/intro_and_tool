@@ -10,12 +10,26 @@ FeedbackStatus = Literal["pending", "read", "resolved"]
 FeedbackUpdateStatus = Literal["read", "resolved"]
 
 
+class FeedbackAttachment(BaseModel):
+    """留言图片的最小元数据；不把图片二进制直接塞进留言表。"""
+
+    id: str | None = None
+    asset_id: str | None = Field(default=None, alias="assetId")
+    name: str = Field(min_length=1, max_length=200)
+    url: str = Field(min_length=1, max_length=500)
+    mime_type: str | None = Field(default=None, alias="mimeType")
+    size: int | None = Field(default=None, ge=0)
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class FeedbackCreateRequest(BaseModel):
     """访客提交留言时允许提供的字段。"""
 
     category: str = Field(min_length=1, max_length=50)
     content: str = Field(min_length=1, max_length=1000)
     contact: str | None = Field(default=None, max_length=255)
+    attachments: list[FeedbackAttachment] = Field(default_factory=list, max_length=3)
 
     @field_validator("category", "content", "contact", mode="before")
     @classmethod
@@ -48,6 +62,8 @@ class FeedbackResponse(BaseModel):
     category: str
     content: str
     contact: str | None = None
+    attachments: list[FeedbackAttachment] = Field(default_factory=list)
+    attachments_expires_at: datetime | None = Field(default=None, alias="attachmentsExpiresAt")
     created_at: datetime = Field(alias="createdAt")
     status: FeedbackStatus
     review_note: str | None = Field(default=None, alias="reviewNote")

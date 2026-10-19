@@ -1,4 +1,4 @@
-"""项目和内容使用的本地图片上传接口。"""
+"""项目、资源和内容使用的本地文件上传接口。"""
 
 from pathlib import Path
 from uuid import uuid4
@@ -26,37 +26,56 @@ ALLOWED_IMAGE_TYPES = {
 }
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
+# 资源附件可以是文档、Markdown、压缩包或图片。这里按文件后缀判断，
+# 因为浏览器对 .md、.doc 等文件给出的 content-type 并不稳定。
+RESOURCE_ATTACHMENT_EXTENSIONS = {
+    ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx",
+    ".zip", ".txt", ".md", ".png", ".jpg", ".jpeg", ".webp",
+}
+MAX_RESOURCE_ATTACHMENT_BYTES = 20 * 1024 * 1024
+
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-async def upload_image(
+async def upload_asset(
     request: Request,
     file: UploadFile = File(...),
     folder: str | None = Form(default=None),
     alt: str | None = Form(default=None),
     current_user: User = Depends(get_current_user),
 ):
-    """保存登录用户上传的图片，并返回可直接展示的地址。"""
+    """保存登录用户上传的图片或资源附件，并返回可直接使用的地址。"""
 
     if folder == "cohort-photos" and current_user.role not in {"CohortLeader", "Leader", "Admin"}:
         raise HTTPException(status_code=403, detail="只有届次负责人或组长可以上传合影")
 
-    extension = ALLOWED_IMAGE_TYPES.get(file.content_type or "")
-    if extension is None:
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="只支持 PNG、JPG 或 WebP 图片",
-        )
+    is_resource_attachment = folder == "resources"
+    if is_resource_attachment:
+        extension = Path(file.filename or "").suffix.lower()
+        if extension not in RESOURCE_ATTACHMENT_EXTENSIONS:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="资源附件支持 PDF、Office、ZIP、TXT、MD 和 PNG/JPG/WebP",
+            )
+        max_bytes = MAX_RESOURCE_ATTACHMENT_BYTES
+    else:
+        extension = ALLOWED_IMAGE_TYPES.get(file.content_type or "")
+        if extension is None:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="只支持 PNG、JPG 或 WebP 图片",
+            )
+        max_bytes = MAX_IMAGE_BYTES
 
     # folder 只允许作为目录名使用，避免用户构造 ../ 访问服务器其他目录。
-    safe_folder = folder if folder in {"projects", "cohort-photos"} else "general"
+    safe_folder = folder if folder in {"projects", "cohort-photos", "resources"} else "general"
     target_directory = UPLOAD_ROOT / safe_folder
     target_directory.mkdir(parents=True, exist_ok=True)
 
-    content = await file.read(MAX_IMAGE_BYTES + 1)
-    if len(content) > MAX_IMAGE_BYTES:
+    content = await file.read(max_bytes + 1)
+    if len(content) > max_bytes:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="图片大小不能超过 10 MB",
+            detail="资源附件不能超过 20 MB" if is_resource_attachment else "图片大小不能超过 10 MB",
         )
 
     stored_name = f"{uuid4().hex}{extension}"

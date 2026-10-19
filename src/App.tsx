@@ -1,5 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { createPortal } from 'react-dom'
 import type { LucideIcon } from 'lucide-react'
 import {
   Activity,
@@ -79,8 +80,8 @@ import { useClubConfig } from './services/club-config.context'
 import { askAssistant } from './services/ai.service'
 import { canAccessAdmin, canManageContent, canManageGlobalContent, canViewContent, demoCredentials, demoOwnerCredentials, isDemoAuth } from './services/auth.service'
 import { createContributionSubmission, deleteContributionSubmission, listContributionSubmissions } from './services/contribution.service'
-import { createFeedbackMessage, listFeedbackMessages } from './services/feedback.service'
-import type { FeedbackMessage } from './services/feedback.service'
+import { createFeedbackMessage, listFeedbackMessages, uploadFeedbackAttachment } from './services/feedback.service'
+import type { FeedbackAttachment, FeedbackMessage } from './services/feedback.service'
 import { MAX_RESOURCE_ATTACHMENTS, uploadAsset, validateResourceAttachmentFiles } from './services/upload.service'
 import { ResourceLinksEditor } from './components/ResourceLinksEditor'
 import { isRemoteClubConfigEnabled } from './services/club-config.service'
@@ -93,7 +94,7 @@ import { listAllInterviewReviewQueue, listMyInterviewSubmissions } from './servi
 import { submitPrompt } from './services/prompt.service'
 import { deleteAllReadMyNotifications, deleteMyNotification, getMyUnreadNotificationCount, listMyNotifications, markAllMyNotificationsRead, markMyNotificationRead, type ServerNotification } from './services/notifications.service'
 import { useAuth } from './services/auth.context'
-import type { AIMessage, AnnouncementCategory, Citation, CompetitionEvent, ContributionSubmission, ContentCategory, InterviewExperience, InterviewSubmission, LearningNode, Project, ProjectCategory, PromptTemplate, Resource, ResourceAttachment, ResourceLink } from './types'
+import type { AIMessage, Announcement, AnnouncementCategory, Citation, CompetitionEvent, ContributionSubmission, ContentCategory, InterviewExperience, InterviewSubmission, LearningNode, Project, ProjectCategory, PromptTemplate, Resource, ResourceAttachment, ResourceLink } from './types'
 import { PromptSubmissionModal } from './components/prompt-modals'
 import ResourceMarkdown from './components/ResourceMarkdown'
 import { InterviewPage, InterviewSubmissionRows } from './components/interviews'
@@ -166,7 +167,6 @@ const categoryClass: Record<AnnouncementCategory, string> = {
   通知: 'badge-slate',
 }
 
-
 function routeFromHash() {
   const encodedPath = window.location.hash.replace(/^#/, '') || '/home'
   let raw = encodedPath
@@ -233,6 +233,15 @@ function getMessageReadState(userId: string | number) {
 function setMessageReadState(userId: string | number, state: Record<string, true>) {
   try { localStorage.setItem(`${MESSAGE_READ_STORAGE_KEY}:${userId}`, JSON.stringify(state)) } catch { /* Storage may be unavailable. */ }
   window.dispatchEvent(new Event('club-messages-state'))
+}
+
+type MessageStateChangeDetail = {
+  userId?: string | number
+  unreadCount?: number
+}
+
+function dispatchMessageStateChange(detail?: MessageStateChangeDetail) {
+  window.dispatchEvent(new CustomEvent<MessageStateChangeDetail>('club-messages-state', { detail }))
 }
 
 function markMessagesRead(userId: string | number, messageIds: string[]) {
@@ -313,6 +322,7 @@ function Navbar({ route, theme, onTheme, onSearch, mobileOpen, setMobileOpen, ba
   const activeUser = user && user.status !== 'disabled' && user.status !== 'closed' ? user : null
   const [profileOpen, setProfileOpen] = useState(false)
   const [notificationItems, setNotificationItems] = useState<Array<{ id: string; label: string; detail: string; count: number }>>([])
+  const notificationRefreshVersion = useRef(0)
   const [inviteOpen, setInviteOpen] = useState(false)
   const [closeAccountOpen, setCloseAccountOpen] = useState(false)
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false)
@@ -328,6 +338,8 @@ function Navbar({ route, theme, onTheme, onSearch, mobileOpen, setMobileOpen, ba
   }
 
   const refreshNotifications = useCallback(async () => {
+    const refreshVersion = notificationRefreshVersion.current + 1
+    notificationRefreshVersion.current = refreshVersion
     if (!activeUser || activeUser.role === 'Visitor') {
       setNotificationItems([])
       return
@@ -335,6 +347,7 @@ function Navbar({ route, theme, onTheme, onSearch, mobileOpen, setMobileOpen, ba
     if (apiConfig.contentSource === 'api') {
       try {
         const unreadCount = await getMyUnreadNotificationCount()
+        if (notificationRefreshVersion.current !== refreshVersion) return
         setNotificationItems(unreadCount > 0
           ? [{ id: 'saved-notifications', label: '站内通知', detail: '你有新的站内通知', count: unreadCount }]
           : [])
@@ -443,7 +456,7 @@ function Navbar({ route, theme, onTheme, onSearch, mobileOpen, setMobileOpen, ba
     if (notificationCountResult.status === 'fulfilled' && notificationCountResult.value > 0) {
       next.push({ id: 'saved-notifications', label: '站内通知', detail: '你有新的站内通知', count: notificationCountResult.value })
     }
-    setNotificationItems(next)
+    if (notificationRefreshVersion.current === refreshVersion) setNotificationItems(next)
   }, [activeUser, listProjectReviewQueue, projects])
 
   useEffect(() => {
@@ -454,10 +467,22 @@ function Navbar({ route, theme, onTheme, onSearch, mobileOpen, setMobileOpen, ba
   }, [activeUser, refreshNotifications])
 
   useEffect(() => {
-    const handleMessageStateChange = () => { void refreshNotifications() }
+    const handleMessageStateChange = (event: Event) => {
+      const detail = (event as CustomEvent<MessageStateChangeDetail>).detail
+      if (detail?.userId !== undefined && activeUser && String(detail.userId) !== String(activeUser.id)) return
+      if (typeof detail?.unreadCount === 'number') {
+        // 已读操作已经得到后端确认，直接更新角标；同时让旧的查询结果失效，避免它把角标恢复。
+        notificationRefreshVersion.current += 1
+        setNotificationItems(detail.unreadCount > 0
+          ? [{ id: 'saved-notifications', label: '站内通知', detail: '你有新的站内通知', count: detail.unreadCount }]
+          : [])
+        return
+      }
+      void refreshNotifications()
+    }
     window.addEventListener('club-messages-state', handleMessageStateChange)
     return () => window.removeEventListener('club-messages-state', handleMessageStateChange)
-  }, [refreshNotifications])
+  }, [activeUser, refreshNotifications])
 
   const handleSignOut = async () => {
     await signOut()
@@ -655,10 +680,45 @@ function FeedbackPage() {
   const [category, setCategory] = useState('功能建议')
   const [content, setContent] = useState('')
   const [contact, setContact] = useState('')
+  const [attachments, setAttachments] = useState<FeedbackAttachment[]>([])
   const [submitted, setSubmitted] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+
+  const chooseAttachments = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? [])
+    event.target.value = ''
+    if (!files.length) return
+    if (apiConfig.contentSource !== 'api') {
+      setError('当前是本地演示模式，连接后端后才能上传留言图片。')
+      return
+    }
+    if (attachments.length + files.length > 3) {
+      setError('最多上传 3 张留言图片。')
+      return
+    }
+    const invalid = files.find((file) => !['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024)
+    if (invalid) {
+      setError(`${invalid.name} 格式不支持或超过 5 MB；支持 PNG、JPG 和 WebP。`)
+      return
+    }
+    setUploading(true)
+    setError('')
+    try {
+      const uploaded = await Promise.all(files.map((file) => uploadFeedbackAttachment(file)))
+      setAttachments((current) => [...current, ...uploaded.map((asset) => ({ id: asset.id, assetId: asset.id, name: asset.name || '留言图片', url: asset.url, mimeType: asset.mimeType, size: asset.size }))])
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '图片上传失败，请稍后重试。')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const removeAttachment = async (attachment: FeedbackAttachment) => {
+    setAttachments((current) => current.filter((item) => item !== attachment))
+  }
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -667,9 +727,10 @@ function FeedbackPage() {
     setSubmitting(true)
     setError('')
     try {
-      await createFeedbackMessage({ category, content: message, contact: contact.trim() || undefined })
+      await createFeedbackMessage({ category, content: message, contact: contact.trim() || undefined, attachments })
       setContent('')
       setContact('')
+      setAttachments([])
       setSubmitted(true)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '留言提交失败，请稍后重试')
@@ -678,7 +739,7 @@ function FeedbackPage() {
     }
   }
 
-  return <div className="page feedback-page"><PageIntro eyebrow="COMMUNITY / FEEDBACK" title="留言建议" description="无论是否登录，都可以把想法、问题和改进建议告诉我们。" /><div className="feedback-layout"><section className="panel feedback-card"><div className="feedback-card-head"><div><p className="eyebrow">WRITE TO THE CLUB</p><h2>一起把小组变得更好</h2><p>建议会交给管理员整理，联系方式仅用于需要回复时联系你。</p></div><span className="feedback-mark"><Quote size={22} /></span></div><form className="feedback-form" onSubmit={(event) => void submit(event)}><label><span>留言类型</span><select value={category} onChange={(event) => setCategory(event.target.value)}><option>功能建议</option><option>内容纠错</option><option>体验反馈</option><option>其他留言</option></select></label><label><span>你的建议</span><textarea value={content} onChange={(event) => { setContent(event.target.value); setSubmitted(false); setError('') }} rows={7} maxLength={1000} placeholder="说说你希望新增、修改或改进的地方" required /><small>{content.length} / 1000</small></label><label><span>联系方式（可选）</span><input value={contact} onChange={(event) => setContact(event.target.value)} placeholder="邮箱或其他联系方式" /></label>{error && <p className="login-error" role="alert">{error}</p>}{submitted && <p className="feedback-success" role="status"><CheckCircle2 size={15} /> 留言已收到，感谢你的参与。</p>}<button className="primary-button" type="submit" disabled={submitting}><Send size={15} /> {submitting ? '提交中…' : '提交留言'}</button></form></section><aside className="panel feedback-aside"><span className="feedback-aside-icon"><Users size={18} /></span><h3>每一条建议都会被看见</h3><p>可以告诉我们你遇到的问题，也可以提出新的栏目、内容或功能想法。</p><div className="feedback-topics"><span><Check size={13} /> 功能建议</span><span><Check size={13} /> 内容纠错</span><span><Check size={13} /> 使用体验</span></div></aside></div></div>
+  return <div className="page feedback-page"><PageIntro eyebrow="COMMUNITY / FEEDBACK" title="留言建议" description="无论是否登录，都可以把想法、问题和改进建议告诉我们。" /><div className="feedback-layout"><section className="panel feedback-card"><div className="feedback-card-head"><div><p className="eyebrow">WRITE TO THE CLUB</p><h2>一起把小组变得更好</h2><p>建议会交给管理员整理，联系方式仅用于需要回复时联系你。</p></div><span className="feedback-mark"><Quote size={22} /></span></div><form className="feedback-form" onSubmit={(event) => void submit(event)}><label><span>留言类型</span><select value={category} onChange={(event) => setCategory(event.target.value)}><option>功能建议</option><option>内容纠错</option><option>体验反馈</option><option>其他留言</option></select></label><label><span>你的建议</span><textarea value={content} onChange={(event) => { setContent(event.target.value); setSubmitted(false); setError('') }} rows={7} maxLength={1000} placeholder="说说你希望新增、修改或改进的地方" required /><small>{content.length} / 1000</small></label><div className="feedback-attachment-field"><div className="feedback-attachment-head"><span>问题截图（可选）</span><small>最多 3 张，每张不超过 5 MB</small></div><label className="feedback-upload-button"><ImagePlus size={15} /> {uploading ? '上传中…' : '添加图片'}<input type="file" accept="image/png,image/jpeg,image/webp" multiple disabled={uploading || submitting} onChange={(event) => void chooseAttachments(event)} /></label>{attachments.length > 0 && <div className="feedback-attachment-list">{attachments.map((attachment) => <div className="feedback-attachment-preview" key={attachment.assetId ?? attachment.url}><img src={attachment.url} alt={attachment.name} /><span title={attachment.name}>{attachment.name}</span><button type="button" onClick={() => void removeAttachment(attachment)} aria-label={`移除${attachment.name}`}><X size={13} /></button></div>)}</div>}<small className="feedback-attachment-hint">图片只用于帮助管理员理解问题，提交后 30 天自动清理，文字留言不会删除。</small></div><label><span>联系方式（可选）</span><input value={contact} onChange={(event) => setContact(event.target.value)} placeholder="邮箱或其他联系方式" /></label>{error && <p className="login-error" role="alert">{error}</p>}{submitted && <p className="feedback-success" role="status"><CheckCircle2 size={15} /> 留言已收到，感谢你的参与。</p>}<button className="primary-button" type="submit" disabled={submitting || uploading}><Send size={15} /> {submitting ? '提交中…' : '提交留言'}</button></form></section><aside className="panel feedback-aside"><span className="feedback-aside-icon"><Users size={18} /></span><h3>每一条建议都会被看见</h3><p>可以告诉我们你遇到的问题，也可以提出新的栏目、内容或功能想法。</p><div className="feedback-topics"><span><Check size={13} /> 功能建议</span><span><Check size={13} /> 内容纠错</span><span><Check size={13} /> 使用体验</span></div></aside></div></div>
 }
 
 function ProjectSubmissionModal({ categories, onClose, project, onUpdated }: { categories: ProjectCategory[]; onClose: () => void; project?: Project; onUpdated?: (project: Project) => void }) {
@@ -1136,6 +1197,7 @@ function ToolsLivePulse({ onOpenProject }: { onOpenProject: (project: Project) =
 function AnnouncementPanel() {
   const { data: { announcements } } = useContent()
   const { user } = useAuth()
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null)
   const userCohort = user?.cohort.replace(/\D/g, '')
   const visible = announcements.filter((item) => {
     if (item.published === false) return false
@@ -1143,7 +1205,21 @@ function AnnouncementPanel() {
     if (item.scope === '管理员可见') return Boolean(user && canManageContent(user))
     return Boolean(user && userCohort && item.scope.replace(/\D/g, '') === userCohort)
   })
-  return <section className="panel announcements-panel"><SectionHeading eyebrow="LIVE / CAMPUS" title="最新公告" /><div className="announcement-list">{visible.map((item) => <button className="announcement-row" key={item.id}><span className={`category-badge ${categoryClass[item.category]}`}>{item.category}</span><span className="announcement-main"><strong>{item.title}</strong><small>{item.detail}</small></span><time>{item.date}</time></button>)}</div>{visible.length === 0 && <div className="admin-empty"><Megaphone size={20} /><span>暂无公开公告</span></div>}</section>
+  useEffect(() => {
+    if (!selectedAnnouncement) return
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setSelectedAnnouncement(null) }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [selectedAnnouncement])
+  return <>
+    <section className="panel announcements-panel"><SectionHeading eyebrow="LIVE / CAMPUS" title="最新公告" /><div className="announcement-list">{visible.map((item) => <button type="button" className="announcement-row" key={item.id} onClick={() => setSelectedAnnouncement(item)} aria-label={`查看公告：${item.title}`}><span className={`category-badge ${categoryClass[item.category]}`}>{item.category}</span><span className="announcement-main"><strong>{item.title}</strong><small>{item.detail}</small></span><time>{item.date}</time><ArrowRight className="announcement-row-arrow" size={14} aria-hidden="true" /></button>)}</div>{visible.length === 0 && <div className="admin-empty"><Megaphone size={20} /><span>暂无公开公告</span></div>}</section>
+    {selectedAnnouncement && createPortal(<div className="announcement-detail-scrim" role="presentation" onClick={() => setSelectedAnnouncement(null)}><section className="announcement-detail-modal" role="dialog" aria-modal="true" aria-labelledby="announcement-detail-title" onClick={(event) => event.stopPropagation()}><div className="announcement-detail-head"><div><p className="eyebrow">CAMPUS / ANNOUNCEMENT</p><div className="announcement-detail-kicker"><span className={`category-badge ${categoryClass[selectedAnnouncement.category]}`}>{selectedAnnouncement.category}</span><time>{selectedAnnouncement.date}</time></div><h2 id="announcement-detail-title">{selectedAnnouncement.title}</h2></div><button type="button" className="icon-button small" onClick={() => setSelectedAnnouncement(null)} aria-label="关闭公告详情"><X size={16} /></button></div><div className="announcement-detail-body"><p>{selectedAnnouncement.detail}</p></div><div className="announcement-detail-foot"><span>公告详情</span><button type="button" className="secondary-button admin-small-button" onClick={() => setSelectedAnnouncement(null)}>关闭</button></div></section></div>, document.body)}
+  </>
 }
 
 function ProjectVisual({ project, compact = false }: { project: Project; compact?: boolean }) {
@@ -2515,6 +2591,22 @@ function resolveResourceFileUrl(value?: string) {
   }
 }
 
+function downloadResourceMarkdown(title: string, content: string) {
+  const safeTitle = Array.from(title.trim(), (character) => {
+    const code = character.charCodeAt(0)
+    return code < 32 || code === 127 || '<>:"/\\|?*'.includes(character) ? '_' : character
+  }).join('')
+    .replace(/\s+/g, ' ')
+    .slice(0, 80) || 'resource'
+  const filename = /\.md$/i.test(safeTitle) ? safeTitle : `${safeTitle}.md`
+  const blobUrl = URL.createObjectURL(new Blob([content], { type: 'text/markdown;charset=utf-8' }))
+  const link = document.createElement('a')
+  link.href = blobUrl
+  link.download = filename
+  link.click()
+  window.setTimeout(() => URL.revokeObjectURL(blobUrl), 0)
+}
+
 function resolveResourceDownloadUrl(attachment: ResourceAttachment) {
   const uploadedAssetId = attachment.assetId || (() => {
     try {
@@ -2526,7 +2618,7 @@ function resolveResourceDownloadUrl(attachment: ResourceAttachment) {
   })()
 
   // 上传文件通过同源 API 路由返回 attachment 响应，避免跨域时浏览器忽略 download 属性。
-  if (uploadedAssetId && /^[a-f0-9]{32}\.(png|jpg|webp)$/i.test(uploadedAssetId)) {
+  if (uploadedAssetId && /^[a-f0-9]{32}\.(pdf|doc|docx|ppt|pptx|xls|xlsx|zip|txt|md|png|jpg|jpeg|webp)$/i.test(uploadedAssetId)) {
     const filename = new URLSearchParams({ filename: attachment.name })
     return `/api/uploads/${encodeURIComponent(uploadedAssetId)}/download?${filename.toString()}`
   }
@@ -2624,7 +2716,7 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
     <div className="resource-detail-layout">
       <main className="resource-detail-main">
         {accessMode === 'article' ? <section className="resource-reader" aria-label="资源正文">
-          <div className="resource-reader-head"><span><BookOpen size={15} /> 正文</span><small>{resource.content ? `${resource.content.length.toLocaleString()} 字符` : '内容待补充'}</small></div>
+          <div className="resource-reader-head"><span><BookOpen size={15} /> 正文</span><div className="resource-reader-actions"><small>{resource.content ? `${resource.content.length.toLocaleString()} 字符` : '内容待补充'}</small>{resource.content && <button type="button" className="resource-reader-download" onClick={() => downloadResourceMarkdown(resource.title, resource.content ?? '')}><Download size={14} /> 下载 Markdown</button>}</div></div>
           {resource.content ? <article className="resource-reader-content"><ResourceMarkdown content={resource.content} /></article> : <div className="resource-detail-state compact"><FileText size={20} /><strong>正文暂未提供</strong><span>请查看资源说明，或联系投稿人补充内容。</span></div>}
         </section> : accessMode === 'attachment' ? <section className="resource-file-viewer" aria-label="资源文件预览">
           <div className="resource-file-viewer-head"><span>{activeAttachment?.name ?? '资源附件'}</span><span>{activeAttachment?.size ? `${(activeAttachment.size / 1024 / 1024).toFixed(1)} MB` : activeAttachment?.mimeType || '附件预览'}</span>{activeAttachment && activeFileUrl && <a className="resource-file-download" href={resolveResourceDownloadUrl(activeAttachment)} download={activeAttachment.name}><Download size={14} /> 下载此文件</a>}</div>
@@ -3227,8 +3319,9 @@ function MessageCenterPage({ onNavigate }: { onNavigate: (path: string) => void 
       try {
         await markMyNotificationRead(message.serverNotification.id)
         setServerNotifications((items) => items.map((item) => item.id === message.serverNotification?.id ? { ...item, isRead: true } : item))
-        setUnreadNotificationTotal((count) => Math.max(0, count - 1))
-        window.dispatchEvent(new Event('club-messages-state'))
+        const nextUnreadCount = Math.max(0, unreadNotificationTotal - 1)
+        setUnreadNotificationTotal(nextUnreadCount)
+        dispatchMessageStateChange({ userId: user.id, unreadCount: nextUnreadCount })
         return
       } catch {
         setError('标记通知已读失败，请稍后重试。')
@@ -3336,7 +3429,7 @@ function MessageCenterPage({ onNavigate }: { onNavigate: (path: string) => void 
         await markAllMyNotificationsRead()
         setServerNotifications((items) => items.map((item) => ({ ...item, isRead: true })))
         setUnreadNotificationTotal(0)
-        window.dispatchEvent(new Event('club-messages-state'))
+        dispatchMessageStateChange({ userId: user.id, unreadCount: 0 })
         setNotice(`已将 ${unreadCount} 条通知标记为已读。待处理审核仍会保留，不能通过标记已读绕过审核。`)
       } catch (readError) {
         setError(readError instanceof Error ? readError.message : '标记通知已读失败，请稍后重试。')
