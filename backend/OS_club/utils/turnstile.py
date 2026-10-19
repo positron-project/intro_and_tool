@@ -15,6 +15,18 @@ from config.turnstile_conf import get_turnstile_settings
 
 logger = logging.getLogger(__name__)
 
+# 本项目没有配置 logging.basicConfig，root logger 没有 handler，
+# INFO 级日志会被丢弃（只剩 lastResort 的 WARNING）。这里给本模块单独挂一个
+# stderr handler，保证核验耗时与拒绝原因能进 journald。
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(
+        logging.Formatter("%(asctime)s %(levelname)s [turnstile] %(message)s")
+    )
+    logger.addHandler(_handler)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+
 # Cloudflare 用这个地址核验浏览器取得的 Turnstile token。
 SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 
