@@ -879,6 +879,8 @@ type AdminFeedbackRecord = {
   createdAt: string
   status?: 'pending' | 'read' | 'resolved'
   reviewNote?: string
+  attachments?: Array<{ id?: string; assetId?: string; name: string; url: string; mimeType?: string; size?: number }>
+  attachmentsExpiresAt?: string
 }
 
 function getContributionStatusLabel(row: AdminContributionRow) {
@@ -2654,6 +2656,7 @@ export function AdminPage({ onNavigate, theme, backgroundPreference, onBackgroun
             {selectedContribution.submission?.attachments?.map((attachment) => <div className="admin-contribution-detail-file" key={attachment.assetId ?? attachment.id ?? attachment.url}><FileText size={15} /><span>附件：{attachment.name}{attachment.size ? ' · ' + (attachment.size / 1024 / 1024).toFixed(1) + ' MB' : ''}</span>{safeLink(attachment.url) && <a href={safeLink(attachment.url)} target="_blank" rel="noreferrer"><Download size={13} /> 下载</a>}</div>)}
             {!selectedContribution.submission?.attachments?.length && selectedContribution.submission?.fileName && <div className="admin-contribution-detail-file"><FileText size={15} /><span>附件：{selectedContribution.submission.fileName}</span></div>}
             {selectedContribution.feedback?.contact && <div className="admin-contribution-detail-file"><Mail size={15} /><span>联系方式：{selectedContribution.feedback.contact}</span></div>}
+            {selectedContribution.feedback?.attachments?.length ? <div className="admin-feedback-attachments"><strong>留言图片</strong><div>{selectedContribution.feedback.attachments.map((attachment) => <a href={safeLink(attachment.url)} target="_blank" rel="noreferrer" key={attachment.assetId ?? attachment.id ?? attachment.url}><img src={safeImageSource(attachment.url)} alt={attachment.name} /><span>{attachment.name}</span></a>)}</div><small>图片会在 {selectedContribution.feedback.attachmentsExpiresAt ? new Date(selectedContribution.feedback.attachmentsExpiresAt).toLocaleDateString('zh-CN') : '30 天后'} 自动清理，留言文字会保留。</small></div> : null}
             {selectedContribution.reviewNote && <div className="admin-note-card"><ShieldAlert size={15} /><div><strong>审核备注</strong><p>{selectedContribution.reviewNote}</p></div></div>}
           </div>
           <div className="admin-modal-foot"><span>{selectedContribution.type === 'feedback' ? `留言建议 · ${getContributionStatusLabel(selectedContribution)}` : `投稿中心 · ${selectedContribution.status === 'pending' ? '等待处理' : '已完成处理'}`}</span><div>

@@ -8,12 +8,24 @@ export interface FeedbackMessage {
   createdAt: string
   status?: 'pending' | 'read' | 'resolved'
   reviewNote?: string
+  attachments?: FeedbackAttachment[]
+  attachmentsExpiresAt?: string
+}
+
+export interface FeedbackAttachment {
+  id?: string
+  assetId?: string
+  name: string
+  url: string
+  mimeType?: string
+  size?: number
 }
 
 export interface CreateFeedbackInput {
   category: string
   content: string
   contact?: string
+  attachments?: FeedbackAttachment[]
 }
 
 const FEEDBACK_STORAGE_KEY = 'club-public-feedback'
@@ -52,6 +64,14 @@ export async function createFeedbackMessage(input: CreateFeedbackInput) {
   const item: FeedbackMessage = { id: `feedback-${Date.now()}`, ...input, createdAt: new Date().toISOString(), status: 'pending' }
   writeLocalFeedback([...readLocalFeedback(), item])
   return item
+}
+
+/** 留言页允许游客上传截图，因此不能复用需要登录的通用上传方法。 */
+export async function uploadFeedbackAttachment(file: File) {
+  if (!isRemoteFeedbackEnabled) throw new Error('当前使用本地模式，图片上传需要先配置 API。')
+  const form = new FormData()
+  form.append('file', file)
+  return apiRequest<FeedbackAttachment>('/feedback/attachments', { method: 'POST', body: form, withAuth: false })
 }
 
 export async function updateFeedbackMessage(id: string, input: { status?: 'read' | 'resolved'; reviewNote?: string }) {

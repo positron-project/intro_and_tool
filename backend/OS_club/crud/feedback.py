@@ -1,11 +1,16 @@
 """留言建议的数据库查询和写入操作。"""
 
+from datetime import datetime, timedelta
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from crud.notifications import mark_notification_event_read, notify_content_reviewers
 from models.feedback import FeedbackMessage
 from schemas.feedback import FeedbackCreateRequest, FeedbackUpdateRequest
+
+
+FEEDBACK_ATTACHMENT_RETENTION_DAYS = 30
 
 
 async def create_feedback_message(
@@ -18,6 +23,8 @@ async def create_feedback_message(
         category=data.category,
         content=data.content,
         contact=data.contact or None,
+        attachments=[item.model_dump(by_alias=True, exclude_none=True) for item in data.attachments],
+        attachments_expires_at=(datetime.utcnow() + timedelta(days=FEEDBACK_ATTACHMENT_RETENTION_DAYS)) if data.attachments else None,
         status="pending",
     )
     db.add(message)

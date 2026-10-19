@@ -120,3 +120,22 @@ test('工作台路由可用', async ({ page }) => {
   await expect(page.locator('.app-shell')).toBeVisible()
   expect(errors, errors.join('\n')).toEqual([])
 })
+
+test('笔记本宽度显示完整主导航', async ({ page }) => {
+  const errors = collectPageErrors(page)
+  await page.setViewportSize({ width: 1024, height: 768 })
+  await page.goto('/#/tools')
+
+  const navFit = await page.evaluate(() => {
+    const nav = document.querySelector('.main-nav')
+    const actions = document.querySelector('.topbar-actions')
+    const links = Array.from(document.querySelectorAll('.main-nav .nav-link'))
+    if (!nav || !actions || links.length !== 10) return false
+    const actionLeft = actions.getBoundingClientRect().left
+    const lastLinkRight = Math.max(...links.map((link) => link.getBoundingClientRect().right))
+    return getComputedStyle(nav).display === 'flex' && lastLinkRight <= actionLeft + 1
+  })
+
+  expect(navFit, '笔记本宽度下主导航被隐藏或与右侧操作区重叠').toBe(true)
+  expect(errors, errors.join('\n')).toEqual([])
+})
