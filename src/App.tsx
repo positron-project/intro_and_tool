@@ -198,6 +198,22 @@ function contentCategoryLabel(categories: ContentCategory[], key?: string) {
   return categories.find((category) => category.key === key)?.label ?? key
 }
 
+// 资源类型枚举（后端 ResourceType）→ 中文展示名；历史数据里存过中文值时原样透出
+const RESOURCE_TYPE_LABELS: Record<string, string> = {
+  article: '文档 / 文章',
+  video: '视频',
+  course: '课程',
+  link: '链接',
+  tool: '工具',
+  repository: '代码仓库',
+  file: '文件',
+}
+
+function resourceTypeLabel(type?: string) {
+  if (!type) return '资源'
+  return RESOURCE_TYPE_LABELS[type] ?? type
+}
+
 function getStoredTheme(): Theme {
   try {
     const stored = localStorage.getItem('club-theme') as Theme | null
@@ -2706,7 +2722,7 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
     <div className="resource-detail-crumb"><button type="button" className="resource-detail-back" onClick={backToList}><ChevronLeft size={16} /> 返回资源库</button><span>/</span><span>{category}</span></div>
     <header className="resource-detail-heading">
       <div className="resource-detail-title-block">
-        <div className="resource-detail-kicker"><span className="resource-detail-kind-icon"><FileText size={15} /></span><span>{accessMode === 'article' ? '站内阅读' : accessMode === 'attachment' ? '文件资料' : '外部资源'}</span><i />{resource.type}</div>
+        <div className="resource-detail-kicker"><span className="resource-detail-kind-icon"><FileText size={15} /></span><span>{accessMode === 'article' ? '站内阅读' : accessMode === 'attachment' ? '文件资料' : '外部资源'}</span><i />{resourceTypeLabel(resource.type)}</div>
         <h1>{resource.title}</h1>
         <p>{resource.description}</p>
         <div className="resource-detail-tags"><Tag tone="blue">{category}</Tag>{resource.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}</div>
@@ -2736,7 +2752,7 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
 
       <aside className="resource-detail-aside">
         <div className="resource-detail-aside-head"><span>资源信息</span><FavoriteButton targetType="resource" targetId={resource.id} initialCount={resource.favoriteCount} initialFavorited={resource.isFavorited} /></div>
-        <dl className="resource-detail-facts"><div><dt>贡献者</dt><dd>{resource.author || '小组成员'}</dd></div><div><dt>最近更新</dt><dd>{updatedLabel}</dd></div><div><dt>浏览</dt><dd><Eye size={14} /> {views.toLocaleString()}</dd></div><div><dt>收藏</dt><dd><Star size={14} /> {(resource.favoriteCount ?? 0).toLocaleString()}</dd></div><div><dt>资源类型</dt><dd>{resource.type}</dd></div><div><dt>访问方式</dt><dd>{accessMode === 'article' ? '站内阅读' : accessMode === 'attachment' ? '站内文件' : '外部链接'}</dd></div></dl>
+        <dl className="resource-detail-facts"><div><dt>贡献者</dt><dd>{resource.author || '小组成员'}</dd></div><div><dt>最近更新</dt><dd>{updatedLabel}</dd></div><div><dt>浏览</dt><dd><Eye size={14} /> {views.toLocaleString()}</dd></div><div><dt>收藏</dt><dd><Star size={14} /> {(resource.favoriteCount ?? 0).toLocaleString()}</dd></div><div><dt>资源类型</dt><dd>{resourceTypeLabel(resource.type)}</dd></div><div><dt>访问方式</dt><dd>{accessMode === 'article' ? '站内阅读' : accessMode === 'attachment' ? '站内文件' : '外部链接'}</dd></div></dl>
         {resource.sourceName && <div className="resource-detail-source"><span>来源</span><strong>{resource.sourceName}</strong></div>}
       </aside>
     </div>
@@ -2744,7 +2760,7 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
 }
 
 function ResourceRow({ resource, categories, onOpen }: { resource: Resource; categories: ContentCategory[]; onOpen: (resource: Resource) => void }) {
-  return <article className="resource-row" role="link" aria-label={`查看资源：${resource.title}`} onClick={() => onOpen(resource)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen(resource) } }} tabIndex={0}><span className={'resource-icon accent-' + resource.accent}><Icon name={resource.type === '学习路线' ? 'route' : resource.type === 'GitHub' ? 'code' : 'file'} size={18} /></span><div className="resource-main"><div className="resource-title-line"><h3>{resource.title}</h3><Tag tone="blue">{resource.type}</Tag></div><p>{resource.description}</p><div className="resource-meta"><span>{contentCategoryLabel(categories, resource.category)}</span>{resource.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}<span>由 {resource.author} 更新</span></div></div><div className="resource-stats"><span><Clock3 size={14} /> {resource.updated}</span><span><Eye size={14} /> {resource.views.toLocaleString()}</span><FavoriteButton targetType="resource" targetId={resource.id} initialCount={resource.favoriteCount} initialFavorited={resource.isFavorited} compact /><button className="icon-button small" aria-label={'打开 ' + resource.title} onClick={(event) => { event.stopPropagation(); onOpen(resource) }}><ArrowUpRight size={15} /></button></div></article>
+  return <article className="resource-row" role="link" aria-label={`查看资源：${resource.title}`} onClick={() => onOpen(resource)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen(resource) } }} tabIndex={0}><span className={'resource-icon accent-' + resource.accent}><Icon name={resource.type === '学习路线' ? 'route' : resource.type === 'GitHub' ? 'code' : 'file'} size={18} /></span><div className="resource-main"><div className="resource-title-line"><h3>{resource.title}</h3><Tag tone="blue">{resourceTypeLabel(resource.type)}</Tag></div><p>{resource.description}</p><div className="resource-meta"><span>{contentCategoryLabel(categories, resource.category)}</span>{resource.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}<span>由 {resource.author} 更新</span></div></div><div className="resource-stats"><span><Clock3 size={14} /> {resource.updated}</span><span><Eye size={14} /> {resource.views.toLocaleString()}</span><FavoriteButton targetType="resource" targetId={resource.id} initialCount={resource.favoriteCount} initialFavorited={resource.isFavorited} compact /><button className="icon-button small" aria-label={'打开 ' + resource.title} onClick={(event) => { event.stopPropagation(); onOpen(resource) }}><ArrowUpRight size={15} /></button></div></article>
 }
 
 function PromptsPage({ onNavigate }: { onNavigate: (path: string) => void }) {
