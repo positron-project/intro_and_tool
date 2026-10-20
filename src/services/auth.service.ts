@@ -232,6 +232,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthSession>
 
   const response = await apiRequest<BackendAuthResponse>('/auth/login', { method: 'POST', body: { email: credentials.email.trim().toLowerCase(), password: credentials.password, turnstileToken: credentials.turnstileToken, rememberMe: credentials.rememberMe }, expectedStatus: 200, withAuth: false, timeoutMs: TURNSTILE_GATED_TIMEOUT_MS })
   const session = normalizeBackendSession(response)
+  persistSessionExpiry(session.expiresAt)
   persistSessionToken(session, credentials.rememberMe)
   return session
 }
@@ -268,6 +269,7 @@ function clearStoredRefreshToken() {
   try {
     window.localStorage.removeItem(REFRESH_TOKEN_KEY)
     window.sessionStorage.removeItem(REFRESH_TOKEN_KEY)
+    window.localStorage.removeItem('club-session-expires-at')
   } catch {
     // Storage can be unavailable for file:// previews or strict privacy modes.
   }
@@ -275,6 +277,13 @@ function clearStoredRefreshToken() {
 
 function shouldRememberSession() {
   try { return Boolean(window.localStorage.getItem('club-access-token')) } catch { return true }
+}
+
+function persistSessionExpiry(expiresAt?: string) {
+  try {
+    if (expiresAt) window.localStorage.setItem('club-session-expires-at', expiresAt)
+    else window.localStorage.removeItem('club-session-expires-at')
+  } catch { /* Storage may be unavailable. */ }
 }
 
 export async function loginWithCode(credentials: LoginCodeCredentials): Promise<AuthSession> {
@@ -286,6 +295,7 @@ export async function loginWithCode(credentials: LoginCodeCredentials): Promise<
   if (!isDemoAuth) {
     const response = await apiRequest<BackendAuthResponse>('/auth/login/code', { method: 'POST', body: { email, verificationCode: credentials.verificationCode.trim(), turnstileToken: credentials.turnstileToken, rememberMe: credentials.rememberMe }, expectedStatus: 200, withAuth: false, timeoutMs: TURNSTILE_GATED_TIMEOUT_MS })
     const session = normalizeBackendSession(response)
+    persistSessionExpiry(session.expiresAt)
     persistSessionToken(session, credentials.rememberMe)
     return session
   }

@@ -88,8 +88,8 @@ import { isRemoteClubConfigEnabled } from './services/club-config.service'
 import { listMyProjectJoinRequests, listOwnedProjectJoinRequests, listProjectJoinRequests, reviewProjectJoinRequest, submitProjectJoinRequest, type ProjectJoinRequest } from './services/project.service'
 import { competitionDateLabel, competitionNextMilestone, competitionStage, getCompetitionReminder, hasCompetitionSchedule, setCompetitionReminder } from './services/competition.service'
 import { getSiteSettings, getUserPreferences, isRemoteSettingsEnabled, updateUserPreferences } from './services/settings.service'
-import { getProject, listMyProjectSubmissions, resubmitProject } from './services/content.service'
-import { listFavorites, toggleFavorite, type FavoriteRecord, type FavoriteTargetType } from './services/favorite.service'
+import { getProject, getResource, listMyProjectSubmissions, resubmitProject } from './services/content.service'
+import { favoriteTargetMatches, listFavorites, toggleFavorite, type FavoriteRecord, type FavoriteTargetType } from './services/favorite.service'
 import { listAllInterviewReviewQueue, listMyInterviewSubmissions } from './services/interview.service'
 import { submitPrompt } from './services/prompt.service'
 import { deleteAllReadMyNotifications, deleteMyNotification, getMyUnreadNotificationCount, listMyNotifications, markAllMyNotificationsRead, markMyNotificationRead, type ServerNotification } from './services/notifications.service'
@@ -980,12 +980,12 @@ function AccountSettingsModal({ onClose, onCloseAccount, theme, onTheme, backgro
 
   const favoriteEntries = myFavorites.map((favorite) => {
     const item = favorite.targetType === 'project'
-      ? contentData.projects.find((value) => value.id === favorite.targetId)
+      ? contentData.projects.find((value) => favoriteTargetMatches(favorite, 'project', value.id))
       : favorite.targetType === 'resource'
-        ? contentData.resources.find((value) => value.id === favorite.targetId)
+        ? contentData.resources.find((value) => favoriteTargetMatches(favorite, 'resource', value.id))
         : favorite.targetType === 'interview'
-          ? contentData.interviews.find((value) => value.id === favorite.targetId)
-          : contentData.prompts.find((value) => value.id === favorite.targetId)
+          ? contentData.interviews.find((value) => favoriteTargetMatches(favorite, 'interview', value.id))
+          : contentData.prompts.find((value) => favoriteTargetMatches(favorite, 'prompt', value.id))
     if (!item) return null
     const title = favorite.targetType === 'project' ? (item as Project).name : favorite.targetType === 'resource' ? (item as Resource).title : favorite.targetType === 'interview' ? `${(item as InterviewExperience).company} · ${(item as InterviewExperience).role}` : (item as PromptTemplate).title
     const detail = favorite.targetType === 'project' ? '项目库' : favorite.targetType === 'resource' ? '资源库' : favorite.targetType === 'interview' ? '面经墙' : 'Prompt 模板库'
@@ -1244,33 +1244,67 @@ function ProjectVisual({ project, compact = false }: { project: Project; compact
   return <div className={`project-visual visual-${accent} ${compact ? 'compact' : ''} ${coverImage ? 'has-cover' : ''}`} style={coverImage ? { backgroundImage: `linear-gradient(135deg, rgba(11, 31, 58, .06), rgba(11, 31, 58, .26)), url(${coverImage})` } : undefined}><div className="visual-noise" />{coverImage ? <span className="visual-cover-label">PROJECT COVER</span> : <><span className="visual-icon"><Icon name={project.icon} size={compact ? 21 : 28} /></span><div className="visual-lines"><i /><i /><i /><i /></div><span className="visual-code">{project.category === 'AI' ? 'retrieval.graph()' : project.category === 'Web' ? 'ship — iterate' : 'reserve.lab()'}</span></>}</div>
 }
 
-function FavoriteButton({ targetType, targetId, initialCount = 0, initialFavorited = false, compact = false }: { targetType: FavoriteTargetType; targetId: string; initialCount?: number; initialFavorited?: boolean; compact?: boolean }) {
+function FavoriteButton({ targetType, targetId, initialCount = 0, initialFavorited = false, compact = false, onChange }: { targetType: FavoriteTargetType; targetId: string; initialCount?: number; initialFavorited?: boolean; compact?: boolean; onChange?: (isFavorited: boolean, favoriteCount?: number) => void }) {
   const { user } = useAuth()
+  const userId = user?.id
   const { data } = useContent()
   const [isFavorited, setIsFavorited] = useState(initialFavorited)
   const [count, setCount] = useState(initialCount)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const interactionVersion = useRef(0)
+
+  // A list row and its detail page are separate button instances. Reset only
+  // when the target/account changes; parent refreshes for the same target must
+  // not overwrite a state that the user has just changed locally.
+  useEffect(() => {
+    interactionVersion.current = 0
+    setIsFavorited(initialFavorited)
+    setCount(initialCount)
+  }, [targetType, targetId, userId, initialFavorited, initialCount])
+
+  // The content object can be stale when navigating from a list to its detail
+  // page, so confirm the current user's state from the canonical favorites list.
+  // A click increments interactionVersion and wins over an older in-flight read.
+  useEffect(() => {
+    if (!userId) {
+      setIsFavorited(false)
+      return
+    }
+    let active = true
+    const requestVersion = interactionVersion.current
+    void listFavorites(userId).then((favorites) => {
+      if (!active || requestVersion !== interactionVersion.current || interactionVersion.current !== 0) return
+      const matchingFavorite = favorites.find((item) => favoriteTargetMatches(item, targetType, targetId))
+      setIsFavorited(Boolean(matchingFavorite))
+      if (typeof matchingFavorite?.favoriteCount === 'number') setCount(matchingFavorite.favoriteCount)
+    }).catch(() => undefined)
+    return () => { active = false }
+  }, [targetType, targetId, userId])
+
   const handleClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
     if (busy) return
     if (!user) { setError('登录后才能收藏'); window.setTimeout(() => setError(''), 2200); return }
+    interactionVersion.current += 1
     const nextState = !isFavorited
     setBusy(true)
     setError('')
     try {
       const result = await toggleFavorite(targetType, targetId, nextState, user.id)
       setIsFavorited(result.isFavorited)
-      setCount(typeof result.favoriteCount === 'number' ? result.favoriteCount : (value) => Math.max(0, value + (result.isFavorited ? 1 : -1)))
+      const nextCount = typeof result.favoriteCount === 'number' ? result.favoriteCount : Math.max(0, count + (result.isFavorited ? 1 : -1))
+      setCount(nextCount)
+      onChange?.(result.isFavorited, typeof result.favoriteCount === 'number' ? result.favoriteCount : nextCount)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '收藏操作失败，请稍后重试')
       window.setTimeout(() => setError(''), 2600)
     } finally { setBusy(false) }
   }
   const viewCount = targetType === 'project'
-    ? data.projects.find((item) => item.id === targetId)?.views
+    ? data.projects.find((item) => String(item.id) === String(targetId))?.views
     : targetType === 'interview'
-      ? data.interviews.find((item) => item.id === targetId)?.views
+      ? data.interviews.find((item) => String(item.id) === String(targetId))?.views
       : undefined
   const showViews = targetType === 'project' || targetType === 'interview'
   return <span className={`favorite-control ${compact ? 'compact' : ''}`}><button type="button" className={`favorite-button ${isFavorited ? 'active' : ''}`} onClick={(event) => void handleClick(event)} onKeyDown={(event) => event.stopPropagation()} aria-pressed={isFavorited} aria-label={isFavorited ? '取消收藏' : '收藏'} title={isFavorited ? '取消收藏' : '收藏'} disabled={busy}><Star size={compact ? 14 : 15} fill={isFavorited ? 'currentColor' : 'none'} /><span>{isFavorited ? '已收藏' : '收藏'}{compact ? '' : ` ${count}`}</span></button>{showViews && typeof viewCount === 'number' && <span className="view-count"><Eye size={14} /> {viewCount.toLocaleString()}</span>}{error && <small role="status">{error}</small>}</span>
@@ -2653,6 +2687,9 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
   const { data: { resources, resourceCategories }, loading, recordResourceView } = useContent()
   const { user } = useAuth()
   const resource = resources.find((item) => String(item.id) === resourceId)
+  const currentResourceId = resource?.id
+  const [freshResource, setFreshResource] = useState<Resource>()
+  const [detailFavoriteCount, setDetailFavoriteCount] = useState<number | undefined>(resource?.favoriteCount)
   const [canReturnToList] = useState(() => {
     try {
       const fromList = window.sessionStorage.getItem(RESOURCE_DETAIL_ORIGIN_KEY) === 'list'
@@ -2667,8 +2704,24 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
   const [copyErrorLinkIndex, setCopyErrorLinkIndex] = useState<number | null>(null)
 
   useEffect(() => {
+    if (!currentResourceId) {
+      setFreshResource(undefined)
+      return
+    }
+    let active = true
+    setFreshResource(undefined)
+    void getResource(currentResourceId).then((latest) => {
+      if (active && latest) setFreshResource(latest)
+    }).catch(() => undefined)
+    return () => { active = false }
+  }, [currentResourceId])
+
+  useEffect(() => {
     setResourceViews(resource?.views)
   }, [resource?.id, resource?.views])
+  useEffect(() => {
+    setDetailFavoriteCount(freshResource?.id === resource?.id ? freshResource?.favoriteCount : resource?.favoriteCount)
+  }, [freshResource, resource?.id, resource?.favoriteCount])
   useEffect(() => {
     if (!resource || !canViewContent(user, resource.visibility) || viewRecorded) return
     setViewRecorded(true)
@@ -2687,6 +2740,7 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
   if (!resource) return <div className="page resource-detail-page"><div className="resource-detail-state"><Folder size={22} /><strong>找不到这份资源</strong><span>资源可能已下架，或链接不再有效。</span><button type="button" className="secondary-button" onClick={() => onNavigate('#/resources')}><ChevronLeft size={15} /> 返回资源库</button></div></div>
   if (!canViewContent(user, resource.visibility)) return <div className="page resource-detail-page"><div className="resource-detail-state"><LockKeyhole size={22} /><strong>这份资源需要组员权限</strong><span>登录并加入小组后即可查看受限内容。</span><div><button type="button" className="secondary-button" onClick={() => onNavigate('#/resources')}><ChevronLeft size={15} /> 返回资源库</button><button type="button" className="primary-button" onClick={() => onNavigate('#/login')}>前往登录 <ArrowRight size={15} /></button></div></div></div>
 
+  const detailResource = freshResource?.id === resource.id ? freshResource : resource
   const accessMode = resource.accessMode ?? (resource.content ? 'article' : resource.downloadUrl || resource.attachments?.length ? 'attachment' : 'external_link')
   const category = contentCategoryLabel(resourceCategories, resource.category)
   const updated = resource.updatedAt ? new Date(resource.updatedAt) : null
@@ -2751,8 +2805,8 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
       </main>
 
       <aside className="resource-detail-aside">
-        <div className="resource-detail-aside-head"><span>资源信息</span><FavoriteButton targetType="resource" targetId={resource.id} initialCount={resource.favoriteCount} initialFavorited={resource.isFavorited} /></div>
-        <dl className="resource-detail-facts"><div><dt>贡献者</dt><dd>{resource.author || '小组成员'}</dd></div><div><dt>最近更新</dt><dd>{updatedLabel}</dd></div><div><dt>浏览</dt><dd><Eye size={14} /> {views.toLocaleString()}</dd></div><div><dt>收藏</dt><dd><Star size={14} /> {(resource.favoriteCount ?? 0).toLocaleString()}</dd></div><div><dt>资源类型</dt><dd>{resourceTypeLabel(resource.type)}</dd></div><div><dt>访问方式</dt><dd>{accessMode === 'article' ? '站内阅读' : accessMode === 'attachment' ? '站内文件' : '外部链接'}</dd></div></dl>
+        <div className="resource-detail-aside-head"><span>资源信息</span><FavoriteButton targetType="resource" targetId={resource.id} initialCount={detailResource.favoriteCount} initialFavorited={detailResource.isFavorited} onChange={(_, favoriteCount) => { if (typeof favoriteCount === 'number') setDetailFavoriteCount(favoriteCount) }} /></div>
+        <dl className="resource-detail-facts"><div><dt>贡献者</dt><dd>{resource.author || '小组成员'}</dd></div><div><dt>最近更新</dt><dd>{updatedLabel}</dd></div><div><dt>浏览</dt><dd><Eye size={14} /> {views.toLocaleString()}</dd></div><div><dt>收藏</dt><dd><Star size={14} /> {(detailFavoriteCount ?? 0).toLocaleString()}</dd></div><div><dt>资源类型</dt><dd>{resourceTypeLabel(resource.type)}</dd></div><div><dt>访问方式</dt><dd>{accessMode === 'article' ? '站内阅读' : accessMode === 'attachment' ? '站内文件' : '外部链接'}</dd></div></dl>
         {resource.sourceName && <div className="resource-detail-source"><span>来源</span><strong>{resource.sourceName}</strong></div>}
       </aside>
     </div>

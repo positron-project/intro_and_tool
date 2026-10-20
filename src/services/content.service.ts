@@ -349,6 +349,12 @@ export async function listResources(params?: ListParams) {
   return copy(mockResources)
 }
 
+export async function getResource(id: string) {
+  if (isRemoteContentEnabled) return apiRequest<Resource>(`/resources/${encodeURIComponent(id)}`)
+  const resource = mockResources.find((item) => String(item.id) === String(id))
+  return resource ? copy(resource) : undefined
+}
+
 export async function createResource(input: CreateInput<Resource>) {
   if (isRemoteContentEnabled) return apiRequest<Resource>('/admin/resources', { method: 'POST', body: input, withAuth: true })
   return createMock(mockResources, input, 'resource')

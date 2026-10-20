@@ -4876,10 +4876,17 @@ html[data-theme='dark'] .event-timeline-point[data-stage='results'] { --stage-co
 .interview-toolbar-main { display: flex; min-width: 0; min-height: 47px; align-items: center; gap: 10px; }
 .interview-index-page .interview-search { width: auto; min-width: 190px; flex: 0 1 245px; gap: 8px; padding: 0 8px; color: var(--text-muted); }
 .interview-index-page .interview-search input { width: 100%; min-width: 0; }
-.interview-category-tabs { min-width: 0; }
+.interview-category-groups { display: flex; min-width: 0; flex: 1 1 auto; align-items: center; gap: 9px; overflow: hidden; }
+.interview-category-group { display: flex; min-width: 0; flex: 1 1 0; align-items: center; gap: 4px; overflow: hidden; }
+.interview-category-group + .interview-category-group { padding-left: 9px; border-left: 1px solid var(--border); }
+.interview-category-label { flex: 0 0 auto; color: var(--text-muted); font-size: 9px; font-weight: 700; white-space: nowrap; }
+.interview-category-tabs, .interview-recruitment-tabs { min-width: 0; }
 .interview-category-tabs { scrollbar-width: none; }
 .interview-category-tabs::-webkit-scrollbar { display: none; }
+.interview-recruitment-tabs { scrollbar-width: none; }
+.interview-recruitment-tabs::-webkit-scrollbar { display: none; }
 .interview-category-tabs .filter-pill { padding: 7px 10px; font-size: 10px; }
+.interview-recruitment-tabs .filter-pill { padding: 7px 9px; font-size: 10px; }
 .interview-toolbar-controls { display: flex; flex: 0 0 auto; align-items: center; gap: 6px; }
 .interview-filter-menu { position: relative; flex: 0 0 auto; }
 .interview-filter-menu > summary {
@@ -4977,7 +4984,8 @@ html[data-theme='dark'] .admin-node-links { background: #202936; border-color: #
 @media (max-width: 640px) {
   .interview-toolbar-main { flex-wrap: wrap; gap: 5px 9px; padding: 2px 2px 4px; }
   .interview-index-page .interview-search { min-width: 100%; flex-basis: 100%; }
-  .interview-category-tabs { flex: 1 1 0; }
+  .interview-category-groups { width: 100%; flex: 0 0 100%; }
+  .interview-category-group { min-width: 50%; }
   .interview-toolbar-controls { margin-left: auto; }
 }
 @media (max-width: 760px) {
@@ -4986,7 +4994,10 @@ html[data-theme='dark'] .admin-node-links { background: #202936; border-color: #
 @media (max-width: 560px) {
   .interview-toolbar-main { display: flex; width: 100%; max-width: 100%; flex-direction: column; align-items: stretch; gap: 4px; padding: 2px; }
   .interview-index-page .interview-search { width: 100%; min-width: 0; min-height: 35px; flex: none; }
-  .interview-category-tabs { width: 100%; flex: none; order: 0; }
+  .interview-category-groups { width: 100%; flex: none; order: 0; flex-direction: column; align-items: stretch; gap: 2px; }
+  .interview-category-group { width: 100%; flex: none; }
+  .interview-category-group + .interview-category-group { padding-top: 2px; padding-left: 0; border-top: 1px solid var(--border); border-left: 0; }
+  .interview-category-tabs, .interview-recruitment-tabs { flex: 1 1 auto; }
   .interview-toolbar-controls { display: flex; width: 100%; min-width: 0; flex: none; justify-content: flex-end; margin-left: 0; padding-top: 2px; }
   .interview-filter-popover { right: 0; left: auto; }
   .interview-filter-popover > .interview-filter-popover-sort { grid-column: 1 / -1; }
@@ -8782,3 +8793,31 @@ html[data-theme='dark'] .visual-cover-label {
 .competition-schedule-editor-note { margin: 5px 0 0; color: var(--text-muted); font-size: 9px; line-height: 1.45; }
 .competition-schedule-pending { display: flex; align-items: center; gap: 8px; padding: 11px 13px; color: var(--text-secondary); background: var(--surface-soft); border: 1px dashed var(--border); border-radius: 10px; font-size: 10px; line-height: 1.45; }
 .competition-schedule-pending svg { flex: 0 0 auto; color: var(--blue); }
+
+/* Long content editors must keep a real touch-scroll surface on phones. Keep this
+   after the shared desktop containment rules so they cannot override it. */
+@media (max-width: 700px) {
+  .admin-collection-modal {
+    max-height: calc(100dvh - 20px);
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .admin-collection-modal > .admin-collection-layout {
+    display: block;
+    overflow: visible;
+  }
+
+  .admin-collection-modal .admin-collection-list {
+    margin-bottom: 12px;
+  }
+
+  .admin-collection-modal .admin-collection-editor {
+    max-height: none;
+    overflow: visible;
+  }
+}

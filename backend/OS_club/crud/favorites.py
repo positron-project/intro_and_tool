@@ -171,10 +171,27 @@ async def remove_favorite(
     target_type: str,
     target_id: str,
 ) -> dict:
-    """取消收藏；目标不存在时返回清晰的业务错误。"""
+    """取消收藏；即使目标已下架，也允许清理自己的旧收藏。"""
 
-    target = await ensure_target_exists(db, target_type, target_id, user)
+    if target_type not in SUPPORTED_TARGET_TYPES:
+        raise ValueError("当前暂不支持收藏这种内容")
+    try:
+        target_id_number = int(target_id)
+    except ValueError as error:
+        raise ValueError("内容编号不正确") from error
     favorite = await get_favorite(db, user.id, target_type, target_id)
+
+    # 取消操作只影响当前用户自己的记录，不需要再次验证内容是否仍然
+    # 可见。否则资源下架或面经撤回后，用户会永远无法清理旧收藏。
+    target = None
+    if target_type == "project":
+        target = await db.get(Project, target_id_number)
+    elif target_type == "resource":
+        target = await db.get(Resource, target_id_number)
+    elif target_type == "interview":
+        target = await db.get(Interview, target_id_number)
+    elif target_type == "prompt":
+        target = await db.get(PromptTemplate, target_id_number)
 
     if favorite is not None:
         await db.delete(favorite)

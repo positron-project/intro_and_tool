@@ -251,13 +251,14 @@ async def login(
             detail="账号已注销，无法继续登录",
         )
 
-    token = await create_login_token(
+    token, expires_at = await create_login_token(
         db,
         user.id,
     )
 
     return LoginResponse(
         access_token=token,
+        expires_at=expires_at,
         user=user,
     )
 
@@ -300,13 +301,14 @@ async def login_with_email_code(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    token = await create_login_token(
+    token, expires_at = await create_login_token(
         db,
         user.id,
     )
 
     return LoginResponse(
         access_token=token,
+        expires_at=expires_at,
         user=user,
     )
 

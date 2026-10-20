@@ -3,6 +3,8 @@
  @Author : 加个真朋友
 @Description : 接收数据 管理认证相关的接口
 """
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from schemas.email import SupportedRegistrationEmail
@@ -47,6 +49,7 @@ class LoginRequest(BaseModel): #前端提交邮箱、密码和人机验证凭证
         min_length=1,
     )
 
+    remember_me: bool = Field(default=True, alias="rememberMe")
 
 class LoginCodeRequest(BaseModel):
     """邮箱验证码登录接口接收的数据。"""
@@ -65,12 +68,14 @@ class LoginCodeRequest(BaseModel):
         min_length=1,
     )
 
+    remember_me: bool = Field(default=True, alias="rememberMe")
 
 class LoginResponse(BaseModel): #后端返回 Token 和用户信息
     access_token: str = Field(
         alias="accessToken",
     )
 
+    expires_at: datetime | None = Field(default=None, alias="expiresAt")
     user: UserInfoResponse
 
     model_config = ConfigDict(

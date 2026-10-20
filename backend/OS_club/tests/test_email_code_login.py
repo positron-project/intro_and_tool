@@ -130,7 +130,11 @@ class PasswordLoginRouteTests(unittest.IsolatedAsyncioTestCase):
         with (
             patch("routers.users.verify_turnstile_token", new_callable=AsyncMock, return_value=True) as verify,
             patch("routers.users.authenticate_user", new_callable=AsyncMock, return_value=make_user()) as authenticate,
-            patch("routers.users.create_login_token", new_callable=AsyncMock, return_value="mock-login-token") as create_token,
+            patch(
+                "routers.users.create_login_token",
+                new_callable=AsyncMock,
+                return_value=("mock-login-token", datetime(2026, 10, 23, 12, 0, 0)),
+            ) as create_token,
         ):
             result = await login(self.make_request(), db)
 
@@ -178,7 +182,7 @@ class LoginCodeRouteTests(unittest.IsolatedAsyncioTestCase):
             patch(
                 "routers.users.create_login_token",
                 new_callable=AsyncMock,
-                return_value="mock-login-token",
+                return_value=("mock-login-token", datetime(2026, 10, 23, 12, 0, 0)),
             ) as create_token,
         ):
             result = await login_with_email_code(request, db)

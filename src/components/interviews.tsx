@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, ChevronLeft, C
 import { useAuth } from '../services/auth.context'
 import { useContent } from '../services/content.context'
 import { canViewContent } from '../services/auth.service'
-import { listFavorites, toggleFavorite } from '../services/favorite.service'
+import { favoriteTargetMatches, listFavorites, toggleFavorite } from '../services/favorite.service'
 import { createInterviewDraft, deleteMyInterviewSubmission, getInterview, getMyInterviewSubmission, listInterviewPage, listMyInterviewSubmissions, recordInterviewDetailView, reviewInterviewSubmission, submitInterviewDraft, toggleInterviewHelpful, updateInterviewDraft, withdrawMyInterviewSubmission, type InterviewSubmissionInput } from '../services/interview.service'
 import type { InterviewExperience, InterviewReviewRecord, InterviewRound, InterviewSubmission, Paginated } from '../types'
 
@@ -47,12 +47,14 @@ function Chip({ children, tone = 'neutral' }: { children: React.ReactNode; tone?
   return <span className={`tag tag-${tone}`}>{children}</span>
 }
 
-function InterviewFavorite({ interview, onChange }: { interview: InterviewExperience; onChange?: (isFavorited: boolean, count?: number) => void }) {
+export function InterviewFavorite({ interview, onChange }: { interview: InterviewExperience; onChange?: (isFavorited: boolean, count?: number) => void }) {
   const { user } = useAuth()
+  const userId = user?.id
   const [favorited, setFavorited] = useState(Boolean(interview.isFavorited))
   const [count, setCount] = useState(interview.favoriteCount ?? 0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const interactionVersion = useRef(0)
 
   useEffect(() => {
     setFavorited(Boolean(interview.isFavorited))
@@ -60,17 +62,25 @@ function InterviewFavorite({ interview, onChange }: { interview: InterviewExperi
   }, [interview.id, interview.isFavorited, interview.favoriteCount])
 
   useEffect(() => {
-    if (!user) { setFavorited(false); return }
+    interactionVersion.current = 0
+  }, [interview.id, user?.id])
+
+  useEffect(() => {
+    if (!userId) { setFavorited(false); return }
     let active = true
-    void listFavorites(user.id).then((favorites) => {
-      if (active) setFavorited(favorites.some((item) => item.targetType === 'interview' && item.targetId === interview.id))
+    const requestVersion = interactionVersion.current
+    void listFavorites(userId).then((favorites) => {
+      if (active && requestVersion === interactionVersion.current && interactionVersion.current === 0) {
+        setFavorited(favorites.some((item) => favoriteTargetMatches(item, 'interview', interview.id)))
+      }
     }).catch(() => undefined)
     return () => { active = false }
-  }, [interview.id, user])
+  }, [interview.id, userId])
 
   const toggle = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
     if (!user || busy) return
+    interactionVersion.current += 1
     const next = !favorited
     setBusy(true)
     setError('')
@@ -85,7 +95,7 @@ function InterviewFavorite({ interview, onChange }: { interview: InterviewExperi
     } finally { setBusy(false) }
   }
 
-  return <button type="button" className={`favorite-control ${favorited ? 'active' : ''}`} aria-label={favorited ? '取消收藏面经' : '收藏面经'} aria-pressed={favorited} disabled={busy || !user} title={error || (!user ? '登录后收藏' : favorited ? '取消收藏' : '收藏')} onClick={(event) => void toggle(event)}><Star size={14} fill={favorited ? 'currentColor' : 'none'} /><span>{count}</span></button>
+  return <button type="button" className={`favorite-control favorite-button ${favorited ? 'active' : ''}`} aria-label={favorited ? '取消收藏面经' : '收藏面经'} aria-pressed={favorited} disabled={busy || !user} title={error || (!user ? '登录后收藏' : favorited ? '取消收藏' : '收藏')} onClick={(event) => void toggle(event)}><Star size={14} fill={favorited ? 'currentColor' : 'none'} /><span>{count}</span></button>
 }
 
 function InterviewHelpful({ interview, onChange }: { interview: InterviewExperience; onChange: (count: number, isHelpful: boolean) => void }) {
@@ -169,9 +179,21 @@ function InterviewListPage({ onNavigate }: { onNavigate: (path: string) => void 
     <div className="interview-toolbar">
       <div className="interview-toolbar-main">
         <label className="filter-search interview-search"><Search size={16} /><input ref={searchRef} value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="搜索公司、岗位、题目或标签" aria-label="搜索面经" /></label>
-        <div className="filter-pills interview-category-tabs" role="group" aria-label="按技术方向筛选">
-          <button type="button" className={'filter-pill ' + (!category ? 'active' : '')} aria-pressed={!category} onClick={() => setCategory('')}>全部</button>
-          {techCategories.map((item) => <button type="button" className={'filter-pill ' + (category === item.key ? 'active' : '')} aria-pressed={category === item.key} key={item.id} onClick={() => setCategory(item.key)}>{item.label}</button>)}
+        <div className="interview-category-groups">
+          <div className="interview-category-group" role="group" aria-label="按技术方向筛选">
+            <span className="interview-category-label">技术方向</span>
+            <div className="filter-pills interview-category-tabs">
+              <button type="button" className={'filter-pill ' + (!category ? 'active' : '')} aria-pressed={!category} onClick={() => setCategory('')}>全部</button>
+              {techCategories.map((item) => <button type="button" className={'filter-pill ' + (category === item.key ? 'active' : '')} aria-pressed={category === item.key} key={item.id} onClick={() => setCategory(item.key)}>{item.label}</button>)}
+            </div>
+          </div>
+          <div className="interview-category-group" role="group" aria-label="按招聘类型筛选">
+            <span className="interview-category-label">招聘类型</span>
+            <div className="filter-pills interview-recruitment-tabs">
+              <button type="button" className={'filter-pill ' + (!recruitmentType ? 'active' : '')} aria-pressed={!recruitmentType} onClick={() => setRecruitmentType('')}>全部</button>
+              {recruitmentTypes.map((type) => <button type="button" className={'filter-pill ' + (recruitmentType === type ? 'active' : '')} aria-pressed={recruitmentType === type} key={type} onClick={() => setRecruitmentType(type)}>{type}</button>)}
+            </div>
+          </div>
         </div>
         <div className="interview-toolbar-controls">
           <details className={'interview-filter-menu ' + (secondaryFilterCount ? 'has-filters' : '')}>

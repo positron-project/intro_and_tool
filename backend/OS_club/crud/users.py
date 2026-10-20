@@ -31,10 +31,10 @@ async def get_user_by_email(    #据邮箱查询用户的数据库
 async def create_login_token(
     db: AsyncSession,
     user_id: int,
-) -> str:
+) -> tuple[str, datetime]:
     token_value = str(uuid.uuid4()) #生成随机登录令牌。
 
-    expires_at = datetime.now() + timedelta(days=7) #设置过期时间为当前时间之后 7 天。
+    expires_at = datetime.now() + timedelta(days=3) #记住登录状态默认保留 3 天。
 
     result = await db.execute(
         select(UserToken).where(
@@ -57,7 +57,7 @@ async def create_login_token(
 
     await db.commit() #把 Token 真正保存到数据库。
 
-    return token_value
+    return token_value, expires_at
 
 
 
