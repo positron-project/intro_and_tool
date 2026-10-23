@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.db_conf import get_database
 from models.users import User
+from models.upload_assets import UploadAsset
 from utils.auth import get_current_user
 from utils.uploads import find_upload_path, is_upload_referenced, sanitize_filename
 
@@ -42,6 +43,7 @@ async def upload_asset(
     folder: str | None = Form(default=None),
     alt: str | None = Form(default=None),
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_database),
 ):
     """保存登录用户上传的图片或资源附件，并返回可直接使用的地址。"""
 
@@ -81,6 +83,16 @@ async def upload_asset(
     stored_name = f"{uuid4().hex}{extension}"
     target_path = target_directory / stored_name
     target_path.write_bytes(content)
+    try:
+        db.add(UploadAsset(id=stored_name, owner_id=current_user.id))
+        await db.commit()
+    except Exception:
+        # 不向客户端返回一个未记录归属的文件。
+        try:
+            await db.rollback()
+        finally:
+            target_path.unlink(missing_ok=True)
+        raise
 
     public_path = f"/uploads/{safe_folder}/{stored_name}"
     return {
@@ -108,6 +120,14 @@ async def delete_unused_upload(
             detail="上传文件不存在",
         )
 
+    asset = await db.get(UploadAsset, asset_id)
+    is_global_admin = current_user.role in {"Leader", "Admin"}
+    if not is_global_admin and (asset is None or asset.owner_id != current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="只能删除自己上传的文件；历史文件请联系组长处理",
+        )
+
     if await is_upload_referenced(db, asset_id):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -121,6 +141,10 @@ async def delete_unused_upload(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="上传文件删除失败，请稍后重试",
         ) from error
+
+    if asset is not None:
+        await db.delete(asset)
+        await db.commit()
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

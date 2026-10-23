@@ -121,6 +121,25 @@ test('工作台路由可用', async ({ page }) => {
   expect(errors, errors.join('\n')).toEqual([])
 })
 
+test('原生滚动同步首屏状态，页脚可返回顶部，切换路由清理滚动实例', async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem('home-intro-seen', '1'))
+  await page.goto('/#/home')
+  await expect(page.locator('.hero-main-title')).toBeVisible()
+  await page.evaluate(() => window.scrollTo({ top: window.innerHeight * 2, behavior: 'instant' }))
+  await expect(page.locator('.hero-sticky-frame')).toHaveCSS('visibility', 'hidden')
+
+  await page.locator('.footer-nav-link', { hasText: /^首页$/ }).click()
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(2)
+  await expect(page.locator('.hero-sticky-frame')).toHaveCSS('opacity', '1')
+
+  await page.locator('.site-tools-btn').click()
+  await expect(page).toHaveURL(/#\/tools$/)
+  await expect.poll(() => page.evaluate(() => '__lenis' in window)).toBe(false)
+  await page.evaluate(() => { window.location.hash = '#/home' })
+  await expect(page.locator('.hero-main-title')).toBeVisible()
+  await expect.poll(() => page.evaluate(() => '__lenis' in window)).toBe(true)
+})
+
 test('笔记本宽度显示完整主导航', async ({ page }) => {
   const errors = collectPageErrors(page)
   await page.setViewportSize({ width: 1024, height: 768 })

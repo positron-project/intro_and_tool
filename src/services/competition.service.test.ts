@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { competitionSaveValidationError, competitionSchedulePayload, competitionStage, hasCompetitionSchedule } from './competition.service'
+import { competitionSaveValidationError, competitionSchedulePayload, competitionStage, hasCompetitionSchedule, parseCompetitionDate } from './competition.service'
 
 describe('competition schedule flexibility', () => {
+  it.each(['2026-10-23T12:60', '2026-10-23T24:00', '2026-10-23T12:00:60', '2026-02-30', '2026-10-23garbage'])('rejects invalid dates instead of silently normalizing %s', (value) => {
+    expect(parseCompetitionDate(value)).toBeUndefined()
+  })
+
+  it('preserves seconds and timezone offsets in backend timestamps', () => {
+    expect(parseCompetitionDate('2026-10-23T12:30:45+08:00')?.getTime()).toBe(new Date('2026-10-23T04:30:45Z').getTime())
+    expect(parseCompetitionDate('2026年10月23日 12:30')?.getHours()).toBe(12)
+  })
   it('allows saving a competition while its schedule is unpublished', () => {
     expect(competitionSaveValidationError({ title: '蓝桥杯', description: '赛事简介', tracks: [] })).toBeUndefined()
     const event = { date: '', registrationStart: '', registrationEnd: '', eventEnd: '', resultDate: '' }

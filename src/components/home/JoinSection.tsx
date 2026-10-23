@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useCopyText } from './useCopyText'
+import { STORY_SECTIONS } from './story-sections'
 import { motion } from 'framer-motion'
 import { ArrowUp, ArrowUpRight, Check, Copy } from 'lucide-react'
 import { useContent } from '../../services/content.context'
@@ -28,31 +29,9 @@ export function JoinSection({
   const {
     data: { contactInfo },
   } = useContent()
-  const [copied, setCopied] = useState(false)
-
-  const handleCopyQQ = async () => {
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(contactInfo.qqGroup)
-      } else {
-        const textArea = document.createElement('textarea')
-        textArea.value = contactInfo.qqGroup
-        textArea.style.position = 'fixed'
-        textArea.style.opacity = '0'
-        document.body.appendChild(textArea)
-        textArea.focus()
-        textArea.select()
-        document.execCommand('copy')
-        document.body.removeChild(textArea)
-      }
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1800)
-    } catch {
-      // 容错降级
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1800)
-    }
-  }
+  const { status, copy } = useCopyText(1800)
+  const copied = status === 'copied'
+  const handleCopyQQ = () => void copy(contactInfo.qqGroup)
 
   const handleNavClick = (sectionId: string, fallbackHash: string) => {
     if (onScrollToSection) {
@@ -147,14 +126,14 @@ export function JoinSection({
                   ) : (
                     <>
                       <Copy size={13} className="copy-icon" aria-hidden="true" />
-                      <span>复制群号</span>
+                      <span>{status === 'failed' ? '复制失败，请手动选择' : '复制群号'}</span>
                     </>
                   )}
                 </button>
 
                 {/* 无障碍实时反馈通道 */}
                 <span className="sr-only" aria-live="polite">
-                  {copied ? 'QQ群号已复制到剪贴板' : ''}
+                  {copied ? 'QQ群号已复制到剪贴板' : status === 'failed' ? '复制失败，请手动选择群号' : ''}
                 </span>
               </figcaption>
             </figure>
@@ -177,66 +156,19 @@ export function JoinSection({
           <div className="footer-nav-col">
             <span className="poster-eyebrow poster-eyebrow--plain">Navigation</span>
             <nav className="footer-nav-list" aria-label="页脚导航">
-              <a
-                href="#story-hero"
-                className="footer-nav-link"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleNavClick('story-hero', '#/home')
-                }}
-              >
-                首页
-              </a>
-              <a
-                href="#story-about"
-                className="footer-nav-link"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleNavClick('story-about', '#/home')
-                }}
-              >
-                关于我们
-              </a>
-              <a
-                href="#story-offer"
-                className="footer-nav-link"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleNavClick('story-offer', '#/home')
-                }}
-              >
-                作品展示
-              </a>
-              <a
-                href="#story-picks"
-                className="footer-nav-link"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleNavClick('story-picks', '#/home')
-                }}
-              >
-                小组推荐
-              </a>
-              <a
-                href="#story-blog"
-                className="footer-nav-link"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleNavClick('story-blog', '#/home')
-                }}
-              >
-                小组博客
-              </a>
-              <a
-                href="#story-join"
-                className="footer-nav-link"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleNavClick('story-join', '#/home')
-                }}
-              >
-                加入我们
-              </a>
+              {STORY_SECTIONS.map(({ id, label }) => (
+                <a
+                  key={id}
+                  href={`#${id}`}
+                  className="footer-nav-link"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleNavClick(id, '#/home')
+                  }}
+                >
+                  {label}
+                </a>
+              ))}
               <a
                 href="#/projects"
                 className="footer-nav-link"

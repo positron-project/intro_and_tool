@@ -1,10 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Menu, X } from 'lucide-react'
 
-export interface StorySectionItem {
-  id: string
-  label: string
-}
+import { STORY_SECTIONS, type StorySectionItem } from './story-sections'
 
 interface SiteHeaderProps {
   activeIndex?: number
@@ -13,19 +10,10 @@ interface SiteHeaderProps {
   onNavigate?: (path: string) => void
 }
 
-/* 导航去掉「01 /」式编号：编号是给目录用的，读者在首屏只需要知道自己能去哪 */
-const DEFAULT_SECTIONS: StorySectionItem[] = [
-  { id: 'story-hero', label: '首页' },
-  { id: 'story-about', label: '关于我们' },
-  { id: 'story-offer', label: '作品展示' },
-  { id: 'story-picks', label: '小组推荐' },
-  { id: 'story-blog', label: '小组博客' },
-  { id: 'story-join', label: '加入我们' },
-]
 
 export function SiteHeader({
   activeIndex = 0,
-  sections = DEFAULT_SECTIONS,
+  sections = STORY_SECTIONS,
   onScrollToSection,
   onNavigate,
 }: SiteHeaderProps) {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCopyText } from './useCopyText'
 import { motion } from 'framer-motion'
 import { ArrowRight, Copy, Check } from 'lucide-react'
 import { fadeUp, listItemVariants, SHIFT, STAGGER, useRuleIn } from './motion'
@@ -63,40 +63,7 @@ const PICKS: Pick[] = [
 ]
 
 export function PicksSection({ onNavigate }: PicksSectionProps) {
-  const [copiedAddress, setCopiedAddress] = useState(false)
-  const [copyFailed, setCopyFailed] = useState(false)
-
-  const handleCopyAddress = async () => {
-    setCopyFailed(false)
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(qqServerGroup)
-        setCopiedAddress(true)
-        setTimeout(() => setCopiedAddress(false), 2000)
-      } else {
-        // 降级使用 textarea 拷贝
-        const textArea = document.createElement('textarea')
-        textArea.value = qqServerGroup
-        textArea.style.position = 'fixed'
-        textArea.style.opacity = '0'
-        document.body.appendChild(textArea)
-        textArea.focus()
-        textArea.select()
-        const success = document.execCommand('copy')
-        document.body.removeChild(textArea)
-        if (success) {
-          setCopiedAddress(true)
-          setTimeout(() => setCopiedAddress(false), 2000)
-        } else {
-          setCopyFailed(true)
-          setTimeout(() => setCopyFailed(false), 3000)
-        }
-      }
-    } catch {
-      setCopyFailed(true)
-      setTimeout(() => setCopyFailed(false), 3000)
-    }
-  }
+  const { status, copy } = useCopyText()
 
   const rule = useRuleIn()
 
@@ -172,15 +139,15 @@ export function PicksSection({ onNavigate }: PicksSectionProps) {
                           <button
                             type="button"
                             className="picks-copy-btn"
-                            onClick={handleCopyAddress}
+                            onClick={() => void copy(spec.value)}
                             aria-label="复制 QQ 群号"
                           >
-                            {copiedAddress ? (
+                            {status === 'copied' ? (
                               <>
                                 <Check size={12} aria-hidden="true" />
                                 <span>已复制</span>
                               </>
-                            ) : copyFailed ? (
+                            ) : status === 'failed' ? (
                               <span className="picks-copy-error">复制失败，请手动选择</span>
                             ) : (
                               <>

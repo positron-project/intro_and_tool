@@ -185,6 +185,10 @@ Node 接收 `multipart/form-data`：`file`（必填，普通图片单文件不�
 
 `GET /api/uploads/files/:id/:name` 返回文件流；`DELETE /api/uploads/:id` 删除文件。生产环境把 Node 本地目录换成 MinIO/S3，返回字段保持不变。
 
+当前 FastAPI 实现会在上传成功前写入 `upload_assets`，上传者从登录用户取得，客户端不能指定归属。删除要求上传者本人或全局 `Leader` / `Admin`；`CohortLeader` 不具有跨用户删除权限。无归属记录的历史文件仅允许全局管理员清理。无权删除返回 403，仍被业务内容引用返回 409，文件不存在返回 404，成功返回 204。
+
+仓库的 main 自动部署流程会在重启后端前执行 `backend/OS_club/migrations/20261023_create_upload_assets.sql`。手工部署时，应先执行该脚本，或在已配置数据库的后端目录运行 `python init_db.py` 创建缺失表，再更新后端服务。迁移不回填或猜测历史文件上传者，也不删除现有文件。
+
 ## AI
 
 ### `POST /api/ai/ask`

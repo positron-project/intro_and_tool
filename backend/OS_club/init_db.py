@@ -30,6 +30,7 @@ from models.interviews import Interview, InterviewHelpfulVote
 from models.competitions import Competition, CompetitionProject, CompetitionReminder
 from models.notifications import Notification
 from models.feedback import FeedbackMessage
+from models.upload_assets import UploadAsset
 
 
 async def create_tables():

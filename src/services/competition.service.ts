@@ -12,15 +12,19 @@ export interface CompetitionReminder {
 function parseParts(value?: string) {
   const raw = value?.trim()
   if (!raw) return undefined
-  const match = raw.match(/^(?:(\d{4})[-/.年])?(\d{1,2})[-/.月](\d{1,2})(?:日)?(?:[T\s]+(\d{1,2})(?::(\d{2}))?)?/)
+  const match = raw.match(/^(?:(\d{4})[-/.年])?(\d{1,2})[-/.月](\d{1,2})(?:日)?(?:[T\s]+(\d{1,2})(?::(\d{2}))?(?::(\d{2})(?:\.\d+)?)?)?(Z|[+-]\d{2}:\d{2})?$/)
   if (!match) return undefined
   const year = Number(match[1] ?? new Date().getFullYear())
   const month = Number(match[2])
   const day = Number(match[3])
   const hour = Number(match[4] ?? 0)
   const minute = Number(match[5] ?? 0)
+  const second = Number(match[6] ?? 0)
+  if (hour > 23 || minute > 59 || second > 59) return undefined
   const result = new Date(year, month - 1, day, hour, minute, 0, 0)
-  return Number.isNaN(result.getTime()) || result.getMonth() !== month - 1 || result.getDate() !== day ? undefined : result
+  if (Number.isNaN(result.getTime()) || result.getMonth() !== month - 1 || result.getDate() !== day) return undefined
+  const zoned = match[7] ? new Date(raw) : new Date(year, month - 1, day, hour, minute, second)
+  return Number.isNaN(zoned.getTime()) ? undefined : zoned
 }
 
 /** Parses the date formats accepted by the editor without introducing UTC day shifts. */

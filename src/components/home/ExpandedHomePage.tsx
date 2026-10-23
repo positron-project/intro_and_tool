@@ -14,19 +14,7 @@ import { JoinSection } from './JoinSection'
 /* 02–06 五节共用的海报原子件（eyebrow / 节标题 / 正文色 / 分隔线） */
 import './poster-sections.css'
 
-type StorySection = {
-  id: string
-  label: string
-}
-
-const STORY_SECTIONS: StorySection[] = [
-  { id: 'story-hero', label: '首页' },
-  { id: 'story-about', label: '关于我们' },
-  { id: 'story-offer', label: '作品展示' },
-  { id: 'story-picks', label: '小组推荐' },
-  { id: 'story-blog', label: '小组博客' },
-  { id: 'story-join', label: '加入我们' },
-]
+import { STORY_SECTIONS } from './story-sections'
 
 /* 首屏离场视差：0.6vh 之前不动，0.6vh~1.3vh 之间淡出离场；
    帧位移与缩放上限只在这里调，别散到下面去 */
@@ -40,7 +28,7 @@ const JUMP_EASING = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * 
 const getJumpDuration = (distance: number) => Math.min(JUMP_MAX_DURATION, Math.max(JUMP_MIN_DURATION, 0.45 + distance / 5200))
 
 /* 首屏滚动热路径：各区段 memo 化，配合稳定的回调身份，
-   让 isPastTrigger / activeIndex 翻转时只重渲染真正需要的那一块 */
+   让 activeIndex 翻转时只重渲染真正需要的那一块 */
 const MemoSiteHeader = memo(SiteHeader)
 const MemoHomeLanding = memo(HomeLanding)
 const MemoAboutSection = memo(AboutSection)
@@ -106,6 +94,7 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
     }
 
     const lenis = new Lenis({
+      autoRaf: true,
       /* 滚轮/触摸走 lerp 模式：由输入驱动、松手自然衰减（lenis 默认 0.1，0.08–0.12 为常用区间）；
          跳转动画不走这里，改由 scrollToSection 按距离传入 duration/easing */
       lerp: 0.1,
@@ -117,35 +106,22 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
     })
 
     lenisRef.current = lenis
-    ;(window as any).__lenis = lenis
+    const homeWindow = window as Window & { __lenis?: Lenis }
+    homeWindow.__lenis = lenis
 
-    let rafId: number
-    function raf(time: number) {
-      lenis.raf(time)
-      rafId = requestAnimationFrame(raf)
-    }
-    rafId = requestAnimationFrame(raf)
-
+    // Lenis also emits for native scrolling; a second window listener duplicates DOM writes.
     lenis.on('scroll', ({ scroll }: { scroll: number }) => applyScrollState(scroll))
 
-    const handleNativeScroll = () => applyScrollState(window.scrollY)
-    window.addEventListener('scroll', handleNativeScroll, { passive: true })
-
-    /* 挂载时同步一次（兜底）：刷新、前进/后退、滚动恢复等情况下，
-       页面挂载时就可能已经停在 50vh 之下，而此后不会再有 scroll 事件 ——
-       阈值永远不翻转，02 会停在 idle 不播入场。
-       深链 #/story-* 另有下面 350ms 的 hash 定位兜底，这里补的是"本来就在下面"的情况。
-       applyScrollState 内部只在真正翻转时才 setState，重复调用幂等。 */
+    /* 刷新、前进/后退时，浏览器可能恢复到页面中部；同步首屏的离场状态。 */
     applyScrollState(window.scrollY)
     /* 浏览器的滚动恢复可能发生在挂载之后，故下一帧再补判一次 */
     const syncRaf = requestAnimationFrame(() => applyScrollState(window.scrollY))
 
     return () => {
-      cancelAnimationFrame(rafId)
       cancelAnimationFrame(syncRaf)
-      window.removeEventListener('scroll', handleNativeScroll)
       lenis.destroy()
-      delete (window as any).__lenis
+      lenisRef.current = null
+      delete homeWindow.__lenis
     }
   }, [])
 
@@ -205,8 +181,7 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
           easing: JUMP_EASING,
         })
       } else {
-        const topPos = targetElement.getBoundingClientRect().top + window.scrollY + HEADER_OFFSET
-        window.scrollTo({ top: topPos, behavior: 'smooth' })
+        window.scrollTo({ top: targetScroll, behavior: 'smooth' })
       }
     }
   }, [])
@@ -223,11 +198,9 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
   }, [scrollToSection])
 
   /* 稳定的回调身份：memo 化的区段不会因为父组件重渲染而被连带重渲染 */
-  const handleHeaderScrollToSection = useCallback((sectionIndex: number) => scrollToSection(sectionIndex), [scrollToSection])
   const handleHeroScrollDown = useCallback(() => scrollToSection('story-about'), [scrollToSection])
   const handleNextJoin = useCallback(() => scrollToSection('story-join'), [scrollToSection])
   const handleJoinScrollToTop = useCallback(() => scrollToSection('story-hero'), [scrollToSection])
-  const handleJoinScrollToSection = useCallback((sectionId: string) => scrollToSection(sectionId), [scrollToSection])
 
   /* 加载页完成与卸载回调 */
   const handleLoadingComplete = useCallback(() => {
@@ -262,7 +235,7 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
       <MemoSiteHeader
         activeIndex={activeIndex}
         sections={STORY_SECTIONS}
-        onScrollToSection={handleHeaderScrollToSection}
+        onScrollToSection={scrollToSection}
         onNavigate={onNavigate}
       />
 
@@ -294,7 +267,7 @@ export function ExpandedHomePage({ onNavigate }: { onNavigate: (path: string) =>
       <MemoJoinSection
         onNavigate={onNavigate}
         onScrollToTop={handleJoinScrollToTop}
-        onScrollToSection={handleJoinScrollToSection}
+        onScrollToSection={scrollToSection}
         qrCodeSrc="./assets/project-group-qrcode.png"
       />
     </div>

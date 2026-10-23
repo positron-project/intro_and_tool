@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { apiConfig } from './api-client'
 import { changePassword, closeAccount as closeAccountService, getCurrentUser, login, loginWithCode, logout, redeemInviteCode as redeemInviteCodeService, register, requestLoginCode, requestRegistrationCode, updateProfile, type LoginCodeCredentials, type LoginCredentials, type RegistrationCodeResult, type RegistrationCredentials } from './auth.service'
 import type { AuthSession, AuthUser } from '../types'
@@ -25,13 +25,16 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
+  const revision = useRef(0)
 
   const refresh = useCallback(async () => {
+    const requestRevision = ++revision.current
     setLoading(true)
     try {
-      setUser(await getCurrentUser())
+      const nextUser = await getCurrentUser()
+      if (requestRevision === revision.current) setUser(nextUser)
     } finally {
-      setLoading(false)
+      if (requestRevision === revision.current) setLoading(false)
     }
   }, [])
 
@@ -41,13 +44,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (credentials: LoginCredentials) => {
     const session = await login(credentials)
+    ++revision.current
     setUser(session.user)
+    setLoading(false)
     return session
   }, [])
 
   const signInWithVerificationCode = useCallback(async (credentials: LoginCodeCredentials) => {
     const session = await loginWithCode(credentials)
+    ++revision.current
     setUser(session.user)
+    setLoading(false)
     return session
   }, [])
 
@@ -56,8 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signOut = useCallback(async () => {
+    ++revision.current
     await logout()
     setUser(null)
+    setLoading(false)
   }, [])
 
   const saveProfile = useCallback(async (patch: Partial<Pick<AuthUser, 'name' | 'initials' | 'avatarUrl' | 'bio'>>) => {
@@ -78,7 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const closeCurrentAccount = useCallback(async () => {
     await closeAccountService()
+    ++revision.current
     setUser(null)
+    setLoading(false)
   }, [])
 
   const value = useMemo(() => ({ user, loading, isDemo: apiConfig.contentSource !== 'api', signIn, signInWithCode: signInWithVerificationCode, register: signUp, requestRegistrationCode, requestLoginCode, signOut, refresh, updateProfile: saveProfile, changePassword: savePassword, redeemInviteCode: redeemInvite, closeAccount: closeCurrentAccount }), [user, loading, signIn, signInWithVerificationCode, signUp, signOut, refresh, saveProfile, savePassword, redeemInvite, closeCurrentAccount])
