@@ -1,3 +1,5 @@
+import { useLocalDraft } from '../lib/useLocalDraft'
+import { LocalDraftNotice } from './LocalDraftNotice'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown, ChevronLeft, ChevronRight, Eye, FileText, Filter, Heart, MessageCircle, Plus, RefreshCw, Search, Send, ShieldAlert, ShieldCheck, Star, ThumbsUp, Trash2, X } from 'lucide-react'
 import { useAuth } from '../services/auth.context'
@@ -294,6 +296,7 @@ function InterviewSubmissionPage({ submissionId, onNavigate }: { submissionId?: 
   const patchDraft = (patch: Partial<InterviewSubmissionInput>) => setDraft((current) => current ? { ...current, ...patch } : current)
   const editable = !record || ['draft', 'changes_requested', 'rejected'].includes(record.status)
   const rounds = draft?.roundDetails ?? []
+  const localDraft = useLocalDraft({ ownerId: user?.id, scope: `interview:${submissionId ?? 'new'}`, value: { draft, tagsText }, sample: { draft: draft ? { ...draft, roundDetails: [{ title: '', questions: [{ question: '' }] }] } : null, tagsText }, ready: Boolean(draft) && !loading && editable, onRestore: (saved) => { setDraft(saved.draft); setTagsText(saved.tagsText) } })
   const saveDraft = async () => {
     if (!user || !draft) return null
     setSaving(true); setError(''); setNotice('')
@@ -301,7 +304,9 @@ function InterviewSubmissionPage({ submissionId, onNavigate }: { submissionId?: 
       const input = { ...draft, cohort: draft.cohort || user.cohort, roundDetails: rounds.map((round) => ({ ...round, questions: round.questions.filter((item) => item.question.trim()) })), rounds: Math.max(1, rounds.length), tags: tagsText.split(/[,，\n]/).map((item) => item.trim()).filter(Boolean).slice(0, 12) }
       const saved = record ? await updateInterviewDraft(record.id, input, user.id, user.name) : await createInterviewDraft(input, user.id, user.name)
       setRecord(saved)
+      localDraft.clear()
       setNotice('草稿已保存')
+      if (!submissionId) onNavigate(`#/interviews/submit/${encodeURIComponent(saved.id)}`)
       return saved
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : '草稿保存失败')
@@ -326,6 +331,7 @@ function InterviewSubmissionPage({ submissionId, onNavigate }: { submissionId?: 
       const saved = record ? await updateInterviewDraft(record.id, input, user.id, user.name) : await createInterviewDraft(input, user.id, user.name)
       setRecord(saved)
       await submitInterviewDraft(saved.id, user.id)
+      localDraft.clear()
       onNavigate('#/interviews/my-submissions')
     } catch (reason) { setError(reason instanceof Error ? reason.message : '提交失败，请稍后重试') }
     finally { setSaving(false) }
@@ -345,6 +351,7 @@ function InterviewSubmissionPage({ submissionId, onNavigate }: { submissionId?: 
   const currentStatus = record ? statusLabel(record.status) : '新投稿'
 
   return <div className="page interview-page interview-submission-page">
+    <LocalDraftNotice draft={localDraft} />
     <InterviewPageIntro eyebrow="INTERVIEW WALL / SUBMISSION" title={submissionId ? '修改面经投稿' : '分享一份面经'} description={record ? `当前状态：${currentStatus}。修改后重新提交会再次进入审核。` : '按招聘流程整理记录。草稿可以随时保存，正式提交后会进入审核。'} action={<button type="button" className="secondary-button" onClick={() => onNavigate('#/interviews/my-submissions')}><ArrowLeft size={15} /> 我的投稿</button>} />
     {record?.reviewNote && <div className="interview-review-note"><ShieldAlert size={17} /><div><strong>管理员要求修改</strong><p>{record.reviewNote}</p></div></div>}
     <div className="interview-wizard">
@@ -403,7 +410,7 @@ function MyInterviewSubmissionsPage({ onNavigate }: { onNavigate: (path: string)
 
 export function InterviewPage({ view, id, onNavigate }: { view: PageView; id?: string; onNavigate: (path: string) => void }) {
   if (view === 'detail') return <InterviewDetailPage id={id ?? ''} onNavigate={onNavigate} />
-  if (view === 'submit') return <InterviewSubmissionPage submissionId={id} onNavigate={onNavigate} />
+  if (view === 'submit') return <InterviewSubmissionPage key={id ?? 'new'} submissionId={id} onNavigate={onNavigate} />
   if (view === 'mine') return <MyInterviewSubmissionsPage onNavigate={onNavigate} />
   return <InterviewListPage onNavigate={onNavigate} />
 }

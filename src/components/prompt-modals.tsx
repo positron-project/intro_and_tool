@@ -1,3 +1,6 @@
+import { useAuth } from '../services/auth.context'
+import { useLocalDraft } from '../lib/useLocalDraft'
+import { LocalDraftNotice } from './LocalDraftNotice'
 import { useEffect, useState } from 'react'
 import { Plus, Save, Send, Trash2, X } from 'lucide-react'
 import type { PromptTemplate } from '../types'
@@ -26,6 +29,9 @@ export function PromptSubmissionModal({ onClose, onSubmit }: {
   onSubmit: (input: PromptFieldsInput) => Promise<void>
 }) {
   const [draft, setDraft] = useState<PromptFieldsInput>(emptyPrompt)
+  const { user } = useAuth()
+  const localDraft = useLocalDraft({ ownerId: user?.id, scope: 'prompt:new', value: draft, onRestore: setDraft })
+  const requestClose = () => { if (localDraft.confirmLeave()) onClose() }
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -38,6 +44,7 @@ export function PromptSubmissionModal({ onClose, onSubmit }: {
     setError('')
     try {
       await onSubmit({ ...draft, title: draft.title.trim(), usage: draft.usage.trim(), model: draft.model.trim(), category: draft.category.trim(), preview: draft.preview.trim() })
+      localDraft.clear()
       onClose()
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Prompt 投稿失败，请稍后重试。')
@@ -46,11 +53,12 @@ export function PromptSubmissionModal({ onClose, onSubmit }: {
     }
   }
 
-  return <div className="admin-modal-scrim" role="presentation" onClick={onClose}><section className="admin-form-modal" role="dialog" aria-modal="true" aria-labelledby="prompt-submit-title" onClick={(event) => event.stopPropagation()}>
-    <div className="admin-modal-head"><div><p className="eyebrow">PROMPT / SUBMISSION</p><h2 id="prompt-submit-title">投稿 Prompt 模板</h2><p>提交后由组长审核，通过后会公开到模板库。</p></div><button type="button" className="icon-button small" onClick={onClose} aria-label="关闭 Prompt 投稿"><X size={16} /></button></div>
+  return <div className="admin-modal-scrim" role="presentation" onClick={requestClose}><section className="admin-form-modal" role="dialog" aria-modal="true" aria-labelledby="prompt-submit-title" onClick={(event) => event.stopPropagation()}>
+    <div className="admin-modal-head"><div><p className="eyebrow">PROMPT / SUBMISSION</p><h2 id="prompt-submit-title">投稿 Prompt 模板</h2><p>提交后由组长审核，通过后会公开到模板库。</p></div><button type="button" className="icon-button small" onClick={requestClose} aria-label="关闭 Prompt 投稿"><X size={16} /></button></div>
+    <LocalDraftNotice draft={localDraft} />
     <PromptFields value={draft} onChange={setDraft} />
     {error && <p className="login-error" role="alert">{error}</p>}
-    <div className="admin-modal-foot"><span>正文最多 4000 个字符</span><div><button type="button" className="secondary-button admin-small-button" onClick={onClose} disabled={busy}>取消</button><button type="button" className="primary-button admin-small-button" onClick={() => void submit()} disabled={busy}><Send size={14} /> {busy ? '提交中…' : '提交审核'}</button></div></div>
+    <div className="admin-modal-foot"><span>正文最多 4000 个字符</span><div><button type="button" className="secondary-button admin-small-button" onClick={requestClose} disabled={busy}>取消</button><button type="button" className="primary-button admin-small-button" onClick={() => void submit()} disabled={busy}><Send size={14} /> {busy ? '提交中…' : '提交审核'}</button></div></div>
   </section></div>
 }
 

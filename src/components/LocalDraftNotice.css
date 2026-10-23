@@ -1,0 +1,3 @@
+.local-draft-notice { margin: 12px 0; }
+.local-draft-notice button { margin-top: 10px; }
+.local-draft-status { margin: 10px 0; font-size: 12px; line-height: 1.6; color: var(--text-secondary); }
