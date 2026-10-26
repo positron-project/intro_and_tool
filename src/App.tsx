@@ -3408,11 +3408,74 @@ function App() {
     return () => { active = false }
   }, [user])
   useEffect(() => {
+    const historyIndexKey = '__clubOsHashRouteIndex'
+    const getStoredHistoryIndex = () => {
+      const state = window.history.state
+      const index = state && typeof state === 'object' ? state[historyIndexKey] : undefined
+      return typeof index === 'number' ? index : undefined
+    }
+    const getHistoryIndex = () => {
+      const navigation = (window as Window & { navigation?: { currentEntry?: { index: number } } }).navigation
+      return navigation?.currentEntry?.index ?? getStoredHistoryIndex()
+    }
+    const setHistoryIndex = (index: number, url = window.location.href) => {
+      const currentState = window.history.state
+      const state = currentState && typeof currentState === 'object' && !Array.isArray(currentState)
+        ? currentState
+        : {}
+      window.history.replaceState({ ...state, [historyIndexKey]: index }, '', url)
+    }
     let previousHash = window.location.hash
+    const currentHistoryIndex = getHistoryIndex()
+    let previousHistoryIndex: number = currentHistoryIndex ?? 0
+    if (getStoredHistoryIndex() !== previousHistoryIndex) {
+      setHistoryIndex(previousHistoryIndex)
+    }
+    let pendingHistoryTraversal = false
+    let pendingHistoryIndex: number | undefined
+    let restoreCancelledTraversal = false
+    let historyTraversalTimer = 0
+    const onPopState = () => {
+      pendingHistoryTraversal = true
+      pendingHistoryIndex = getHistoryIndex()
+      window.clearTimeout(historyTraversalTimer)
+      historyTraversalTimer = window.setTimeout(() => {
+        pendingHistoryTraversal = false
+        pendingHistoryIndex = undefined
+      }, 0)
+    }
     const updateRoute = () => {
-      if (window.location.hash !== previousHash && !confirmDraftNavigation()) {
-        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${previousHash}`)
+      if (restoreCancelledTraversal) {
+        restoreCancelledTraversal = false
+        pendingHistoryTraversal = false
+        previousHistoryIndex = getHistoryIndex() ?? previousHistoryIndex
+        previousHash = window.location.hash
         return
+      }
+      const wasHistoryTraversal = pendingHistoryTraversal
+      const traversedHistoryIndex = pendingHistoryIndex
+      pendingHistoryTraversal = false
+      pendingHistoryIndex = undefined
+      if (window.location.hash !== previousHash && !confirmDraftNavigation()) {
+        if (wasHistoryTraversal) {
+          restoreCancelledTraversal = true
+          const reverseSteps = traversedHistoryIndex === undefined
+            ? 1
+            : previousHistoryIndex - traversedHistoryIndex
+          window.history.go(reverseSteps || 1)
+        } else {
+          previousHistoryIndex += 1
+          setHistoryIndex(previousHistoryIndex, `${window.location.pathname}${window.location.search}${previousHash}`)
+        }
+        return
+      }
+      if (window.location.hash !== previousHash) {
+        if (wasHistoryTraversal) {
+          previousHistoryIndex = traversedHistoryIndex ?? previousHistoryIndex - 1
+        } else {
+          previousHistoryIndex = getHistoryIndex() ?? previousHistoryIndex + 1
+          setHistoryIndex(previousHistoryIndex)
+        }
       }
       previousHash = window.location.hash
       setRoute(routeFromHash())
@@ -3422,8 +3485,13 @@ function App() {
         window.scrollTo({ top: 0, behavior: 'auto' })
       }
     }
+    window.addEventListener('popstate', onPopState)
     window.addEventListener('hashchange', updateRoute)
-    return () => window.removeEventListener('hashchange', updateRoute)
+    return () => {
+      window.clearTimeout(historyTraversalTimer)
+      window.removeEventListener('popstate', onPopState)
+      window.removeEventListener('hashchange', updateRoute)
+    }
   }, [])
   useEffect(() => {
     document.documentElement.dataset.theme = theme
