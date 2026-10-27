@@ -31,7 +31,7 @@ export function PromptSubmissionModal({ onClose, onSubmit }: {
   const [draft, setDraft] = useState<PromptFieldsInput>(emptyPrompt)
   const { user } = useAuth()
   const localDraft = useLocalDraft({ ownerId: user?.id, scope: 'prompt:new', value: draft, onRestore: setDraft })
-  const requestClose = () => { if (localDraft.confirmLeave()) onClose() }
+  const requestClose = () => { void localDraft.confirmLeave('close').then((confirmed) => { if (confirmed) onClose() }) }
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 

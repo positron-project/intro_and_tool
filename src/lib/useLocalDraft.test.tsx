@@ -3,6 +3,9 @@ import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useLocalDraft } from './useLocalDraft'
 import { confirmDraftNavigation } from './draft-navigation'
+import { requestAppConfirmation } from '../components/AppConfirmation'
+
+vi.mock('../components/AppConfirmation', () => ({ requestAppConfirmation: vi.fn() }))
 
 const storageKey = (owner = 'alice', scope = 'prompt:new') => `club-draft:v1:${owner}:${scope}`
 const seed = (value: unknown, savedAt = Date.now()) => localStorage.setItem(storageKey(), JSON.stringify({ value, savedAt }))
@@ -16,6 +19,7 @@ function useForm(ownerId = 'alice', scope = 'prompt:new', ready = true) {
 beforeEach(() => {
   localStorage.clear()
   vi.useFakeTimers()
+  vi.mocked(requestAppConfirmation).mockReset().mockResolvedValue(false)
 })
 afterEach(() => {
   vi.restoreAllMocks()
@@ -70,14 +74,13 @@ describe('local drafts', () => {
     expect(result.current.draft.candidate).toBeNull()
   })
 
-  it('clears after successful submission without resurrecting a pending timer or showing a leave warning', () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+  it('clears after successful submission without resurrecting a pending timer or showing a leave warning', async () => {
     const { result, unmount } = renderHook(() => useForm())
     act(() => result.current.setValue({ text: 'submitted' }))
     act(() => result.current.draft.clear())
     act(() => vi.advanceTimersByTime(500))
-    expect(confirmDraftNavigation()).toBe(true)
-    expect(confirm).not.toHaveBeenCalled()
+    await expect(confirmDraftNavigation()).resolves.toBe(true)
+    expect(requestAppConfirmation).not.toHaveBeenCalled()
     unmount()
     expect(localStorage.getItem(storageKey())).toBeNull()
   })
@@ -92,31 +95,32 @@ describe('local drafts', () => {
     expect(JSON.parse(localStorage.getItem(storageKey())!).value.text).toBe('typed during save')
   })
 
-  it('guards navigation and refresh, flushing immediately, and lets a cancelled navigation keep editing', () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+  it('guards in-app navigation with a site dialog and saves drafts without a browser unload prompt', async () => {
     const { result } = renderHook(() => useForm())
     act(() => result.current.setValue({ text: 'unsent' }))
-    expect(confirmDraftNavigation()).toBe(false)
-    expect(confirm).toHaveBeenCalled()
+    await expect(confirmDraftNavigation()).resolves.toBe(false)
+    expect(requestAppConfirmation).toHaveBeenCalledWith(expect.objectContaining({
+      title: '离开当前页面？',
+      confirmLabel: '离开页面',
+    }))
     expect(JSON.parse(localStorage.getItem(storageKey())!).value.text).toBe('unsent')
     const event = new Event('beforeunload', { cancelable: true })
     window.dispatchEvent(event)
-    expect(event.defaultPrevented).toBe(true)
-    confirm.mockReturnValue(true)
-    expect(result.current.draft.confirmLeave()).toBe(true)
+    expect(event.defaultPrevented).toBe(false)
+    vi.mocked(requestAppConfirmation).mockResolvedValue(true)
+    await expect(result.current.draft.confirmLeave('close')).resolves.toBe(true)
   })
 
-  it('reports quota errors and still warns before leaving', () => {
+  it('reports quota errors in the site confirmation dialog', async () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('quota')
     })
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
     const { result } = renderHook(() => useForm())
     act(() => result.current.setValue({ text: 'not saved' }))
     act(() => vi.advanceTimersByTime(400))
     expect(result.current.draft.status).toContain('保存失败')
-    expect(result.current.draft.confirmLeave()).toBe(false)
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('可能未保存'))
+    await expect(result.current.draft.confirmLeave()).resolves.toBe(false)
+    expect(requestAppConfirmation).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('未能保存') }))
   })
 
   it.each([

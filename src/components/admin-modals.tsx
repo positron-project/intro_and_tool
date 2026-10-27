@@ -7,6 +7,8 @@ import { apiConfig } from '../services/api-client'
 import { MAX_RESOURCE_ATTACHMENTS, uploadAsset, validateResourceAttachmentFiles } from '../services/upload.service'
 import { initialsFromName } from '../utils/identity'
 import { isProjectMemberSelected, normalizeProjectMemberIds, toggleProjectMember } from '../utils/project-members'
+import { requestAppConfirmation } from './AppConfirmation'
+import { LearningMarkdownField } from './LearningMarkdownField'
 
 export type AnnouncementDraft = {
   id?: string
@@ -146,11 +148,19 @@ function ProjectDetailEditor({ draft, update, members }: { draft: CollectionDraf
     milestones.splice(index + 1, 0, createMilestone())
     update({ milestones })
   }
-  const removeMilestone = (id: string) => {
+  const removeMilestone = async (id: string) => {
     const milestone = draft.milestones.find((item) => item.id === id)
     if (!milestone) return
     const hasContent = Boolean(milestone.title.trim() || milestone.summary.trim() || milestone.year !== String(new Date().getFullYear()) || (milestone.status && milestone.status !== '计划中'))
-    if (hasContent && !window.confirm(`确定删除“${milestone.title.trim() || milestone.year + ' 年阶段'}”吗？删除后需要保存项目才会生效。`)) return
+    if (hasContent) {
+      const confirmed = await requestAppConfirmation({
+        title: '删除项目阶段',
+        message: `确定删除“${milestone.title.trim() || milestone.year + ' 年阶段'}”吗？删除后需要保存项目才会生效。`,
+        confirmLabel: '删除阶段',
+        tone: 'danger',
+      })
+      if (!confirmed) return
+    }
     update({ milestones: draft.milestones.filter((item) => item.id !== id) })
   }
   const updateLog = (id: string, patch: Partial<ProjectLogEntry>) => update({ logs: draft.logs.map((item) => item.id === id ? { ...item, ...patch } : item) })
@@ -476,7 +486,7 @@ export function AdminLearningRouteModal({ draft: initialDraft, routes = [], proj
     nodes.splice(nodeIndex + 1, 0, createNode())
     return { ...current, nodes }
   })
-  const removeNode = (id: string) => {
+  const removeNode = async (id: string) => {
     const node = draft.nodes.find((item) => item.id === id)
     if (!node) return
     const hasContent = Boolean(
@@ -487,7 +497,15 @@ export function AdminLearningRouteModal({ draft: initialDraft, routes = [], proj
       node.cloudDriveLinks?.some((link) => link.title.trim() || link.url.trim() || link.description?.trim()) ||
       node.resourceIds?.length || node.projectIds?.length,
     )
-    if (hasContent && !window.confirm(`确定删除“${node.title.trim() || '未命名节点'}”吗？删除后需要保存路线才会生效。`)) return
+    if (hasContent) {
+      const confirmed = await requestAppConfirmation({
+        title: '删除学习路线节点',
+        message: `确定删除“${node.title.trim() || '未命名节点'}”吗？删除后需要保存路线才会生效。`,
+        confirmLabel: '删除节点',
+        tone: 'danger',
+      })
+      if (!confirmed) return
+    }
     setDraft((current) => ({ ...current, nodes: current.nodes.filter((item) => item.id !== id) }))
   }
   const updateNodeLinks = (nodeId: string, field: 'resourceLinks' | 'videoLinks' | 'cloudDriveLinks', links: LearningLink[]) => {
@@ -503,7 +521,7 @@ export function AdminLearningRouteModal({ draft: initialDraft, routes = [], proj
   return <div className="admin-modal-scrim" role="presentation" onClick={onClose}><section className="admin-editor-modal admin-learning-modal" role="dialog" aria-modal="true" aria-labelledby="admin-learning-title" onClick={(event) => event.stopPropagation()}>
     <div className="admin-modal-head"><div><p className="eyebrow">LEARNING / ROUTE BUILDER</p><h2 id="admin-learning-title">编辑学习路线</h2><p>按方向维护路线，再给每个节点绑定真实项目；右侧项目入口也从这里配置。</p></div><button className="icon-button small" onClick={onClose} aria-label="关闭学习路线编辑"><X size={16} /></button></div>
     <div className="learning-editor-layout">    <div className="learning-editor-sidebar"><div className="learning-editor-sidebar-head"><div><span className="eyebrow">ROUTES</span><strong>路线目录</strong></div>{onNewRoute && <button type="button" className="icon-button small" onClick={onNewRoute} aria-label="新建学习方向"><Plus size={15} /></button>}</div>{onNewRoute && <button type="button" className="learning-editor-new" onClick={onNewRoute}><Plus size={14} /> 新建方向</button>}<label className="admin-search admin-admin-list-search"><Search size={14} /><input value={routeQuery} onChange={(event) => setRouteQuery(event.target.value)} placeholder="搜索路线、方向或简介" aria-label="搜索学习路线" /></label><div className="learning-editor-route-list">{visibleRoutes.map((route) => <button type="button" key={route.id} className={route.id === draft.id ? 'active' : ''} onClick={() => { if (!route.id.startsWith('new-route-')) onSelectRoute?.(route.id) }}><span className="learning-editor-route-icon"><Route size={14} /></span><span><strong>{route.direction || route.title}</strong><small>{route.nodes.length} 个节点{route.id.startsWith('new-route-') ? ' · 正在编辑' : ''}</small></span><ChevronRight size={14} /></button>)}{visibleRoutes.length === 0 && <div className="learning-editor-sidebar-empty"><Search size={18} /><span>{routeList.length === 0 ? '还没有路线' : '没有匹配的路线'}</span></div>}</div><div className="learning-editor-sidebar-tip"><Sparkles size={15} /><span>每条路线可以绑定不同项目，成员按方向查看。</span></div></div>
-    <div className="learning-editor-main"><div className="learning-editor-main-head"><div className="learning-editor-main-head-copy"><div><span className="eyebrow">CURRENT ROUTE</span><h3>{draft.direction || '未命名方向'}</h3></div><span className="learning-editor-count">{draft.nodes.length} 个学习节点</span></div><div className="learning-editor-route-actions">{onDelete && (draft.id.startsWith('new-route-') || draft.id !== 'pyagent') && <button type="button" className="admin-link-button admin-danger-link learning-editor-delete-button" onClick={() => onDelete(draft.id)}><Trash2 size={13} /> {draft.id.startsWith('new-route-') ? '取消新建' : '删除路线'}</button>}{draft.id === 'pyagent' && <span className="admin-route-protected">默认路线</span>}<button type="button" className="secondary-button admin-small-button" onClick={onClose}>取消编辑</button><button type="button" className="primary-button admin-small-button" onClick={() => onSave(draft)}><Save size={14} /> 保存当前方向</button></div></div>    <div className="admin-editor-form"><div className="admin-editor-form-grid"><label><span>方向名称</span><input value={draft.direction} onChange={(event) => setDraft({ ...draft, direction: event.target.value })} placeholder="例如：前端" /></label><label><span>路线名称</span><input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} autoFocus /></label></div><label><span>路线简介</span><textarea value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} rows={3} placeholder="说明这条路线适合谁，以及最终能完成什么" /></label>
+    <div className="learning-editor-main"><div className="learning-editor-main-head"><div className="learning-editor-main-head-copy"><div><span className="eyebrow">CURRENT ROUTE</span><h3>{draft.direction || '未命名方向'}</h3></div><span className="learning-editor-count">{draft.nodes.length} 个学习节点</span></div><div className="learning-editor-route-actions">{onDelete && (draft.id.startsWith('new-route-') || draft.id !== 'pyagent') && <button type="button" className="admin-link-button admin-danger-link learning-editor-delete-button" onClick={() => onDelete(draft.id)}><Trash2 size={13} /> {draft.id.startsWith('new-route-') ? '取消新建' : '删除路线'}</button>}{draft.id === 'pyagent' && <span className="admin-route-protected">默认路线</span>}<button type="button" className="secondary-button admin-small-button" onClick={onClose}>取消编辑</button><button type="button" className="primary-button admin-small-button" onClick={() => onSave(draft)}><Save size={14} /> 保存当前方向</button></div></div>    <div className="admin-editor-form"><div className="admin-editor-form-grid"><label><span>方向名称</span><input value={draft.direction} onChange={(event) => setDraft({ ...draft, direction: event.target.value })} placeholder="例如：前端" /></label><label><span>路线名称</span><input value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} autoFocus /></label></div><LearningMarkdownField label="路线简介" value={draft.description} onChange={(description) => setDraft({ ...draft, description })} rows={4} placeholder="说明这条路线适合谁，以及最终能完成什么" />
       <div className="admin-route-featured-picker"><div className="admin-route-node-head"><div><p className="eyebrow">PROJECT ENTRY</p><h3>路线右侧项目入口</h3></div><span>可多选</span></div><div className="admin-project-picker">{projects.map((project) => <label key={project.id}><input type="checkbox" checked={draft.featuredProjectIds.includes(project.id)} onChange={() => setDraft({ ...draft, featuredProjectIds: toggleProject(draft.featuredProjectIds, project.id) })} /><span><strong>{project.name}</strong><small>{project.category} · {project.status}</small></span></label>)}</div>{projects.length === 0 && <small>项目库暂无可展示项目，请先添加项目。</small>}</div>
       <div className="admin-route-node-head"><div><p className="eyebrow">ROUTE NODES</p><h3>学习节点</h3></div><button className="secondary-button admin-small-button" onClick={addNode}><Plus size={14} /> 添加节点</button></div>
       <div className="admin-route-nodes">
@@ -518,7 +536,7 @@ export function AdminLearningRouteModal({ draft: initialDraft, routes = [], proj
               <label><span>节点标题</span><input value={node.title} onChange={(event) => updateNode(node.id, { title: event.target.value })} placeholder="例如：Python 基础与工程习惯" /></label>
               <label><span>预计时长</span><input value={node.duration} onChange={(event) => updateNode(node.id, { duration: event.target.value })} placeholder="2 周" /></label>
             </div>
-            <label><span>节点说明</span><textarea value={node.description ?? ''} onChange={(event) => updateNode(node.id, { description: event.target.value })} rows={2} placeholder="写清本阶段的产出和验收方式" /></label>
+            <LearningMarkdownField label="节点说明" value={node.description ?? ''} onChange={(description) => updateNode(node.id, { description })} rows={3} placeholder="写清本阶段的产出和验收方式" />
             <section className="admin-node-links">
               <div className="admin-node-links-head"><strong><FileText size={14} /> 文档资料</strong><button type="button" className="text-button" onClick={() => updateNodeLinks(node.id, 'resourceLinks', [...(node.resourceLinks ?? []), { id: `resource-link-${Date.now()}`, title: '', url: '' }])}><Plus size={13} /> 添加文档</button></div>
               {(node.resourceLinks ?? []).map((link, linkIndex) => <div className="admin-node-link-row" key={link.id}>

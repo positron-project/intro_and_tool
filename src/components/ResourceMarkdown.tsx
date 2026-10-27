@@ -1,5 +1,6 @@
 import { isValidElement, useState, type ComponentProps, type ReactNode } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
+import remarkBreaks from 'remark-breaks'
 import remarkGfm from 'remark-gfm'
 
 function readText(node: ReactNode): string {
@@ -69,10 +70,11 @@ const markdownComponents: Components = {
  * 资源正文渲染器：支持 Markdown/GFM，同时保留未加标记的普通文字。
  * react-markdown 默认不执行正文中的原始 HTML，避免投稿内容注入脚本。
  */
-export default function ResourceMarkdown({ content }: { content: string }) {
+export default function ResourceMarkdown({ content, singleLineBreaks = false }: { content: string; singleLineBreaks?: boolean }) {
+  const remarkPlugins = singleLineBreaks ? [remarkGfm, remarkBreaks] : [remarkGfm]
   return (
     <div className="resource-markdown">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+      <ReactMarkdown remarkPlugins={remarkPlugins} components={markdownComponents}>
         {content}
       </ReactMarkdown>
     </div>

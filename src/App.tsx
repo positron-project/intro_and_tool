@@ -1,5 +1,6 @@
 import { useLocalDraft } from './lib/useLocalDraft'
 import { confirmDraftNavigation } from './lib/draft-navigation'
+import { requestAppConfirmation } from './components/AppConfirmation'
 import { LocalDraftNotice } from './components/LocalDraftNotice'
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -625,7 +626,7 @@ function ContributionSubmissionModal({ onClose, onSubmitted }: { onClose: () => 
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const localDraft = useLocalDraft({ ownerId: user?.id, scope: 'resource:new', value: { title, description, category, resourceType, accessMode, tags, visibility, links, content, uploadedAttachments }, ready: Boolean(user), onRestore: (saved) => { setTitle(saved.title); setDescription(saved.description); setCategory(saved.category); setResourceType(saved.resourceType); setAccessMode(saved.accessMode); setTags(saved.tags); setVisibility(saved.visibility); setLinks(saved.links); setContent(saved.content); setUploadedAttachments(saved.uploadedAttachments) }, sample: { title, description, category, resourceType, accessMode, tags, visibility, links: [{ title: '', url: '' }], content, uploadedAttachments: [{ name: '', url: '' }] } })
-  const requestClose = () => { if (localDraft.confirmLeave()) onClose() }
+  const requestClose = () => { void localDraft.confirmLeave('close').then((confirmed) => { if (confirmed) onClose() }) }
 
 
   if (!user) return null
@@ -787,7 +788,7 @@ function ProjectSubmissionModal({ categories, onClose, project, onUpdated }: { c
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const localDraft = useLocalDraft({ ownerId: user?.id, scope: `project:${project?.id ?? 'new'}`, value: { name, description, intro, stack, status, difficulty, category, githubUrl, docsUrl, demoUrl, issueUrl, downloadUrl, joinEnabled, joinNote, coverImage, galleryImages }, ready: Boolean(user), onRestore: (saved) => { setName(saved.name); setDescription(saved.description); setIntro(saved.intro); setStack(saved.stack); setStatus(saved.status); setDifficulty(saved.difficulty); setCategory(saved.category); setGithubUrl(saved.githubUrl); setDocsUrl(saved.docsUrl); setDemoUrl(saved.demoUrl); setIssueUrl(saved.issueUrl); setDownloadUrl(saved.downloadUrl); setJoinEnabled(saved.joinEnabled); setJoinNote(saved.joinNote); setCoverImage(saved.coverImage); setGalleryImages(saved.galleryImages) } })
-  const requestClose = () => { if (localDraft.confirmLeave()) onClose() }
+  const requestClose = () => { void localDraft.confirmLeave('close').then((confirmed) => { if (confirmed) onClose() }) }
 
 
   useEffect(() => {
@@ -904,7 +905,13 @@ function AccountSettingsModal({ onClose, onCloseAccount, theme, onTheme, backgro
   const [favoritesLoading, setFavoritesLoading] = useState(false)
   const [favoritesError, setFavoritesError] = useState('')
   const removeMySubmission = async (submission: ContributionSubmission) => {
-    if (!window.confirm(`确定删除“${submission.title}”这条投稿记录吗？`)) return
+    const confirmed = await requestAppConfirmation({
+      title: '删除投稿记录',
+      message: `确定删除“${submission.title}”这条投稿记录吗？此操作无法撤销。`,
+      confirmLabel: '删除记录',
+      tone: 'danger',
+    })
+    if (!confirmed) return
     try {
       await deleteContributionSubmission(submission.id)
       setMySubmissions((items) => items.filter((item) => item.id !== submission.id))
@@ -1511,8 +1518,8 @@ function HomePage({ onNavigate, onOnboarding, onOpenProject }: { onNavigate: (pa
     </div>
   )
 }
-function PageIntro({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: React.ReactNode }) {
-  return <div className="page-intro"><div><p className="eyebrow">{eyebrow}</p><h1>{title}</h1><p>{description}</p></div>{action && <div className="page-intro-action">{action}</div>}</div>
+function PageIntro({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: React.ReactNode; action?: React.ReactNode }) {
+  return <div className="page-intro"><div><p className="eyebrow">{eyebrow}</p><h1>{title}</h1>{typeof description === 'string' ? <p>{description}</p> : <div className="page-intro-rich-description">{description}</div>}</div>{action && <div className="page-intro-action">{action}</div>}</div>
 }
 
 function LoginPage({ initialMode = 'login' }: { initialMode?: 'login' | 'register' }) {
@@ -1724,6 +1731,8 @@ function LearningPage({ onOpenProject, initialRouteId }: { onOpenProject: (proje
   const tracks = useMemo(() => visibleRoutes.map((route) => ({ id: route.id, label: route.direction?.trim() || route.title.trim(), route })).filter((item) => item.label), [visibleRoutes])
   const hasConfiguredRoutes = learningRoutes.length > 0
   const activeTrack = tracks.find((track) => track.id === activeRouteId) ?? tracks[0]
+  const activeTrackIndex = tracks.findIndex((track) => track.id === activeTrack?.id)
+  const activeTrackNumber = activeTrackIndex >= 0 ? String(activeTrackIndex + 1).padStart(2, '0') : '01'
   const active = activeTrack?.label ?? ''
   const route = activeTrack?.route
   const visibleNodes = route?.nodes ?? []
@@ -1747,7 +1756,7 @@ function LearningPage({ onOpenProject, initialRouteId }: { onOpenProject: (proje
   const emptyTitle = !hasConfiguredRoutes ? '暂时没有学习路线' : route ? '这个方向还没有学习节点' : user ? '暂无可查看的学习路线' : '请先登录'
   const emptyDescription = !hasConfiguredRoutes ? '' : route ? '' : user ? '当前账号暂时无法查看这些路线。' : '登录以查看全部学习路线。'
   return <div className="page learning-page">
-    <PageIntro eyebrow="LEARNING OS / 01" title="学习路线" description={routeDescription} />
+    <PageIntro eyebrow={`LEARNING OS / ${activeTrackNumber}`} title="学习路线" description={route ? <ResourceMarkdown content={routeDescription} singleLineBreaks /> : routeDescription} />
     {!user && hasConfiguredRoutes && <div className="access-policy-note"><LockKeyhole size={16} /><div><strong>请先登录</strong><span>登录以查看全部学习路线。</span></div></div>}
     <div className={`learning-layout ${tracks.length ? '' : 'learning-layout-empty'}`}>
       {tracks.length > 0 && <aside className="track-sidebar"><div className="sidebar-label">TECH TRACKS</div>{tracks.map((track, index) => <button key={track.id} className={`track-button ${activeRouteId === track.id ? 'active' : ''}`} onClick={() => setActiveRouteId(track.id)}><span className="track-number">{String(index + 1).padStart(2, '0')}</span>{track.label}{activeRouteId === track.id && <ChevronRight size={15} />}</button>)}<div className="sidebar-tip"><Sparkles size={16} /><strong>给下一步留一点空间</strong><span>路线是参考地图，学习内容可以来自你信任的平台。</span></div></aside>}
@@ -1769,7 +1778,7 @@ function LearningNodeCard({ node: learningNode, index, onOpenProject }: { node: 
     <div className="node-marker"><span>{String(index + 1).padStart(2, '0')}</span></div>
     <div className="node-card">
       <div className="node-card-heading"><div><span className="node-status">学习节点 {String(index + 1).padStart(2, '0')}</span><h3>{node.title}</h3></div><span className="node-duration"><Clock3 size={13} /> {node.duration}</span></div>
-      {node.description && <p>{node.description}</p>}
+      {node.description && <div className="learning-node-description"><ResourceMarkdown content={node.description} singleLineBreaks /></div>}
       {(nodeProjects.length > 0 || nodeResources.length > 0 || resourceLinks.length > 0 || videoLinks.length > 0 || (node.cloudDriveLinks?.length ?? 0) > 0) && <div className="node-learning-links">
         {nodeProjects.map((project) => <button type="button" key={project.id} className="learning-link-chip project-entry" onClick={() => onOpenProject(project)} aria-label={`打开项目：${project.name}`} title={`打开项目：${project.name}`}><Rocket size={13} /><span>{project.name}</span><ArrowUpRight size={12} /></button>)}
         {nodeResources.map((resource) => <a className="learning-link-chip library-resource-entry" key={resource.id} href={`#/resources/${encodeURIComponent(resource.id)}`} aria-label={`打开资源库资料：${resource.title}`} title={`打开资源库资料：${resource.title}`}><Folder size={13} /><span>{resource.title}</span><ArrowUpRight size={12} /></a>)}
@@ -3435,6 +3444,8 @@ function App() {
     let pendingHistoryIndex: number | undefined
     let restoreCancelledTraversal = false
     let historyTraversalTimer = 0
+    let navigationPending = false
+    let navigationRequestId = 0
     const onPopState = () => {
       pendingHistoryTraversal = true
       pendingHistoryIndex = getHistoryIndex()
@@ -3452,38 +3463,48 @@ function App() {
         previousHash = window.location.hash
         return
       }
+      if (window.location.hash === previousHash || navigationPending) return
       const wasHistoryTraversal = pendingHistoryTraversal
       const traversedHistoryIndex = pendingHistoryIndex
       pendingHistoryTraversal = false
       pendingHistoryIndex = undefined
-      if (window.location.hash !== previousHash && !confirmDraftNavigation()) {
-        if (wasHistoryTraversal) {
-          restoreCancelledTraversal = true
-          const reverseSteps = traversedHistoryIndex === undefined
-            ? 1
-            : previousHistoryIndex - traversedHistoryIndex
-          window.history.go(reverseSteps || 1)
-        } else {
-          previousHistoryIndex += 1
-          setHistoryIndex(previousHistoryIndex, `${window.location.pathname}${window.location.search}${previousHash}`)
+      const requestedHash = window.location.hash
+      const requestId = ++navigationRequestId
+      navigationPending = true
+      void confirmDraftNavigation().then((confirmed) => {
+        if (requestId !== navigationRequestId) return
+        navigationPending = false
+        if (window.location.hash !== requestedHash) {
+          updateRoute()
+          return
         }
-        return
-      }
-      if (window.location.hash !== previousHash) {
+        if (!confirmed) {
+          if (wasHistoryTraversal) {
+            restoreCancelledTraversal = true
+            const reverseSteps = traversedHistoryIndex === undefined
+              ? 1
+              : previousHistoryIndex - traversedHistoryIndex
+            window.history.go(reverseSteps || 1)
+          } else {
+            previousHistoryIndex += 1
+            setHistoryIndex(previousHistoryIndex, `${window.location.pathname}${window.location.search}${previousHash}`)
+          }
+          return
+        }
         if (wasHistoryTraversal) {
           previousHistoryIndex = traversedHistoryIndex ?? previousHistoryIndex - 1
         } else {
           previousHistoryIndex = getHistoryIndex() ?? previousHistoryIndex + 1
           setHistoryIndex(previousHistoryIndex)
         }
-      }
-      previousHash = window.location.hash
-      setRoute(routeFromHash())
-      setMobileOpen(false)
-      const rawHash = window.location.hash.replace(/^#/, '')
-      if (!rawHash.startsWith('story-')) {
-        window.scrollTo({ top: 0, behavior: 'auto' })
-      }
+        previousHash = window.location.hash
+        setRoute(routeFromHash())
+        setMobileOpen(false)
+        const rawHash = window.location.hash.replace(/^#/, '')
+        if (!rawHash.startsWith('story-')) {
+          window.scrollTo({ top: 0, behavior: 'auto' })
+        }
+      })
     }
     window.addEventListener('popstate', onPopState)
     window.addEventListener('hashchange', updateRoute)

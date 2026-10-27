@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { registerDraftGuard } from './draft-navigation'
+import { requestAppConfirmation } from '../components/AppConfirmation'
 
 const MAX_AGE = 30 * 24 * 60 * 60 * 1000
 
@@ -115,21 +116,24 @@ export function useLocalDraft<T>({
   }, [active, key, serialized, dirty, pending])
 
   useEffect(() => {
-    const confirmLeave = () => {
+    const confirmLeave = async () => {
       if (!latest.current.dirty || latest.current.serialized === baseline.current) return true
       const saved = flush()
-      return window.confirm(
-        saved && !latest.current.pending
-          ? '内容尚未提交，本地草稿已保存。确定离开吗？'
-          : '内容尚未提交，最新修改可能未保存到本地。确定离开吗？',
-      )
+      const canRestore = saved && !latest.current.pending
+      return requestAppConfirmation({
+        title: '离开当前页面？',
+        message: canRestore
+          ? '内容尚未提交，但本地草稿已保存。离开后仍可从当前账号恢复。'
+          : '内容尚未提交，最新修改未能保存到本地。仍要离开吗？',
+        confirmLabel: '离开页面',
+        cancelLabel: '继续编辑',
+        tone: 'warning',
+      })
     }
     const unregister = registerDraftGuard(confirmLeave)
-    const beforeUnload = (event: BeforeUnloadEvent) => {
+    const beforeUnload = () => {
       if (!latest.current.dirty || latest.current.serialized === baseline.current) return
       flush()
-      event.preventDefault()
-      event.returnValue = ''
     }
     const onHidden = () => {
       if (document.visibilityState === 'hidden') flush()
@@ -175,12 +179,19 @@ export function useLocalDraft<T>({
       setStatus('')
     },
     clear,
-    confirmLeave: () => {
+    confirmLeave: async (reason: 'navigate' | 'close' = 'navigate') => {
       if (!dirty || latest.current.serialized === baseline.current) return true
       const saved = flush()
-      return window.confirm(
-        saved && !pending ? '内容尚未提交，本地草稿已保存。确定关闭吗？' : '内容尚未提交，最新修改可能未保存到本地。确定关闭吗？',
-      )
+      const canRestore = saved && !pending
+      return requestAppConfirmation({
+        title: reason === 'close' ? '关闭当前表单？' : '离开当前页面？',
+        message: canRestore
+          ? '内容尚未提交，但本地草稿已保存。关闭后仍可从当前账号恢复。'
+          : '内容尚未提交，最新修改未能保存到本地。仍要关闭吗？',
+        confirmLabel: reason === 'close' ? '关闭表单' : '离开页面',
+        cancelLabel: reason === 'close' ? '继续编辑' : '留在此页',
+        tone: 'warning',
+      })
     },
   }
 }

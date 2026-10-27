@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { MotionConfig } from 'framer-motion'
 import App from './App'
+import { AppConfirmationHost } from './components/AppConfirmation'
 import './styles.css'
 // Tailwind 骨架：只提供 theme + utilities 两个 layer，不含 preflight，
 // 不会覆盖 styles.css 里的既有样式（未分层 CSS 在层叠中优先于 @layer）。
@@ -17,6 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <ContentProvider>
           <ClubConfigProvider>
             <App />
+            <AppConfirmationHost />
           </ClubConfigProvider>
         </ContentProvider>
       </AuthProvider>

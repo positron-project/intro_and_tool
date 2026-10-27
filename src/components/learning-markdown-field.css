@@ -1,0 +1,136 @@
+.learning-markdown-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.learning-markdown-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.learning-markdown-field-head > label {
+  color: var(--text-secondary);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.learning-markdown-field-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+
+.learning-markdown-field-tabs button {
+  min-width: 38px;
+  padding: 4px 8px;
+  color: var(--text-muted);
+  background: transparent;
+  border-radius: 5px;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.learning-markdown-field-tabs button.active {
+  color: var(--blue);
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .1);
+}
+
+.learning-markdown-field > textarea {
+  width: 100%;
+  padding: 8px 9px;
+  color: var(--text);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  font: inherit;
+  font-size: 10px;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.learning-markdown-field > textarea:focus {
+  border-color: color-mix(in srgb, var(--blue) 45%, var(--border-strong));
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
+}
+
+.learning-markdown-preview {
+  min-height: 76px;
+  max-height: 260px;
+  padding: 9px 11px;
+  overflow: auto;
+  color: var(--text-secondary);
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.learning-markdown-preview .resource-markdown > :first-child { margin-top: 0; }
+.learning-markdown-preview .resource-markdown > :last-child { margin-bottom: 0; }
+.learning-markdown-preview .resource-markdown p { margin-bottom: 7px; font-size: inherit; }
+.learning-markdown-preview .resource-markdown h1,
+.learning-markdown-preview .resource-markdown h2,
+.learning-markdown-preview .resource-markdown h3,
+.learning-markdown-preview .resource-markdown h4,
+.learning-markdown-preview .resource-markdown h5,
+.learning-markdown-preview .resource-markdown h6 { margin: 10px 0 5px; font-size: 1.05em; }
+.learning-markdown-preview .resource-markdown ul,
+.learning-markdown-preview .resource-markdown ol { margin-bottom: 8px; }
+.learning-markdown-preview .resource-markdown .resource-markdown-code-block { margin: 8px 0; }
+
+.learning-markdown-empty,
+.learning-markdown-field > small {
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.learning-page .page-intro-rich-description {
+  max-width: 570px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.learning-page .page-intro-rich-description .resource-markdown > :first-child { margin-top: 0; }
+.learning-page .page-intro-rich-description .resource-markdown > :last-child { margin-bottom: 0; }
+.learning-page .page-intro-rich-description .resource-markdown p { margin: 0 0 6px; color: inherit; font-size: inherit; }
+.learning-page .page-intro-rich-description .resource-markdown h1,
+.learning-page .page-intro-rich-description .resource-markdown h2,
+.learning-page .page-intro-rich-description .resource-markdown h3,
+.learning-page .page-intro-rich-description .resource-markdown h4,
+.learning-page .page-intro-rich-description .resource-markdown h5,
+.learning-page .page-intro-rich-description .resource-markdown h6 { margin: 7px 0 4px; font-size: 1.05em; }
+.learning-page .page-intro-rich-description .resource-markdown ul,
+.learning-page .page-intro-rich-description .resource-markdown ol { margin-bottom: 7px; }
+
+.node-card .learning-node-description {
+  margin: 8px 0 10px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.node-card .learning-node-description .resource-markdown > :first-child { margin-top: 0; }
+.node-card .learning-node-description .resource-markdown > :last-child { margin-bottom: 0; }
+.node-card .learning-node-description .resource-markdown p { margin: 0 0 6px; color: inherit; font-size: inherit; }
+.node-card .learning-node-description .resource-markdown h1,
+.node-card .learning-node-description .resource-markdown h2,
+.node-card .learning-node-description .resource-markdown h3,
+.node-card .learning-node-description .resource-markdown h4,
+.node-card .learning-node-description .resource-markdown h5,
+.node-card .learning-node-description .resource-markdown h6 { margin: 7px 0 4px; font-size: 1.05em; }
+.node-card .learning-node-description .resource-markdown ul,
+.node-card .learning-node-description .resource-markdown ol { margin-bottom: 7px; }
+
+html[data-theme='dark'] .learning-markdown-field-tabs button.active { box-shadow: 0 1px 4px rgba(0, 0, 0, .3); }
