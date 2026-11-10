@@ -104,6 +104,7 @@ import ResourceMarkdown from './components/ResourceMarkdown'
 import { InterviewPage, InterviewSubmissionRows } from './components/interviews'
 import { TurnstileWidget } from './components/turnstile-widget'
 import { ExpandedHomePage } from './components/home/ExpandedHomePage'
+import { FooterInfoModal, type FooterModalType } from './components/footer-modals'
 // 管理后台约 230KB 源码，只有 /admin 会遇到。改成动态导入后，
 // vite.config 里分出来的 page-admin chunk 才会真正按需拉取，
 // 而不是被 index.html 用 modulepreload 提前下载给每个访客。
@@ -571,6 +572,7 @@ function InviteRedemptionModal({ onClose }: { onClose: () => void }) {
   const { data: { members }, createMember, updateMember, refresh } = useContent()
   const { currentCohort } = useClubConfig()
   const [inviteCode, setInviteCode] = useState('')
+  const [realName, setRealName] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -580,14 +582,17 @@ function InviteRedemptionModal({ onClose }: { onClose: () => void }) {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!inviteCode.trim()) { setError('请输入邀请码'); return }
+    if (!realName.trim()) { setError('请输入真实姓名'); return }
+    if (realName.trim().length > 50) { setError('真实姓名不能超过 50 个字符'); return }
     setSubmitting(true)
     setError('')
     try {
-      const nextUser = await redeemInviteCode(inviteCode)
+      const nextUser = await redeemInviteCode(inviteCode, realName)
       const cohortYear = nextUser.cohort.match(/\d{4}/)?.[0] ?? currentCohort?.year
       const cohort = cohortYear ? `${cohortYear} 届` : '待分配'
       const direction = nextUser.directions.find((item) => /算法|项目|网安|安全|cyber|ai|agent|模型/i.test(item)) ?? '待分配'
-      const payload = { name: nextUser.name, role: '组员', cohort, direction, projects: [], initials: nextUser.initials, accent: accentForMemberDirection(direction) }
+      const displayName = realName.trim()
+      const payload = { name: displayName, role: '组员', cohort, direction, projects: [], initials: displayName.slice(0, 2), accent: accentForMemberDirection(direction) }
       if (isDemoAuth) {
         const existing = members.find((member) => member.id === nextUser.id)
         if (existing) await updateMember(existing.id, payload)
@@ -604,7 +609,7 @@ function InviteRedemptionModal({ onClose }: { onClose: () => void }) {
     }
   }
 
-  return <div className="admin-modal-scrim invite-modal-scrim" role="presentation" onClick={onClose}><section className="admin-form-modal invite-modal" role="dialog" aria-modal="true" aria-labelledby="invite-redemption-title" onClick={(event) => event.stopPropagation()}><div className="admin-modal-head"><div><p className="eyebrow">MEMBERSHIP / INVITE</p><h2 id="invite-redemption-title">加入小组</h2><p>输入管理员发给你的邀请码，账号会升级为组员并同步到对应届次和方向。</p></div><button className="icon-button small" onClick={onClose} aria-label="关闭邀请码窗口"><X size={16} /></button></div><form className="invite-redemption-form" onSubmit={submit}><label><span>邀请码</span><input value={inviteCode} onChange={(event) => { setInviteCode(event.target.value.toUpperCase()); setError('') }} placeholder="例如 OS-7K4M-9Q2P" autoComplete="off" autoFocus /></label><div className="invite-redemption-hint"><KeyRound size={15} /><span>邀请码有有效期和使用次数限制，每个账号只能兑换一次。</span></div>{error && <p className="login-error" role="alert">{error}</p>}{success && <p className="login-success" role="status">{success}</p>}<div className="admin-modal-foot"><span>{user.name} · 当前为{roleLabels[user.role] ?? user.role}</span><div><button type="button" className="secondary-button admin-small-button" onClick={onClose}>取消</button><button type="submit" className="primary-button admin-small-button" disabled={submitting}>{submitting ? '验证中…' : '兑换邀请码'}</button></div></div></form><p className="invite-demo-note">{isDemoAuth ? '当前使用本地演示数据，兑换后会立即写入成员目录。' : '当前由后端验证邀请码并刷新成员目录。'}</p></section></div>
+  return <div className="admin-modal-scrim invite-modal-scrim" role="presentation" onClick={onClose}><section className="admin-form-modal invite-modal" role="dialog" aria-modal="true" aria-labelledby="invite-redemption-title" onClick={(event) => event.stopPropagation()}><div className="admin-modal-head"><div><p className="eyebrow">MEMBERSHIP / INVITE</p><h2 id="invite-redemption-title">加入小组</h2><p>输入管理员发给你的邀请码和真实姓名，账号会升级为组员并同步到成员目录。</p></div><button className="icon-button small" onClick={onClose} aria-label="关闭邀请码窗口"><X size={16} /></button></div><form className="invite-redemption-form" onSubmit={submit}><label><span>真实姓名</span><input value={realName} onChange={(event) => { setRealName(event.target.value); setError('') }} placeholder="请输入真实姓名" autoComplete="name" autoFocus /></label><label><span>邀请码</span><input value={inviteCode} onChange={(event) => { setInviteCode(event.target.value.toUpperCase()); setError('') }} placeholder="例如 OS-7K4M-9Q2P" autoComplete="off" /></label><div className="invite-redemption-hint"><KeyRound size={15} /><span>邀请码有有效期和使用次数限制，每个账号只能兑换一次。</span></div>{error && <p className="login-error" role="alert">{error}</p>}{success && <p className="login-success" role="status">{success}</p>}<div className="admin-modal-foot"><span>{user.name} · 当前为{roleLabels[user.role] ?? user.role}</span><div><button type="button" className="secondary-button admin-small-button" onClick={onClose}>取消</button><button type="submit" className="primary-button admin-small-button" disabled={submitting}>{submitting ? '验证中…' : '兑换邀请码'}</button></div></div></form><p className="invite-demo-note">{isDemoAuth ? '当前使用本地演示数据，兑换后会立即写入成员目录。' : '当前由后端验证邀请码并刷新成员目录。'}</p></section></div>
 }
 
 function ContributionSubmissionModal({ onClose, onSubmitted }: { onClose: () => void; onSubmitted?: () => void }) {
@@ -3389,6 +3394,7 @@ function App() {
   const [commandOpen, setCommandOpen] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
   const [onboardingOpen, setOnboardingOpen] = useState(false)
+  const [activeFooterModal, setActiveFooterModal] = useState<FooterModalType | null>(null)
   const [messages, setMessages] = useState<AIMessage[]>(starterMessages)
   useEffect(() => {
     if (!isRemoteSettingsEnabled) {
@@ -3591,7 +3597,7 @@ function App() {
     : theme === 'dark' && backgroundPreference !== 'custom'
       ? 'starfield'
       : backgroundPreference === 'follow' ? 'campus' : backgroundPreference
-  return <div className={`app-shell ${isLanding ? 'landing-shell' : ''} ${isTools ? 'tools-shell' : ''} ${isAdminRoute ? 'admin-shell' : ''} ${!isLanding ? 'site-background-shell' : ''} site-bg-${siteBackground}`} style={{ '--site-background-image': backgroundImage ? `url(${backgroundImage})` : 'none' } as React.CSSProperties}>{!isFullBleed && <Navbar route={route} theme={theme} onTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')} onSearch={() => setCommandOpen(true)} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} backgroundPreference={backgroundPreference} onBackgroundPreferenceChange={setBackgroundPreference} backgroundImage={backgroundImage} onBackgroundImageChange={setBackgroundImage} />}<main className={`${isFullBleed ? 'full-bleed-main' : ''} ${isTools ? 'tools-main' : ''}`}><AnimatePresence mode="wait"><motion.div key={route} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.18 }}><Suspense fallback={null}>{renderPage()}</Suspense></motion.div></AnimatePresence></main>{!isFullBleed && !isAdminRoute && <footer className="site-footer"><div><a href="#/home" className="brand footer-brand"><img className="brand-logo" src="./assets/college-logo-cropped.png" alt="南昌航空大学科技学院校徽" /><span className="brand-copy"><strong>南昌航空大学科技学院</strong><small>计算机科技小组 · Computer Science Club</small></span></a><p>学习 → 实践 → 传承。让每一届的知识都留下来。</p></div><div className="footer-links"><a href="#/members">关于我们</a><a href="#/members">加入我们</a><a href="#/resources">贡献指南</a><a href="#/home">隐私政策</a></div><span className="copyright">© 2026 南昌航空大学科技学院计算机科技小组</span></footer>}{!isFullBleed && !isAdminRoute && <button className="floating-ai" onClick={() => setAiOpen(true)} aria-label="打开 AI 助手"><Bot size={21} /></button>}<AiDrawer open={aiOpen && !isLanding} onClose={() => setAiOpen(false)} messages={messages} onSend={sendMessage} /><CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={navigate} /><OnboardingModal open={onboardingOpen} onClose={() => setOnboardingOpen(false)} onNavigate={navigate} /></div>
+  return <div className={`app-shell ${isLanding ? 'landing-shell' : ''} ${isTools ? 'tools-shell' : ''} ${isAdminRoute ? 'admin-shell' : ''} ${!isLanding ? 'site-background-shell' : ''} site-bg-${siteBackground}`} style={{ '--site-background-image': backgroundImage ? `url(${backgroundImage})` : 'none' } as React.CSSProperties}>{!isFullBleed && <Navbar route={route} theme={theme} onTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')} onSearch={() => setCommandOpen(true)} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} backgroundPreference={backgroundPreference} onBackgroundPreferenceChange={setBackgroundPreference} backgroundImage={backgroundImage} onBackgroundImageChange={setBackgroundImage} />}<main className={`${isFullBleed ? 'full-bleed-main' : ''} ${isTools ? 'tools-main' : ''}`}><AnimatePresence mode="wait"><motion.div key={route} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.18 }}><Suspense fallback={null}>{renderPage()}</Suspense></motion.div></AnimatePresence></main>{!isFullBleed && !isAdminRoute && <footer className="site-footer"><div><a href="#/home" className="brand footer-brand"><img className="brand-logo" src="./assets/college-logo-cropped.png" alt="南昌航空大学科技学院校徽" /><span className="brand-copy"><strong>南昌航空大学科技学院</strong><small>计算机科技小组 · Computer Science Club</small></span></a><p>学习 → 实践 → 传承。让每一届的知识都留下来。</p></div><div className="footer-links"><button type="button" className="footer-link-btn" onClick={() => setActiveFooterModal('about')}>关于我们</button><button type="button" className="footer-link-btn" onClick={() => setActiveFooterModal('join')}>加入我们</button><button type="button" className="footer-link-btn" onClick={() => setActiveFooterModal('contribute')}>贡献指南</button><button type="button" className="footer-link-btn" onClick={() => setActiveFooterModal('privacy')}>隐私政策</button></div><span className="copyright">© 2026 南昌航空大学科技学院计算机科技小组</span></footer>}{!isFullBleed && !isAdminRoute && <button className="floating-ai" onClick={() => setAiOpen(true)} aria-label="打开 AI 助手"><Bot size={21} /></button>}<AiDrawer open={aiOpen && !isLanding} onClose={() => setAiOpen(false)} messages={messages} onSend={sendMessage} /><CommandPalette open={commandOpen} onClose={() => setCommandOpen(false)} onNavigate={navigate} /><OnboardingModal open={onboardingOpen} onClose={() => setOnboardingOpen(false)} onNavigate={navigate} /><FooterInfoModal type={activeFooterModal} onClose={() => setActiveFooterModal(null)} onNavigate={navigate} /></div>
 }
 
 export default App

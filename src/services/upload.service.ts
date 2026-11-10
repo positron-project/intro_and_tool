@@ -3,6 +3,7 @@ import type { UploadAsset } from '../types'
 
 export const MAX_RESOURCE_ATTACHMENTS = 5
 export const MAX_RESOURCE_ATTACHMENT_BYTES = 20 * 1024 * 1024
+const RESOURCE_UPLOAD_TIMEOUT_MS = 120_000
 const RESOURCE_ATTACHMENT_EXTENSIONS = new Set(['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'zip', 'txt', 'md', 'png', 'jpg', 'jpeg', 'webp'])
 
 export function validateResourceAttachmentFiles(files: File[], currentCount: number) {
@@ -28,7 +29,12 @@ export async function uploadAsset(file: File, options: UploadOptions = {}) {
   form.append('file', file)
   if (options.folder) form.append('folder', options.folder)
   if (options.alt) form.append('alt', options.alt)
-  return apiRequest<UploadAsset>('/uploads', { method: 'POST', body: form, signal: options.signal })
+  return apiRequest<UploadAsset>('/uploads', {
+    method: 'POST',
+    body: form,
+    signal: options.signal,
+    timeoutMs: RESOURCE_UPLOAD_TIMEOUT_MS,
+  })
 }
 
 export async function deleteAsset(id: string) {

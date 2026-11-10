@@ -2,6 +2,7 @@
  @File : auth.py
  @Author : 加个真朋友
 @Description : 接收数据 管理认证相关的接口
+管账号认证相关的接口（登录、发验证码、改密码）
 """
 from datetime import datetime
 
@@ -9,6 +10,35 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from schemas.email import SupportedRegistrationEmail
 from schemas.users import UserInfoResponse
+
+
+"""注册时接收用户名、邮箱、密码"""
+class RegisterRequest(BaseModel):  # UserCreate：只用于接收注册数据
+    """注册接口接收的账号、邮箱和密码。"""
+
+    username: str = Field(  # username：注册用户名，长度限制为 2 到 32 个字符
+        min_length=2,
+        max_length=32,
+    )
+
+    email: SupportedRegistrationEmail
+
+    verification_code: str = Field(
+        alias="verificationCode",
+        min_length=6,
+        max_length=6,
+        pattern=r"^[0-9]{6}$",
+    )
+
+    password: str = Field(  # password：接收用户输入的密码，长度限制为 8 到 128 个字符
+        min_length=8,
+        max_length=128,
+    )
+
+    turnstile_token: str = Field(
+        alias="turnstileToken",
+        min_length=1,
+    )
 
 
 

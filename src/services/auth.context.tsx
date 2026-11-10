@@ -16,7 +16,7 @@ export interface AuthContextValue {
   refresh: () => Promise<void>
   updateProfile: (patch: Partial<Pick<AuthUser, 'name' | 'initials' | 'avatarUrl' | 'bio'>>) => Promise<AuthUser>
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>
-  redeemInviteCode: (inviteCode: string) => Promise<AuthUser>
+  redeemInviteCode: (inviteCode: string, realName: string) => Promise<AuthUser>
   closeAccount: () => Promise<void>
 }
 
@@ -79,8 +79,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await changePassword(currentPassword, newPassword)
   }, [])
 
-  const redeemInvite = useCallback(async (inviteCode: string) => {
-    const nextUser = await redeemInviteCodeService(inviteCode)
+  const redeemInvite = useCallback(async (inviteCode: string, realName: string) => {
+    const nextUser = await redeemInviteCodeService(inviteCode, realName)
     setUser(nextUser)
     return nextUser
   }, [])

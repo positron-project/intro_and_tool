@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
 import type { AuthUser, AuthSession } from '../types'
 import { AuthProvider, useAuth } from './auth.context'
-import { getCurrentUser, login, logout } from './auth.service'
+import { getCurrentUser, login, logout, redeemInviteCode as redeemInviteCodeService } from './auth.service'
 
 vi.mock('./auth.service', async (original) => ({
   ...await original<typeof import('./auth.service')>(),
-  getCurrentUser: vi.fn(), login: vi.fn(), logout: vi.fn(),
+  getCurrentUser: vi.fn(), login: vi.fn(), logout: vi.fn(), redeemInviteCode: vi.fn(),
 }))
 
 const user = { id: 'old-user', name: 'Old' } as AuthUser
@@ -49,5 +49,22 @@ describe('auth refresh races', () => {
     await act(() => result.current.refresh())
     await act(async () => { resolve(user); await first })
     expect(result.current.user).toBeNull()
+  })
+})
+
+describe('invite redemption', () => {
+  it('passes the submitted real name to the redemption service', async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(null)
+    const redeemedUser = { ...user, role: 'Contributor' } as AuthUser
+    vi.mocked(redeemInviteCodeService).mockResolvedValue(redeemedUser)
+    const { result } = renderHook(useAuth, { wrapper })
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    await act(async () => {
+      await result.current.redeemInviteCode('OS-7K4M-9Q2P', '张三')
+    })
+
+    expect(redeemInviteCodeService).toHaveBeenCalledWith('OS-7K4M-9Q2P', '张三')
+    expect(result.current.user).toEqual(redeemedUser)
   })
 })

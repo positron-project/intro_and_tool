@@ -88,6 +88,7 @@ async def find_team_by_text(
 async def sync_member_for_user(
     db: AsyncSession,
     user: User,
+    real_name: str | None = None,
 ) -> Member:
     """
     根据登录账号同步一条成员目录资料。
@@ -108,8 +109,8 @@ async def sync_member_for_user(
     )
     member = result.scalar_one_or_none()
 
-    # 用户昵称为空时，使用用户名作为前台展示姓名，保证 name 不为空。
-    display_name = (user.nickname or user.username).strip()
+    # 真实姓名只写入成员目录；未传姓名时兼容旧调用，回退到昵称或用户名。
+    display_name = (real_name or '').strip() or (user.nickname or user.username).strip()
 
     # users.role 是账号权限；members.role 是小组风采里的展示职务。
     # 新建成员时给一个合理的展示职务，后续管理员仍可以单独修改成员职务。
@@ -161,6 +162,7 @@ async def sync_member_for_user(
             if user.direction
             else None
         )
+        member.initials = display_name[:2]
         member.avatar_url = user.avatar_url
 
     # 让 SQLAlchemy 先把新成员的变化写入当前事务，但不结束事务。
@@ -296,7 +298,7 @@ async def update_member(
         return None
 
     update_values = data.model_dump(
-        exclude_unset=True,
+        exclude_unset=True, #只把前端真正发过来的字段拿出来，没发的全部忽略！
         by_alias=False,
     )
 

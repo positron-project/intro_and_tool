@@ -7,8 +7,12 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from routers.users import login, login_with_email_code
-from schemas.auth import LoginCodeRequest, LoginRequest, RegistrationEmailCodeSendRequest
-from schemas.users import RegisterRequest
+from schemas.auth import (
+    LoginCodeRequest,
+    LoginRequest,
+    RegisterRequest,
+    RegistrationEmailCodeSendRequest,
+)
 
 
 class FakeAsyncSession:

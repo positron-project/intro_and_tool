@@ -222,6 +222,7 @@ async def redeem_invite_code(
     db: AsyncSession,
     code: str,
     user: User,
+    real_name: str | None = None,
 ) -> InviteCode:
     """
     兑换邀请码，并把当前用户升级为邀请码指定的角色。
@@ -285,6 +286,7 @@ async def redeem_invite_code(
     await sync_member_for_user(
         db=db,
         user=user,
+        real_name=real_name,
     )
 
     record_audit_log(

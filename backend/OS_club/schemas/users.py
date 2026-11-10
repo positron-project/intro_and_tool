@@ -1,14 +1,11 @@
 """
  @File : users.py.py
  @Author : 加个真朋友
-@Description : 
+@Description : 管用户资料相关的接口（查资料、改资料）
 """
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
-
-from schemas.email import SupportedRegistrationEmail
-
 
 class UserInfoBase(BaseModel):
     """用户资料中可复用的字段。"""
@@ -36,34 +33,6 @@ class UserInfoBase(BaseModel):
 
 
 
-
-"""注册时接收用户名、邮箱、密码"""
-class RegisterRequest(BaseModel):    #UserCreate：只用于接收注册数据；
-    """注册接口接收的账号、邮箱和密码。"""
-
-    username: str = Field(  #username：注册用户名，长度限制为 2 到 32 个字符；
-        min_length=2,
-        max_length=32,
-    )
-
-    email: SupportedRegistrationEmail
-
-    verification_code: str = Field(
-        alias="verificationCode",
-        min_length=6,
-        max_length=6,
-        pattern=r"^[0-9]{6}$",
-    )
-
-    password: str = Field(  #password：接收用户输入的密码，长度限制为 8 到 128 个字符；
-        min_length=8,
-        max_length=128,
-    )
-
-    turnstile_token: str = Field(
-        alias="turnstileToken",
-        min_length=1,
-    )
 
 """修改资料时接收昵称、头像、简介"""
 """修改资料只能改「昵称、头像、简介」这三个字段"""

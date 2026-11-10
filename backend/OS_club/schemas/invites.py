@@ -100,6 +100,13 @@ class InviteCodeRedeemRequest(BaseModel):
         alias="inviteCode",     #匹配前端发送的字段名。
     )
 
+    real_name: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=50,
+        alias="realName",
+    )
+
     # 允许使用字段名 invite_code 或别名 inviteCode。
     model_config = ConfigDict(
         populate_by_name=True,

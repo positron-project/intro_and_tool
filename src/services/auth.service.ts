@@ -628,9 +628,9 @@ export async function logout() {
  * real deployment this call will be handled by the backend so the browser
  * cannot forge a role change.
  */
-export async function redeemInviteCode(inviteCode: string): Promise<AuthUser> {
+export async function redeemInviteCode(inviteCode: string, realName: string): Promise<AuthUser> {
   if (!isDemoAuth) {
-    const user = await apiRequest<BackendUserResponse>('/auth/me/redeem-invite', { method: 'POST', body: { inviteCode } })
+    const user = await apiRequest<BackendUserResponse>('/auth/me/redeem-invite', { method: 'POST', body: { inviteCode, realName: realName.trim() } })
     return normalizeBackendUser(user)
   }
 
