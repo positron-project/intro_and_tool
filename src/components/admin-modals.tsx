@@ -214,7 +214,7 @@ export function createCollectionDraft(kind: AdminCollectionKind, item?: Project 
     milestones: [],
     logs: [],
     type: '文档',
-    accessMode: 'external_link',
+    accessMode: 'article',
     resourceUrl: '',
     links: [],
     attachments: [],

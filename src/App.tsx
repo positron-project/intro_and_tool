@@ -619,7 +619,7 @@ function ContributionSubmissionModal({ onClose, onSubmitted }: { onClose: () => 
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState(resourceCategories.find((item) => item.enabled)?.key ?? '')
   const [resourceType, setResourceType] = useState<'article' | 'video' | 'course' | 'link' | 'tool' | 'repository' | 'file'>('article')
-  const [accessMode, setAccessMode] = useState<'external_link' | 'attachment' | 'article'>('external_link')
+  const [accessMode, setAccessMode] = useState<'external_link' | 'attachment' | 'article'>('article')
   const [tags, setTags] = useState('')
   const [visibility, setVisibility] = useState<'public' | 'members' | 'contributors'>('members')
   const [links, setLinks] = useState<ResourceLink[]>([])
