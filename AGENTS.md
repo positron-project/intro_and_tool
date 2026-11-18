@@ -41,7 +41,7 @@ powershell -ExecutionPolicy Bypass -File scripts/dev-up.ps1
 ```
 
 - 后端：`backend/OS_club/.venv/Scripts/python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000`，健康检查 `/api/health`。
-- 数据库：`D:\_tools\mysql-8.4.9-winx64`（便携版，非服务），`root / 123456`，库 `club_os`。建表用 `backend/OS_club/init_db.py`。
+- 数据库：`D:\_tools\mysql-8.4.9-winx64`（便携版，非服务），账号密码见 `backend/OS_club/.env`，库 `club_os`。建表用 `backend/OS_club/init_db.py`。
 - 后端测试：`cd backend/OS_club && .venv/Scripts/python.exe -m pytest`。
 
 ## 目录地图
