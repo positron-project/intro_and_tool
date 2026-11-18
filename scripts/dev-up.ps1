@@ -37,7 +37,7 @@ if (Test-Port 3306) {
     Start-Process -FilePath $mysqld -WindowStyle Hidden `
         -ArgumentList "--defaults-file=$MysqlHome\my.ini"
     if (Wait-Port 3306 30) {
-        Write-Host '[mysql] listening on 127.0.0.1:3306 (root / 123456, database club_os)'
+        Write-Host '[mysql] listening on 127.0.0.1:3306 (账号密码见 backend/OS_club/.env, database club_os)'
     } else {
         Write-Warning "[mysql] did not come up; see $MysqlHome\mysqld.err"
     }
