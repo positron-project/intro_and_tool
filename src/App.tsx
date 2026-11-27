@@ -1,5 +1,6 @@
 import { useLocalDraft } from './lib/useLocalDraft'
 import { confirmDraftNavigation } from './lib/draft-navigation'
+import { resolveResourceUrl, selectResourceDetail } from './lib/resource-detail'
 import { requestAppConfirmation } from './components/AppConfirmation'
 import { LocalDraftNotice } from './components/LocalDraftNotice'
 import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -2413,16 +2414,7 @@ function ResourcesPage({ onNavigate }: { onNavigate: (path: string) => void }) {
 }
 
 function resolveResourceFileUrl(value?: string) {
-  const source = value?.trim()
-  if (!source) return undefined
-  if (source.startsWith('#/')) return undefined
-  try {
-    const baseUrl = apiConfig.baseUrl || window.location.origin
-    const resolved = new URL(source, baseUrl)
-    return resolved.protocol === 'https:' || resolved.protocol === 'http:' ? resolved.href : undefined
-  } catch {
-    return undefined
-  }
+  return resolveResourceUrl(value, apiConfig.baseUrl || window.location.origin, window.location.origin)
 }
 
 function downloadResourceMarkdown(title: string, content: string) {
@@ -2520,28 +2512,28 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
     return () => window.clearTimeout(timer)
   }, [copiedLinkIndex, copyErrorLinkIndex])
 
-  if (!resource && loading) return <div className="page resource-detail-page"><div className="resource-detail-state"><RefreshCw size={18} className="spin" /><strong>正在加载资源</strong><span>正在读取资源详情。</span></div></div>
-  if (!resource) return <div className="page resource-detail-page"><div className="resource-detail-state"><Folder size={22} /><strong>找不到这份资源</strong><span>资源可能已下架，或链接不再有效。</span><button type="button" className="secondary-button" onClick={() => onNavigate('#/resources')}><ChevronLeft size={15} /> 返回资源库</button></div></div>
-  if (!canViewContent(user, resource.visibility)) return <div className="page resource-detail-page"><div className="resource-detail-state"><LockKeyhole size={22} /><strong>这份资源需要组员权限</strong><span>登录并加入小组后即可查看受限内容。</span><div><button type="button" className="secondary-button" onClick={() => onNavigate('#/resources')}><ChevronLeft size={15} /> 返回资源库</button><button type="button" className="primary-button" onClick={() => onNavigate('#/login')}>前往登录 <ArrowRight size={15} /></button></div></div></div>
+  const detailResource = selectResourceDetail(resource, freshResource)
+  if (!detailResource && loading) return <div className="page resource-detail-page"><div className="resource-detail-state"><RefreshCw size={18} className="spin" /><strong>正在加载资源</strong><span>正在读取资源详情。</span></div></div>
+  if (!detailResource) return <div className="page resource-detail-page"><div className="resource-detail-state"><Folder size={22} /><strong>找不到这份资源</strong><span>资源可能已下架，或链接不再有效。</span><button type="button" className="secondary-button" onClick={() => onNavigate('#/resources')}><ChevronLeft size={15} /> 返回资源库</button></div></div>
+  if (!canViewContent(user, detailResource.visibility)) return <div className="page resource-detail-page"><div className="resource-detail-state"><LockKeyhole size={22} /><strong>这份资源需要组员权限</strong><span>登录并加入小组后即可查看受限内容。</span><div><button type="button" className="secondary-button" onClick={() => onNavigate('#/resources')}><ChevronLeft size={15} /> 返回资源库</button><button type="button" className="primary-button" onClick={() => onNavigate('#/login')}>前往登录 <ArrowRight size={15} /></button></div></div></div>
 
-  const detailResource = freshResource?.id === resource.id ? freshResource : resource
-  const accessMode = resource.accessMode ?? (resource.content ? 'article' : resource.downloadUrl || resource.attachments?.length ? 'attachment' : 'external_link')
-  const category = contentCategoryLabel(resourceCategories, resource.category)
-  const updated = resource.updatedAt ? new Date(resource.updatedAt) : null
-  const updatedLabel = updated && !Number.isNaN(updated.getTime()) ? updated.toLocaleDateString('zh-CN') : resource.updated || '时间待同步'
-  const attachments = resource.attachments?.length
-    ? resource.attachments
-    : resource.downloadUrl ? [{ name: resource.sourceName || '资源附件', url: resource.downloadUrl }] : []
+  const accessMode = detailResource.accessMode ?? (detailResource.content ? 'article' : detailResource.downloadUrl || detailResource.attachments?.length ? 'attachment' : 'external_link')
+  const category = contentCategoryLabel(resourceCategories, detailResource.category)
+  const updated = detailResource.updatedAt ? new Date(detailResource.updatedAt) : null
+  const updatedLabel = updated && !Number.isNaN(updated.getTime()) ? updated.toLocaleDateString('zh-CN') : detailResource.updated || '时间待同步'
+  const attachments = detailResource.attachments?.length
+    ? detailResource.attachments
+    : detailResource.downloadUrl ? [{ name: detailResource.sourceName || '资源附件', url: detailResource.downloadUrl }] : []
   const activeAttachment = attachments[previewIndex] ?? attachments[0]
   const activeFileUrl = activeAttachment ? resolveResourceFileUrl(activeAttachment.url) : undefined
   const activeDownloadUrl = activeAttachment ? resolveResourceDownloadUrl(activeAttachment) : undefined
   const activeFileKind = activeAttachment ? resourceFileKind(activeAttachment, activeFileUrl) : 'file'
-  const resourceLinkSource = resource.links?.some((link) => link.url.trim()) ? resource.links : resource.resourceUrl ? [{ title: '外部资源', url: resource.resourceUrl }] : resource.links ?? []
+  const resourceLinkSource = detailResource.links?.some((link) => link.url.trim()) ? detailResource.links : detailResource.resourceUrl ? [{ title: '外部资源', url: detailResource.resourceUrl }] : detailResource.links ?? []
   const externalLinks = resourceLinkSource.flatMap((link) => {
     const url = resolveResourceFileUrl(link.url)
     return url ? [{ ...link, resolvedUrl: url }] : []
   })
-  const views = Math.max(0, Math.trunc(resourceViews ?? resource.views ?? 0))
+  const views = Math.max(0, Math.trunc(resourceViews ?? detailResource.views ?? 0))
   const backToList = () => {
     if (canReturnToList && window.history.length > 1) window.history.back()
     else onNavigate('#/resources')
@@ -2561,22 +2553,22 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
     <div className="resource-detail-crumb"><button type="button" className="resource-detail-back" onClick={backToList}><ChevronLeft size={16} /> 返回资源库</button><span>/</span><span>{category}</span></div>
     <header className="resource-detail-heading">
       <div className="resource-detail-title-block">
-        <div className="resource-detail-kicker"><span className="resource-detail-kind-icon"><FileText size={15} /></span><span>{accessMode === 'article' ? '站内阅读' : accessMode === 'attachment' ? '文件资料' : '外部资源'}</span><i />{resourceTypeLabel(resource.type)}</div>
-        <h1>{resource.title}</h1>
-        <p>{resource.description}</p>
-        <div className="resource-detail-tags"><Tag tone="blue">{category}</Tag>{resource.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}</div>
+        <div className="resource-detail-kicker"><span className="resource-detail-kind-icon"><FileText size={15} /></span><span>{accessMode === 'article' ? '站内阅读' : accessMode === 'attachment' ? '文件资料' : '外部资源'}</span><i />{resourceTypeLabel(detailResource.type)}</div>
+        <h1>{detailResource.title}</h1>
+        <p>{detailResource.description}</p>
+        <div className="resource-detail-tags"><Tag tone="blue">{category}</Tag>{detailResource.tags.map((tag) => <Tag key={tag}>{tag}</Tag>)}</div>
       </div>
     </header>
 
     <div className="resource-detail-layout">
       <main className="resource-detail-main">
         {accessMode === 'article' ? <section className="resource-reader" aria-label="资源正文">
-          <div className="resource-reader-head"><span><BookOpen size={15} /> 正文</span><div className="resource-reader-actions"><small>{resource.content ? `${resource.content.length.toLocaleString()} 字符` : '内容待补充'}</small>{resource.content && <button type="button" className="resource-reader-download" onClick={() => downloadResourceMarkdown(resource.title, resource.content ?? '')}><Download size={14} /> 下载 Markdown</button>}</div></div>
-          {resource.content ? <article className="resource-reader-content"><ResourceMarkdown content={resource.content} /></article> : <div className="resource-detail-state compact"><FileText size={20} /><strong>正文暂未提供</strong><span>请查看资源说明，或联系投稿人补充内容。</span></div>}
+          <div className="resource-reader-head"><span><BookOpen size={15} /> 正文</span><div className="resource-reader-actions"><small>{detailResource.content ? `${detailResource.content.length.toLocaleString()} 字符` : '内容待补充'}</small>{detailResource.content && <button type="button" className="resource-reader-download" onClick={() => downloadResourceMarkdown(detailResource.title, detailResource.content ?? '')}><Download size={14} /> 下载 Markdown</button>}</div></div>
+          {detailResource.content ? <article className="resource-reader-content"><ResourceMarkdown content={detailResource.content} /></article> : <div className="resource-detail-state compact"><FileText size={20} /><strong>正文暂未提供</strong><span>请查看资源说明，或联系投稿人补充内容。</span></div>}
         </section> : accessMode === 'attachment' ? <section className="resource-file-viewer" aria-label="资源文件预览">
           <div className="resource-file-viewer-head"><span>{activeAttachment?.name ?? '资源附件'}</span><span>{activeAttachment?.size ? `${(activeAttachment.size / 1024 / 1024).toFixed(1)} MB` : activeAttachment?.mimeType || '附件预览'}</span>{activeAttachment && activeDownloadUrl && <a className="resource-file-download" href={activeDownloadUrl} download={activeAttachment.name}><Download size={14} /> 下载此文件</a>}</div>
           {activeAttachment && activeFileUrl && activeFileKind === 'image' && <div className="resource-image-stage"><img src={activeFileUrl} alt={activeAttachment.name} /></div>}
-          {activeAttachment && activeFileUrl && activeFileKind === 'pdf' && <iframe className="resource-pdf-frame" src={activeFileUrl} title={`${resource.title} PDF 预览`} />}
+          {activeAttachment && activeFileUrl && activeFileKind === 'pdf' && <iframe className="resource-pdf-frame" src={activeFileUrl} title={`${detailResource.title} PDF 预览`} />}
           {activeAttachment && (!activeFileUrl || activeFileKind === 'file') && <div className="resource-file-fallback"><span><FileText size={25} /></span><strong>{activeAttachment.name}</strong><small>{activeDownloadUrl ? '此文件格式暂不支持网页预览，请使用上方按钮下载后查看。' : '文件地址暂不可用，请联系管理员检查资源附件。'}</small></div>}
           {!activeAttachment && <div className="resource-file-fallback"><span><Folder size={25} /></span><strong>尚未添加资源文件</strong><small>请查看资源说明，或联系管理员补充附件。</small></div>}
           {attachments.length > 1 && <div className="resource-attachment-list" aria-label="资源附件列表">{attachments.map((attachment, index) => <button type="button" key={`${attachment.assetId ?? attachment.id ?? attachment.url}-${index}`} className={index === previewIndex ? 'active' : ''} onClick={() => setPreviewIndex(index)}><FileText size={15} /><span><strong>{attachment.name}</strong><small>{attachment.mimeType || '附件'}{attachment.size ? ` · ${(attachment.size / 1024 / 1024).toFixed(1)} MB` : ''}</small></span>{index === previewIndex && <Check size={14} />}</button>)}</div>}
@@ -2590,9 +2582,9 @@ function ResourceDetailPage({ resourceId, onNavigate }: { resourceId: string; on
       </main>
 
       <aside className="resource-detail-aside">
-        <div className="resource-detail-aside-head"><span>资源信息</span><FavoriteButton targetType="resource" targetId={resource.id} initialCount={detailResource.favoriteCount} initialFavorited={detailResource.isFavorited} onChange={(_, favoriteCount) => { if (typeof favoriteCount === 'number') setDetailFavoriteCount(favoriteCount) }} /></div>
-        <dl className="resource-detail-facts"><div><dt>贡献者</dt><dd>{resource.author || '小组成员'}</dd></div><div><dt>最近更新</dt><dd>{updatedLabel}</dd></div><div><dt>浏览</dt><dd><Eye size={14} /> {views.toLocaleString()}</dd></div><div><dt>收藏</dt><dd><Star size={14} /> {(detailFavoriteCount ?? 0).toLocaleString()}</dd></div><div><dt>资源类型</dt><dd>{resourceTypeLabel(resource.type)}</dd></div><div><dt>访问方式</dt><dd>{accessMode === 'article' ? '站内阅读' : accessMode === 'attachment' ? '站内文件' : '外部链接'}</dd></div></dl>
-        {resource.sourceName && <div className="resource-detail-source"><span>来源</span><strong>{resource.sourceName}</strong></div>}
+        <div className="resource-detail-aside-head"><span>资源信息</span><FavoriteButton targetType="resource" targetId={detailResource.id} initialCount={detailResource.favoriteCount} initialFavorited={detailResource.isFavorited} onChange={(_, favoriteCount) => { if (typeof favoriteCount === 'number') setDetailFavoriteCount(favoriteCount) }} /></div>
+        <dl className="resource-detail-facts"><div><dt>贡献者</dt><dd>{detailResource.author || '小组成员'}</dd></div><div><dt>最近更新</dt><dd>{updatedLabel}</dd></div><div><dt>浏览</dt><dd><Eye size={14} /> {views.toLocaleString()}</dd></div><div><dt>收藏</dt><dd><Star size={14} /> {(detailFavoriteCount ?? 0).toLocaleString()}</dd></div><div><dt>资源类型</dt><dd>{resourceTypeLabel(detailResource.type)}</dd></div><div><dt>访问方式</dt><dd>{accessMode === 'article' ? '站内阅读' : accessMode === 'attachment' ? '站内文件' : '外部链接'}</dd></div></dl>
+        {detailResource.sourceName && <div className="resource-detail-source"><span>来源</span><strong>{detailResource.sourceName}</strong></div>}
       </aside>
     </div>
   </div>
